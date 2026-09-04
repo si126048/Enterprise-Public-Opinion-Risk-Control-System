@@ -1,251 +1,189 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>内容列表 - 五华区民意诉求语义分析系统</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诉求列表 - 五华民意·态势感知</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/mobile.css">
 </head>
 <body>
-  <div class="page-header">
-    <a href="../index.html">&larr; 返回</a>
-    <h1>内容列表</h1>
-  </div>
-  <div class="page-body">
-    <div class="filter-bar">
-      <select class="select" id="filter-source">
-        <option value="">全部来源</option>
-      </select>
-      <select class="select" id="filter-sentiment">
-        <option value="">全部情感</option>
-        <option value="negative">负面</option>
-        <option value="neutral">中性</option>
-        <option value="positive">正面</option>
-        <option value="uncertain">不确定</option>
-      </select>
-      <input class="input" id="filter-search" placeholder="搜索标题或正文..." style="flex:1;min-width:180px;">
-      <button class="btn btn-primary" id="btn-import">导入 CSV</button>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">◆</span>
+            <span class="brand-text">五华民意·态势感知</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">总览</a></li>
+            <li><a href="content.html" class="active">诉求列表</a></li>
+            <li><a href="search.html">语义搜索</a></li>
+            <li><a href="topics.html">主题库</a></li>
+            <li><a href="review.html" class="nav-highlight">审核</a></li>
+            <li><a href="sources.html">来源</a></li>
+            <li><a href="validation.html">验证</a></li>
+        </ul>
+        <div class="nav-actions">
+            <span class="data-badge">数据更新: 今日</span>
+            <button class="nav-toggle" aria-label="菜单">≡</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="page-body">
+            <!-- Filter Bar -->
+            <div class="section">
+                <div class="filter-bar">
+                    <select id="filter-source" class="select" style="min-width:140px">
+                        <option value="">全部来源</option>
+                    </select>
+                    <select id="filter-sentiment" class="select" style="min-width:120px">
+                        <option value="">全部情感</option>
+                        <option value="positive">正面</option>
+                        <option value="neutral">中性</option>
+                        <option value="negative">负面</option>
+                    </select>
+                    <select id="filter-risk" class="select" style="min-width:120px">
+                        <option value="">全部风险</option>
+                        <option value="high">高风险</option>
+                        <option value="medium">中风险</option>
+                        <option value="low">低风险</option>
+                    </select>
+                    <input type="text" id="filter-search" class="input" placeholder="搜索标题/内容..." style="flex:1;min-width:200px">
+                    <button id="btn-import" class="btn btn-secondary btn-sm">导入 CSV</button>
+                    <input type="file" id="file-input" accept=".csv,.json" style="display:none">
+                </div>
+            </div>
+
+            <!-- Results Info -->
+            <div id="results-info" class="text-muted mb-1" style="font-size:0.85rem"></div>
+
+            <!-- Content List -->
+            <div id="content-list"></div>
+
+            <!-- Pagination -->
+            <div id="pagination"></div>
+        </div>
     </div>
-    <input type="file" id="file-input" accept=".csv,.json" style="display:none;">
 
-    <div id="loading" style="text-align:center;padding:2rem;color:var(--color-text-secondary);display:none;">加载中...</div>
-    <div id="error-msg" style="display:none;padding:1rem;background:var(--color-danger);color:#fff;margin-bottom:1rem;"></div>
-
-    <div style="overflow-x:auto;">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>来源</th>
-            <th>标题</th>
-            <th>情感</th>
-            <th>风险</th>
-            <th>发布时间</th>
-          </tr>
-        </thead>
-        <tbody id="content-tbody"></tbody>
-      </table>
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>诉求详情</h3>
+                <button class="modal-close">×</button>
+            </div>
+            <div id="detail-modal-body"></div>
+        </div>
     </div>
 
-    <div id="empty-state" style="display:none;text-align:center;padding:2rem;color:var(--color-text-secondary);">
-      暂无数据，请先导入 CSV 文件
-    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <span>昆明市五华区 | 课程演示项目</span>
+        <span class="demo-tag">Demo Mode</span>
+    </footer>
 
-    <div id="pagination" style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:wrap;"></div>
-  </div>
-
-  <div id="detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:1rem;">
-    <div style="max-width:700px;margin:2rem auto;background:var(--color-bg-card);border:2px solid var(--color-text-primary);padding:1.5rem;position:relative;">
-      <button id="detail-close" style="position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-primary);">&times;</button>
-      <div id="detail-content"></div>
-    </div>
-  </div>
-
-  <script src="../js/app.js"></script>
-  <script>
-    var currentPage = 1;
-    var pageSize = 15;
-
-    var sourceLabels = {
-      local_gov_hotline: '政务热线',
-      social_media_weibo: '微博',
-      social_media_douyin: '抖音',
-      community_feedback: '社区反馈',
-      gov_platform: '政务平台'
-    };
-
-    function loadContent() {
-      var source = document.getElementById('filter-source').value;
-      var sentiment = document.getElementById('filter-sentiment').value;
-      var search = document.getElementById('filter-search').value;
-
-      var params = 'page=' + currentPage + '&page_size=' + pageSize;
-      if (source) params += '&source=' + encodeURIComponent(source);
-      if (sentiment) params += '&sentiment=' + encodeURIComponent(sentiment);
-      if (search) params += '&search=' + encodeURIComponent(search);
-
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('error-msg').style.display = 'none';
-      document.getElementById('empty-state').style.display = 'none';
-
-      fetchApi('/api/content?' + params)
-        .then(function(data) {
-          document.getElementById('loading').style.display = 'none';
-          renderTable(data.items);
-          renderPagination(data.pagination);
-          populateSources(data.filters.sources);
-        })
-        .catch(function(err) {
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error-msg').textContent = '加载失败: ' + err.message;
-          document.getElementById('error-msg').style.display = 'block';
+    <script src="../data/mock/mock_data.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/store.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/interactions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Interactions.init();
+            ContentPage.init();
         });
-    }
 
-    function renderTable(items) {
-      var tbody = document.getElementById('content-tbody');
-      if (!items || items.length === 0) {
-        tbody.innerHTML = '';
-        document.getElementById('empty-state').style.display = 'block';
-        return;
-      }
-      var html = '';
-      for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        html += '<tr style="cursor:pointer;" data-id="' + escapeHtml(item.id) + '">'
-          + '<td>' + escapeHtml(item.id) + '</td>'
-          + '<td>' + escapeHtml(sourceLabels[item.source] || item.source) + '</td>'
-          + '<td>' + escapeHtml(item.title || '-') + '</td>'
-          + '<td>' + sentimentBadge(item.sentiment) + '</td>'
-          + '<td>' + riskBadge(item.risk_level) + '</td>'
-          + '<td>' + formatDate(item.publish_time) + '</td>'
-          + '</tr>';
-      }
-      tbody.innerHTML = html;
+        var ContentPage = {
+            currentPage: 1,
+            pageSize: 20,
 
-      var rows = tbody.querySelectorAll('tr');
-      for (var j = 0; j < rows.length; j++) {
-        rows[j].addEventListener('click', function() {
-          showDetail(this.getAttribute('data-id'));
-        });
-      }
-    }
+            init: function() {
+                this.bindEvents();
+                this.loadSources();
+                this.loadData();
+            },
 
-    function renderPagination(pg) {
-      var el = document.getElementById('pagination');
-      if (!pg || pg.total_pages <= 1) {
-        el.innerHTML = '';
-        return;
-      }
-      var html = '';
-      if (pg.page > 1) {
-        html += '<button class="btn" data-page="' + (pg.page - 1) + '">&laquo; 上一页</button>';
-      }
-      html += '<span style="font-size:0.85rem;color:var(--color-text-secondary);">第 ' + pg.page + ' / ' + pg.total_pages + ' 页，共 ' + pg.total + ' 条</span>';
-      if (pg.page < pg.total_pages) {
-        html += '<button class="btn" data-page="' + (pg.page + 1) + '">下一页 &raquo;</button>';
-      }
-      el.innerHTML = html;
+            bindEvents: function() {
+                var self = this;
 
-      var btns = el.querySelectorAll('button[data-page]');
-      for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener('click', function() {
-          currentPage = parseInt(this.getAttribute('data-page'));
-          loadContent();
-        });
-      }
-    }
+                document.getElementById('filter-source').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
+                document.getElementById('filter-sentiment').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
+                document.getElementById('filter-risk').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
 
-    var sourcesPopulated = false;
-    function populateSources(sources) {
-      if (sourcesPopulated) return;
-      var sel = document.getElementById('filter-source');
-      for (var i = 0; i < sources.length; i++) {
-        var opt = document.createElement('option');
-        opt.value = sources[i];
-        opt.textContent = sourceLabels[sources[i]] || sources[i];
-        sel.appendChild(opt);
-      }
-      sourcesPopulated = true;
-    }
+                var searchInput = document.getElementById('filter-search');
+                var debouncedSearch = debounce(function() { self.currentPage = 1; self.loadData(); }, 400);
+                searchInput.addEventListener('input', debouncedSearch);
 
-    function showDetail(id) {
-      fetchApi('/api/content/' + encodeURIComponent(id))
-        .then(function(data) {
-          var html = '<h2 style="margin-bottom:1rem;font-size:1.1rem;">' + escapeHtml(data.title || '无标题') + '</h2>'
-            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem;margin-bottom:1rem;">'
-            + '<div><strong>ID:</strong> ' + escapeHtml(data.id) + '</div>'
-            + '<div><strong>来源:</strong> ' + escapeHtml(sourceLabels[data.source] || data.source) + '</div>'
-            + '<div><strong>发布时间:</strong> ' + formatDate(data.publish_time) + '</div>'
-            + '<div><strong>采集时间:</strong> ' + formatDate(data.crawl_time) + '</div>'
-            + '<div><strong>情感:</strong> ' + sentimentBadge(data.sentiment) + '</div>'
-            + '<div><strong>风险:</strong> ' + riskBadge(data.risk_level) + '</div>'
-            + '</div>';
+                document.getElementById('btn-import').addEventListener('click', function() {
+                    document.getElementById('file-input').click();
+                });
 
-          if (data.url) {
-            html += '<div style="margin-bottom:0.75rem;font-size:0.85rem;"><strong>链接:</strong> <a href="' + escapeHtml(data.url) + '" target="_blank" style="color:var(--color-accent-cyan);">' + escapeHtml(data.url) + '</a></div>';
-          }
-          if (data.summary) {
-            html += '<div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;"><strong>摘要:</strong> ' + escapeHtml(data.summary) + '</div>';
-          }
-          html += '<div style="margin-bottom:0.75rem;"><strong style="font-size:0.85rem;">原文:</strong><div style="margin-top:0.5rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;line-height:1.7;white-space:pre-wrap;">' + escapeHtml(data.clean_text || data.raw_text) + '</div></div>';
+                document.getElementById('file-input').addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        var formData = new FormData();
+                        formData.append('file', e.target.files[0]);
+                        ApiService.importCSV(formData).then(function(result) {
+                            alert('导入完成：' + (result.imported || 0) + ' 条新增，' + (result.skipped || 0) + ' 条跳过');
+                            self.loadData();
+                        }).catch(function(err) {
+                            alert('导入失败: ' + err.message);
+                        });
+                    }
+                });
+            },
 
-          if (data.metadata_json) {
-            try {
-              var meta = JSON.parse(data.metadata_json);
-              var metaStr = '';
-              for (var k in meta) {
-                if (meta.hasOwnProperty(k)) metaStr += k + ': ' + meta[k] + '  ';
-              }
-              if (metaStr) html += '<div style="font-size:0.8rem;color:var(--color-text-secondary);"><strong>元数据:</strong> ' + escapeHtml(metaStr) + '</div>';
-            } catch(e) {}
-          }
+            loadSources: function() {
+                ApiService.getSources().then(function(data) {
+                    var select = document.getElementById('filter-source');
+                    var items = data.items || [];
+                    items.forEach(function(s) {
+                        var opt = document.createElement('option');
+                        opt.value = s.source_name;
+                        opt.textContent = s.source_name;
+                        select.appendChild(opt);
+                    });
+                }).catch(function() {});
+            },
 
-          document.getElementById('detail-content').innerHTML = html;
-          document.getElementById('detail-modal').style.display = 'block';
-        })
-        .catch(function(err) {
-          alert('加载详情失败: ' + err.message);
-        });
-    }
+            loadData: function() {
+                var self = this;
+                var params = {
+                    page: this.currentPage,
+                    page_size: this.pageSize,
+                    source: document.getElementById('filter-source').value || undefined,
+                    sentiment: document.getElementById('filter-sentiment').value || undefined,
+                    risk_level: document.getElementById('filter-risk').value || undefined,
+                    search: document.getElementById('filter-search').value || undefined
+                };
 
-    document.getElementById('detail-close').addEventListener('click', function() {
-      document.getElementById('detail-modal').style.display = 'none';
-    });
-    document.getElementById('detail-modal').addEventListener('click', function(e) {
-      if (e.target === this) this.style.display = 'none';
-    });
+                ApiService.getContent(params).then(function(data) {
+                    var items = data.items || [];
+                    var pagination = data.pagination || {};
 
-    document.getElementById('filter-source').addEventListener('change', function() { currentPage = 1; loadContent(); });
-    document.getElementById('filter-sentiment').addEventListener('change', function() { currentPage = 1; loadContent(); });
+                    document.getElementById('results-info').textContent =
+                        '共 ' + pagination.total + ' 条记录  展示 ' + ((pagination.page - 1) * pagination.page_size + 1) + '-' + Math.min(pagination.page * pagination.page_size, pagination.total);
 
-    var searchTimer = null;
-    document.getElementById('filter-search').addEventListener('input', function() {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(function() { currentPage = 1; loadContent(); }, 400);
-    });
+                    Components.renderContentList('content-list', items);
+                    Components.renderPagination('pagination', pagination, function(page) {
+                        self.currentPage = page;
+                        self.loadData();
+                        window.scrollTo(0, 0);
+                    });
+                }).catch(function(err) {
+                    document.getElementById('content-list').innerHTML = '<div class="empty-state"><p>加载失败: ' + err.message + '</p></div>';
+                });
+            }
+        };
 
-    document.getElementById('btn-import').addEventListener('click', function() {
-      document.getElementById('file-input').click();
-    });
-    document.getElementById('file-input').addEventListener('change', function() {
-      var file = this.files[0];
-      if (!file) return;
-      var formData = new FormData();
-      formData.append('file', file);
-      fetchApi('/api/ingest/import', { method: 'POST', body: formData })
-        .then(function(data) {
-          var s = data.stats;
-          alert('导入完成！\n总计: ' + s.total + '\n新增: ' + s.imported + '\n跳过(重复): ' + s.skipped_duplicate + '\n错误: ' + s.errors);
-          loadContent();
-        })
-        .catch(function(err) {
-          alert('导入失败: ' + err.message);
-        });
-      this.value = '';
-    });
-
-    loadContent();
-  </script>
+        function debounce(fn, ms) {
+            var timer;
+            return function() {
+                clearTimeout(timer);
+                timer = setTimeout(fn, ms);
+            };
+        }
+    </script>
 </body>
 </html>

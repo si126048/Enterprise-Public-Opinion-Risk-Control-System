@@ -118,3 +118,67 @@
   - [x] Dashboard 页面：6 统计卡片（35 内容/35 已分析/2.9% 负面/1 高风险/8 主题/5 来源）、主题分布图、情感分布图、趋势图、高风险表格（5 条可点击详情）
   - [x] Search 页面：查询返回结果卡片（标题/来源/摘要/相似度/情感风险徽章）、分页（35 条/4 页）、情感过滤（负面 → 1 条）
 - **Version**: 0.5.0
+
+## Phase 5: Unknown Negative 发现
+- **Date**: 2026-09-04
+- **What**: 对路由结果为 "unknown" 的内容进行 HDBSCAN 聚类，发现候选新主题，提供审核页（批准/合并/忽略）
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `config.yaml` — 扩展 discovery 配置（min_cluster_size, min_samples, cluster_selection_method, max_representative_samples, anchor_proposal_count, min_unknown_for_clustering）
+  - `backend/services/vector_store.py` — 新增 get_embeddings_by_ids() 从 ChromaDB 批量取回嵌入向量
+  - `backend/discovery/clusterer.py` — 核心聚类发现模块（collect_unknown_content, retrieve_embeddings, run_clustering, pick_representative_indices, generate_candidate_label, run_discovery）
+  - `backend/api/discovery.py` — 7 个 API 端点（POST run, GET candidates, GET candidates/{id}, POST approve, POST ignore, POST merge, GET topics-for-merge）
+  - `backend/app.py` — 注册 discovery 路由
+  - `frontend/pages/review.html` — 完整审核页（统计栏、运行发现按钮、过滤下拉、候选卡片网格、4 个弹窗：详情/批准/合并/忽略）
+  - `frontend/css/style.css` — 新增 .candidate-preview、.grid-4 样式 + 响应式规则
+  - `requirements.txt` — 已有 hdbscan + scikit-learn
+- **Manual changes**: None
+- **Verification**:
+  - [x] hdbscan 0.8.44 + scikit-learn 1.9.0 安装成功
+  - [x] POST /api/discovery/run → 返回 insufficient_data（0 条未知内容，需 ≥5 条）
+  - [x] GET /api/discovery/candidates → 返回空列表 + stats（unknown:0, pending:0, approved:0, merged:0, ignored:0）
+  - [x] GET /api/discovery/topics-for-merge → 返回 8 个活跃主题
+  - [x] 前端 review 页：统计栏（4 格）、运行发现按钮、过滤下拉（5 选项）、空状态提示
+  - [x] 运行发现按钮点击后显示状态消息
+  - [x] 4 个弹窗 DOM 存在（detail/approve/merge/ignore）
+  - [x] 无控制台错误，所有网络请求 200 OK
+  - [x] app.js?v=6 缓存破坏生效
+- **Version**: 0.6.0
+
+## Phase 6: 课程化收尾
+- **Date**: 2026-09-04
+- **What**: 来源管理 API + 动态来源页、三 Provider 交叉验证（Mock/DeepSeek/Qwen）、交叉验证 API + 前端页、基础测试套件、证据导出脚本、文档更新
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `backend/api/sources.py` — 6 个来源管理端点（GET list, GET detail, POST create, PUT update, DELETE, POST sync）
+  - `backend/api/validation.py` — 4 个交叉验证端点（POST run, GET summary, GET results, GET results/{id}）
+  - `backend/services/cross_validation.py` — 交叉验证服务（run_cross_validation, get_validation_results, get_validation_summary）
+  - `backend/services/llm_service.py` — 新增 SimulatedDeepSeekProvider + SimulatedQwenProvider + get_all_providers()
+  - `backend/db/database.py` — 新增 cross_validation_results 表
+  - `backend/ingestion/importer.py` — 导入时自动写入 source_ledger
+  - `backend/app.py` — 注册 sources + validation 路由
+  - `frontend/pages/sources.html` — 重写为动态来源管理页（统计卡片、表格、详情展开、新增弹窗）
+  - `frontend/pages/validation.html` — 交叉验证页（运行按钮、一致性概览、ECharts 对比图、结果明细表）
+  - `frontend/index.html` — 新增交叉验证导航卡片，更新来源管理描述
+  - `frontend/css/style.css` — 新增 validation-match/mismatch、source-detail、modal 样式
+  - `scripts/export_evidence.py` — 课程证据导出脚本
+  - `tests/conftest.py` — 测试 fixtures（TestClient + tmp_db）
+  - `tests/test_health.py` — 健康检查测试
+  - `tests/test_content.py` — 内容 API 测试
+  - `tests/test_sources.py` — 来源 API 测试
+  - `tests/test_llm_service.py` — LLM 服务测试
+  - `config.yaml` — version → 0.7.0
+  - `README.md` — 所有 Phase 标记 [x]
+- **Manual changes**: None
+- **Verification**:
+  - [x] GET /api/sources → 来源列表
+  - [x] POST /api/sources → 创建来源记录
+  - [x] POST /api/sources/sync → 从 raw_content 聚合统计
+  - [x] 前端 sources.html → 动态表格渲染
+  - [x] POST /api/validation/run → 35 条 × 3 provider 分析
+  - [x] GET /api/validation/summary → 一致率统计
+  - [x] GET /api/validation/results/{id} → 3 provider 对比
+  - [x] 前端 validation.html → ECharts 对比图 + 明细表
+  - [x] pytest tests/ → 测试通过
+  - [x] scripts/export_evidence.py → 生成证据文件
+- **Version**: 0.7.0

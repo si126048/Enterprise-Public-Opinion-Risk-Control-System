@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交叉验证 - 五华民意·态势感知</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">◆</span>
+            <span class="brand-text">五华民意·态势感知</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">总览</a></li>
+            <li><a href="content.html">诉求列表</a></li>
+            <li><a href="search.html">语义搜索</a></li>
+            <li><a href="topics.html">主题库</a></li>
+            <li><a href="review.html">审核</a></li>
+            <li><a href="sources.html">来源</a></li>
+            <li><a href="validation.html" class="active">验证</a></li>
+        </ul>
+        <div class="nav-actions">
+            <span class="data-badge">数据更新: 今日</span>
+            <button class="nav-toggle" aria-label="菜单">≡</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="page-body">
+            <!-- Header -->
+            <div class="section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+                <div class="section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0">交叉验证</div>
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    <span id="run-status" style="font-size:0.85rem;color:var(--color-text-muted);"></span>
+                    <button class="btn btn-primary" id="run-btn">运行交叉验证</button>
+                </div>
+            </div>
+
+            <!-- Agreement Stats -->
+            <div class="grid grid-3 mb-2" id="agreement-cards">
+                <div class="stat-card" style="border-left:3px solid var(--color-accent-cyan)">
+                    <div class="stat-icon" style="color:var(--color-accent-cyan)">◈</div>
+                    <div class="stat-value" id="stat-total">-</div>
+                    <div class="stat-label">总分析数</div>
+                </div>
+                <div class="stat-card" style="border-left:3px solid var(--color-success)">
+                    <div class="stat-icon" style="color:var(--color-success)">✓</div>
+                    <div class="stat-value" id="stat-full">-</div>
+                    <div class="stat-label">完全一致率</div>
+                </div>
+                <div class="stat-card" style="border-left:3px solid var(--color-accent-yellow)">
+                    <div class="stat-icon" style="color:var(--color-accent-yellow)">◐</div>
+                    <div class="stat-value" id="stat-partial">-</div>
+                    <div class="stat-label">部分一致率</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="section">
+                <div class="section-title">Provider 对比</div>
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-title">情感分布</div>
+                        <div id="chart-sentiment" style="width:100%;height:300px;"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">风险分布</div>
+                        <div id="chart-risk" style="width:100%;height:300px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="section">
+                <div class="section-title">结果明细</div>
+                <div class="filter-bar">
+                    <input class="input" id="filter-input" placeholder="输入 content_id 查看对比..." style="max-width:400px;">
+                    <button class="btn" id="filter-btn">查询</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>内容ID</th>
+                                <th>来源</th>
+                                <th>原文摘要</th>
+                                <th>Mock</th>
+                                <th>DeepSeek</th>
+                                <th>Qwen</th>
+                                <th>一致性</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-tbody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);">点击"运行交叉验证"后查看结果</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box" style="max-width:600px;">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h2 class="modal-title" id="modal-title">对比详情</h2>
+            <div id="modal-body" style="margin-top:1rem;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>五华区民意诉求语义分析系统 v0.7.0</span>
+        <span class="demo-tag">演示数据</span>
+    </footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/store.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/interactions.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        var summaryData = null;
+
+        function escapeHtml(t) {
+            if (!t) return '';
+            var d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function sentimentBadge(s) {
+            var cls = { positive: 'badge-positive', negative: 'badge-negative', neutral: 'badge-neutral', uncertain: 'badge-uncertain' };
+            var labels = { positive: '正面', negative: '负面', neutral: '中性', uncertain: '不确定' };
+            return '<span class="badge ' + (cls[s] || 'badge-neutral') + '">' + (labels[s] || s || '-') + '</span>';
+        }
+
+        function riskBadge(r) {
+            var cls = { low: 'badge-low', medium: 'badge-medium', high: 'badge-high', uncertain: 'badge-uncertain' };
+            var labels = { low: '低', medium: '中', high: '高', uncertain: '不确定' };
+            return '<span class="badge ' + (cls[r] || 'badge-neutral') + '">' + (labels[r] || r || '-') + '</span>';
+        }
+
+        function loadSummary() {
+            fetchApi('/api/validation/summary').then(function(data) {
+                summaryData = data;
+                renderAgreement(data);
+                renderCharts(data);
+                loadResults();
+            }).catch(function() {
+                document.getElementById('stat-total').textContent = '-';
+            });
+        }
+
+        function renderAgreement(data) {
+            document.getElementById('stat-total').textContent = data.content_count || 0;
+            var fullRate = ((data.full_agreement_rate || 0) * 100).toFixed(1) + '%';
+            var partialRate = ((data.partial_agreement_rate || 0) * 100).toFixed(1) + '%';
+            document.getElementById('stat-full').textContent = fullRate;
+            document.getElementById('stat-partial').textContent = partialRate;
+        }
+
+        function renderCharts(data) {
+            var ps = data.provider_stats || {};
+            var providers = ['mock', 'deepseek', 'qwen'];
+            var providerLabels = { mock: 'Mock', deepseek: 'DeepSeek', qwen: 'Qwen' };
+            var sentiments = ['positive', 'neutral', 'negative', 'uncertain'];
+            var risks = ['low', 'medium', 'high', 'uncertain'];
+            var sentLabels = { positive: '正面', neutral: '中性', negative: '负面', uncertain: '不确定' };
+            var riskLabels = { low: '低', medium: '中', high: '高', uncertain: '不确定' };
+
+            var sentChart = echarts.init(document.getElementById('chart-sentiment'));
+            var sentSeries = providers.map(function(p) {
+                return {
+                    name: providerLabels[p],
+                    type: 'bar',
+                    data: sentiments.map(function(s) { return (ps[p] && ps[p].sentiment && ps[p].sentiment[s]) || 0; })
+                };
+            });
+            sentChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: providers.map(function(p) { return providerLabels[p]; }) },
+                xAxis: { type: 'category', data: sentiments.map(function(s) { return sentLabels[s]; }) },
+                yAxis: { type: 'value' },
+                series: sentSeries,
+                color: ['#14D0D0', '#FFD700', '#F65413']
+            });
+
+            var riskChart = echarts.init(document.getElementById('chart-risk'));
+            var riskSeries = providers.map(function(p) {
+                return {
+                    name: providerLabels[p],
+                    type: 'bar',
+                    data: risks.map(function(r) { return (ps[p] && ps[p].risk && ps[p].risk[r]) || 0; })
+                };
+            });
+            riskChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: providers.map(function(p) { return providerLabels[p]; }) },
+                xAxis: { type: 'category', data: risks.map(function(r) { return riskLabels[r]; }) },
+                yAxis: { type: 'value' },
+                series: riskSeries,
+                color: ['#14D0D0', '#FFD700', '#F65413']
+            });
+
+            window.addEventListener('resize', function() {
+                sentChart.resize();
+                riskChart.resize();
+            });
+        }
+
+        function loadResults(contentId) {
+            var url = contentId
+                ? '/api/validation/results/' + encodeURIComponent(contentId)
+                : '/api/validation/results?limit=50';
+
+            fetchApi(url).then(function(data) {
+                var results = data.results || [];
+                renderResults(results, contentId);
+            }).catch(function() {
+                document.getElementById('results-tbody').innerHTML =
+                    '<tr><td colspan="7" style="text-align:center;color:var(--color-accent-orange);">加载失败</td></tr>';
+            });
+        }
+
+        function renderResults(results, singleId) {
+            var tbody = document.getElementById('results-tbody');
+            if (results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);">暂无结果</td></tr>';
+                return;
+            }
+
+            if (singleId) {
+                var byProvider = {};
+                for (var i = 0; i < results.length; i++) {
+                    byProvider[results[i].provider] = results[i];
+                }
+                var sentiments = [byProvider.mock, byProvider.deepseek, byProvider.qwen];
+                var allSame = sentiments.every(function(s) { return s && s.sentiment === sentiments[0].sentiment; });
+                var risks = sentiments.map(function(s) { return s ? s.risk_level : null; });
+                var risksSame = risks.every(function(r) { return r && r === risks[0]; });
+
+                var html = '<tr>';
+                html += '<td>' + escapeHtml(singleId.substring(0, 8)) + '...</td>';
+                html += '<td>' + escapeHtml(results[0].source || '-') + '</td>';
+                html += '<td>' + escapeHtml((results[0].clean_text || '').substring(0, 40)) + '</td>';
+                html += '<td>' + sentimentBadge(byProvider.mock ? byProvider.mock.sentiment : '-') + ' ' + riskBadge(byProvider.mock ? byProvider.mock.risk_level : '-') + '</td>';
+                html += '<td>' + sentimentBadge(byProvider.deepseek ? byProvider.deepseek.sentiment : '-') + ' ' + riskBadge(byProvider.deepseek ? byProvider.deepseek.risk_level : '-') + '</td>';
+                html += '<td>' + sentimentBadge(byProvider.qwen ? byProvider.qwen.sentiment : '-') + ' ' + riskBadge(byProvider.qwen ? byProvider.qwen.risk_level : '-') + '</td>';
+                var matchCls = (allSame && risksSame) ? 'validation-match' : 'validation-mismatch';
+                var matchTxt = (allSame && risksSame) ? '完全一致' : (allSame ? '情感一致' : (risksSame ? '风险一致' : '不一致'));
+                html += '<td><span class="' + matchCls + '">' + matchTxt + '</span></td>';
+                html += '</tr>';
+                tbody.innerHTML = html;
+                return;
+            }
+
+            var grouped = {};
+            for (var j = 0; j < results.length; j++) {
+                var cid = results[j].content_id;
+                if (!grouped[cid]) grouped[cid] = [];
+                grouped[cid].push(results[j]);
+            }
+
+            var rows = '';
+            var keys = Object.keys(grouped);
+            for (var k = 0; k < keys.length; k++) {
+                var cid = keys[k];
+                var items = grouped[cid];
+                var byP = {};
+                for (var m = 0; m < items.length; m++) {
+                    byP[items[m].provider] = items[m];
+                }
+
+                var sents = [byP.mock, byP.deepseek, byP.qwen].map(function(p) { return p ? p.sentiment : null; });
+                var rsk = [byP.mock, byP.deepseek, byP.qwen].map(function(p) { return p ? p.risk_level : null; });
+                var sentMatch = sents.every(function(s) { return s && s === sents[0]; });
+                var riskMatch = rsk.every(function(r) { return r && r === rsk[0]; });
+
+                var matchCls2 = (sentMatch && riskMatch) ? 'validation-match' : 'validation-mismatch';
+                var matchTxt2 = (sentMatch && riskMatch) ? '一致' : (sentMatch ? '情感=' : (riskMatch ? '风险=' : '差异'));
+
+                rows += '<tr style="cursor:pointer;" onclick="ValidationPage.showDetail(\'' + cid + '\')">';
+                rows += '<td>' + escapeHtml(cid.substring(0, 8)) + '...</td>';
+                rows += '<td>' + escapeHtml(items[0].source || '-') + '</td>';
+                rows += '<td>' + escapeHtml((items[0].clean_text || '').substring(0, 30)) + '</td>';
+                rows += '<td>' + sentimentBadge(byP.mock ? byP.mock.sentiment : '-') + '</td>';
+                rows += '<td>' + sentimentBadge(byP.deepseek ? byP.deepseek.sentiment : '-') + '</td>';
+                rows += '<td>' + sentimentBadge(byP.qwen ? byP.qwen.sentiment : '-') + '</td>';
+                rows += '<td><span class="' + matchCls2 + '">' + matchTxt2 + '</span></td>';
+                rows += '</tr>';
+            }
+            tbody.innerHTML = rows;
+        }
+
+        function showDetail(contentId) {
+            fetchApi('/api/validation/results/' + encodeURIComponent(contentId)).then(function(data) {
+                var results = data.results || [];
+                document.getElementById('modal-title').textContent = '对比详情 — ' + contentId.substring(0, 12) + '...';
+
+                var html = '<p class="card-desc" style="margin-bottom:1rem;">'
+                    + escapeHtml((results[0] && results[0].clean_text) || '') + '</p>';
+
+                for (var i = 0; i < results.length; i++) {
+                    var r = results[i];
+                    html += '<div class="card" style="margin-bottom:0.5rem;padding:0.75rem;">'
+                        + '<strong>' + escapeHtml(r.provider) + '</strong> (' + escapeHtml(r.model) + ')<br>'
+                        + '<span style="font-size:0.85rem;">'
+                        + '情感: ' + sentimentBadge(r.sentiment)
+                        + ' 风险: ' + riskBadge(r.risk_level)
+                        + '</span><br>'
+                        + '<span style="font-size:0.8rem;color:var(--color-text-muted);">'
+                        + escapeHtml(r.summary || '')
+                        + '</span></div>';
+                }
+
+                document.getElementById('modal-body').innerHTML = html;
+                document.getElementById('detail-modal').style.display = 'flex';
+            });
+        }
+
+        // Events
+        document.getElementById('modal-close').addEventListener('click', function() {
+            document.getElementById('detail-modal').style.display = 'none';
+        });
+
+        document.getElementById('detail-modal').addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+
+        document.getElementById('run-btn').addEventListener('click', function() {
+            var btn = this;
+            var status = document.getElementById('run-status');
+            btn.disabled = true;
+            status.textContent = '运行中...';
+            fetchApi('/api/validation/run', { method: 'POST' }).then(function(data) {
+                status.textContent = '完成: ' + data.stats.processed + ' 条分析 (' + data.stats.content_count + ' 内容 × ' + data.stats.provider_count + ' Provider)';
+                btn.disabled = false;
+                loadSummary();
+            }).catch(function(err) {
+                status.textContent = '失败: ' + err.message;
+                btn.disabled = false;
+            });
+        });
+
+        document.getElementById('filter-btn').addEventListener('click', function() {
+            var val = document.getElementById('filter-input').value.trim();
+            if (val) {
+                loadResults(val);
+            } else {
+                loadResults();
+            }
+        });
+
+        document.getElementById('filter-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('filter-btn').click();
+            }
+        });
+
+        // Init
+        Interactions.initNavbar();
+        Interactions.initPageTransition();
+        loadSummary();
+
+        window.ValidationPage = {
+            showDetail: showDetail
+        };
+    })();
+    </script>
+</body>
+</html>

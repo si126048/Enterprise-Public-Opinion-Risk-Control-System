@@ -1,0 +1,44 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "status": "available",
+    "note": "endpoint registered"
+  },
+  {
+    "method": "GET",
+    "path": "/api/content",
+    "status": "available",
+    "note": "endpoint registered"
+  },
+  {
+    "method": "GET",
+    "path": "/api/stats/overview",
+    "status": "available",
+    "note": "endpoint registered"
+  },
+  {
+    "method": "GET",
+    "path": "/api/routing/status",
+    "status": "available",
+    "note": "endpoint registered"
+  },
+  {
+    "method": "GET",
+    "path": "/api/routing/topics",
+    "status": "available",
+    "note": "endpoint registered"
+  },
+  {
+    "method": "GET",
+    "path": "/api/sources",
+    "status": "available",
+    "note": "endpoint registered"
+  },
+  {
+    "method": "GET",
+    "path": "/api/validation/summary",
+    "status": "available",
+    "note": "endpoint registered"
+  }
+]

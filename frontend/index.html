@@ -1,88 +1,137 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>五华区民意诉求语义分析系统</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五华民意·态势感知</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/maps.css">
+    <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
-  <header class="header">
-    <div class="header-inner">
-      <h1 class="header-title">五华区民意诉求语义分析系统</h1>
-      <span class="header-badge">DEMO v0.1.0</span>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">◆</span>
+            <span class="brand-text">五华民意·态势感知</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">总览</a></li>
+            <li><a href="pages/content.html">诉求列表</a></li>
+            <li><a href="pages/search.html">语义搜索</a></li>
+            <li><a href="pages/topics.html">主题库</a></li>
+            <li><a href="pages/review.html" class="nav-highlight">审核</a></li>
+            <li><a href="pages/sources.html">来源</a></li>
+            <li><a href="pages/validation.html">验证</a></li>
+        </ul>
+        <div class="nav-actions">
+            <span class="data-badge">数据更新: 今日</span>
+            <button class="nav-toggle" aria-label="菜单">≡</button>
+        </div>
+    </nav>
+
+    <!-- Dashboard Layout: Map + Panel -->
+    <div class="main-content">
+        <div class="dashboard-layout">
+            <!-- Left: Map -->
+            <div class="dashboard-map">
+                <div id="map-container"></div>
+                <button class="map-reset-btn">↩ 重置视图</button>
+                <div class="map-legend">
+                    <h4>诉求密度</h4>
+                    <div class="map-legend-item"><span class="map-legend-color" style="background:#EDE8DF"></span> &lt;50</div>
+                    <div class="map-legend-item"><span class="map-legend-color" style="background:#F5E6A3"></span> 50-150</div>
+                    <div class="map-legend-item"><span class="map-legend-color" style="background:#FFD700"></span> 150-300</div>
+                    <div class="map-legend-item"><span class="map-legend-color" style="background:#F6A83D"></span> 300-500</div>
+                    <div class="map-legend-item"><span class="map-legend-color" style="background:#F65413"></span> &gt;500</div>
+                </div>
+            </div>
+
+            <!-- Right: Panel -->
+            <div class="dashboard-panel">
+                <!-- Stat Cards -->
+                <div class="section">
+                    <div class="section-title">核心指标</div>
+                    <div id="stats-cards" class="grid grid-3"></div>
+                </div>
+
+                <!-- Topic Rank -->
+                <div class="section">
+                    <div class="section-title">主题排行</div>
+                    <div id="topic-rank"></div>
+                </div>
+
+                <!-- Trend Chart -->
+                <div class="section">
+                    <div class="section-title">近7天趋势</div>
+                    <div id="chart-trend" style="height: 180px;"></div>
+                </div>
+
+                <!-- Sentiment + Topic Charts -->
+                <div class="section">
+                    <div class="grid grid-2">
+                        <div>
+                            <div class="section-title">情感分布</div>
+                            <div id="chart-sentiment-dist" style="height: 180px;"></div>
+                        </div>
+                        <div>
+                            <div class="section-title">主题分布</div>
+                            <div id="chart-topic-dist" style="height: 180px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High Risk -->
+                <div class="section">
+                    <div class="section-title">高风险样本</div>
+                    <div id="high-risk-table"></div>
+                </div>
+
+                <!-- Content List (for drill-down) -->
+                <div class="section" id="dashboard-content-section" style="display:none">
+                    <div class="section-title">区域诉求</div>
+                    <div id="dashboard-content-list"></div>
+                </div>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <main class="main">
-    <section class="section">
-      <h2 class="section-title">功能导航</h2>
-      <div class="grid grid-3">
-        <a href="pages/dashboard.html" class="card card-link">
-          <div class="card-icon" style="color: var(--color-accent-cyan);">&#9632;</div>
-          <h3 class="card-title">数据总览</h3>
-          <p class="card-desc">样本总数、负面比例、主题分布、趋势图、高风险样本</p>
-        </a>
-        <a href="pages/content.html" class="card card-link">
-          <div class="card-icon" style="color: var(--color-accent-orange);">&#9632;</div>
-          <h3 class="card-title">内容列表</h3>
-          <p class="card-desc">已导入的民意诉求记录，支持按来源、主题、情感过滤</p>
-        </a>
-        <a href="pages/search.html" class="card card-link">
-          <div class="card-icon" style="color: var(--color-accent-yellow);">&#9632;</div>
-          <h3 class="card-title">语义搜索</h3>
-          <p class="card-desc">自然语言输入，基于 Embedding 的语义检索</p>
-        </a>
-        <a href="pages/topics.html" class="card card-link">
-          <div class="card-icon" style="color: var(--color-accent-blue);">&#9632;</div>
-          <h3 class="card-title">主题管理</h3>
-          <p class="card-desc">查看预置主题与语义锚点，了解主题分布情况</p>
-        </a>
-        <a href="pages/review.html" class="card card-link">
-          <div class="card-icon" style="color: var(--color-accent-orange);">&#9632;</div>
-          <h3 class="card-title">新主题审核</h3>
-          <p class="card-desc">审核 AI 发现的候选新主题，批准、合并或忽略</p>
-        </a>
-        <a href="pages/sources.html" class="card card-link">
-          <div class="card-icon" style="color: var(--color-accent-cyan);">&#9632;</div>
-          <h3 class="card-title">来源说明</h3>
-          <p class="card-desc">数据来源、采集方式、时间范围、伦理说明</p>
-        </a>
-      </div>
-    </section>
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>诉求详情</h3>
+                <button class="modal-close">×</button>
+            </div>
+            <div id="detail-modal-body"></div>
+        </div>
+    </div>
 
-    <section class="section">
-      <div class="card info-card">
-        <h3 class="card-title">系统状态</h3>
-        <div id="health-status" class="health-status">加载中...</div>
-      </div>
-    </section>
-  </main>
+    <!-- Footer -->
+    <footer class="footer">
+        <span>昆明市五华区 | 课程演示项目</span>
+        <span class="demo-tag">Demo Mode</span>
+    </footer>
 
-  <footer class="footer">
-    <span>昆明市五华区 | 课程演示项目</span>
-    <span class="demo-tag">Demo Mode</span>
-  </footer>
-
-  <script src="js/app.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      fetchApi('/api/health').then(function(data) {
-        var el = document.getElementById('health-status');
-        if (data && data.status === 'ok') {
-          el.innerHTML =
-            '<div class="status-row"><span class="status-dot status-ok"></span> 服务运行中</div>' +
-            '<div class="status-detail">版本: ' + data.version + '</div>' +
-            '<div class="status-detail">Embedding: ' + data.embedding.status + ' (' + data.embedding.model + ')</div>' +
-            '<div class="status-detail">LLM: ' + data.llm.status + ' (' + data.llm.provider + ')</div>';
-        } else {
-          el.innerHTML = '<div class="status-row"><span class="status-dot status-err"></span> 服务异常</div>';
-        }
-      }).catch(function() {
-        document.getElementById('health-status').innerHTML =
-          '<div class="status-row"><span class="status-dot status-err"></span> 无法连接后端</div>';
-      });
-    });
-  </script>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="data/mock/mock_data.js"></script>
+    <script src="data/mock/mock_stats.js"></script>
+    <script src="data/mock/mock_topics.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/interactions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Interactions.init();
+            Interactions.initDashboard();
+        });
+    </script>
 </body>
 </html>

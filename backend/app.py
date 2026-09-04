@@ -10,6 +10,9 @@ from backend.api.ingest import router as ingest_router
 from backend.api.content import router as content_router
 from backend.api.embedding import router as embedding_router
 from backend.api.routing import router as routing_router
+from backend.api.discovery import router as discovery_router
+from backend.api.sources import router as sources_router
+from backend.api.validation import router as validation_router
 from backend.db.database import init_db
 from backend.services import embedding_service
 
@@ -33,6 +36,9 @@ app.include_router(ingest_router)
 app.include_router(content_router)
 app.include_router(embedding_router)
 app.include_router(routing_router)
+app.include_router(discovery_router)
+app.include_router(sources_router)
+app.include_router(validation_router)
 
 
 @app.on_event("startup")

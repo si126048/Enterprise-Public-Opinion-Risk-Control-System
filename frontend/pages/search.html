@@ -1,232 +1,189 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>语义搜索 - 五华区民意诉求语义分析系统</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语义搜索 - 五华民意·态势感知</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/mobile.css">
 </head>
 <body>
-  <div class="page-header">
-    <a href="../index.html">&larr; 返回</a>
-    <h1>语义搜索</h1>
-  </div>
-  <div class="page-body">
-    <div class="search-bar">
-      <input type="text" class="input" id="search-input" placeholder="输入自然语言查询，如：小区物业管理问题...">
-      <button class="btn btn-primary" id="search-btn">搜索</button>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">◆</span>
+            <span class="brand-text">五华民意·态势感知</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">总览</a></li>
+            <li><a href="content.html">诉求列表</a></li>
+            <li><a href="search.html" class="active">语义搜索</a></li>
+            <li><a href="topics.html">主题库</a></li>
+            <li><a href="review.html" class="nav-highlight">审核</a></li>
+            <li><a href="sources.html">来源</a></li>
+            <li><a href="validation.html">验证</a></li>
+        </ul>
+        <div class="nav-actions">
+            <span class="data-badge">数据更新: 今日</span>
+            <button class="nav-toggle" aria-label="菜单">≡</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="page-body">
+            <!-- Search Bar -->
+            <div class="section">
+                <div class="section-title">语义搜索</div>
+                <div class="search-bar">
+                    <input type="text" id="search-query" class="input" placeholder="输入自然语言查询，如：物业管理问题、噪音投诉...">
+                    <button id="btn-search" class="btn btn-primary">搜索</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="filter-topic" class="select" style="min-width:140px">
+                        <option value="">全部主题</option>
+                        <option value="topic_001">物业管理</option>
+                        <option value="topic_002">市容环境</option>
+                        <option value="topic_003">交通出行</option>
+                        <option value="topic_004">教育入学</option>
+                        <option value="topic_005">医疗卫生</option>
+                        <option value="topic_006">社会保障</option>
+                        <option value="topic_007">公共安全</option>
+                        <option value="topic_008">文化服务</option>
+                    </select>
+                    <select id="filter-sentiment" class="select" style="min-width:120px">
+                        <option value="">全部情感</option>
+                        <option value="positive">正面</option>
+                        <option value="neutral">中性</option>
+                        <option value="negative">负面</option>
+                    </select>
+                    <select id="filter-risk" class="select" style="min-width:120px">
+                        <option value="">全部风险</option>
+                        <option value="high">高风险</option>
+                        <option value="medium">中风险</option>
+                        <option value="low">低风险</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- AI Summary -->
+            <div id="ai-summary" class="section" style="display:none">
+                <div class="card" style="border-left:3px solid var(--color-accent-cyan)">
+                    <div style="font-size:0.8rem;color:var(--color-accent-cyan);font-weight:700;margin-bottom:0.5rem">AI 总结</div>
+                    <div id="ai-summary-text" style="font-size:0.9rem;line-height:1.7"></div>
+                </div>
+            </div>
+
+            <!-- Results Info -->
+            <div id="results-info" class="text-muted mb-1" style="font-size:0.85rem"></div>
+
+            <!-- Results List -->
+            <div id="search-results"></div>
+
+            <!-- Pagination -->
+            <div id="search-pagination"></div>
+        </div>
     </div>
-    <div class="filter-bar">
-      <select class="select" id="search-filter-topic">
-        <option value="">全部主题</option>
-      </select>
-      <select class="select" id="search-filter-sentiment">
-        <option value="">全部情感</option>
-        <option value="negative">负面</option>
-        <option value="neutral">中性</option>
-        <option value="positive">正面</option>
-        <option value="uncertain">不确定</option>
-      </select>
-      <select class="select" id="search-filter-risk">
-        <option value="">全部风险</option>
-        <option value="high">高风险</option>
-        <option value="medium">中风险</option>
-        <option value="low">低风险</option>
-      </select>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>诉求详情</h3>
+                <button class="modal-close">×</button>
+            </div>
+            <div id="detail-modal-body"></div>
+        </div>
     </div>
 
-    <div id="loading" style="text-align:center;padding:2rem;color:var(--color-text-secondary);display:none;">搜索中...</div>
-    <div id="error-msg" style="display:none;padding:1rem;background:var(--color-danger);color:#fff;margin-bottom:1rem;"></div>
-    <div id="empty-state" style="display:none;text-align:center;padding:2rem;color:var(--color-text-secondary);">请输入查询内容开始搜索</div>
+    <!-- Footer -->
+    <footer class="footer">
+        <span>昆明市五华区 | 课程演示项目</span>
+        <span class="demo-tag">Demo Mode</span>
+    </footer>
 
-    <div id="search-results"></div>
-
-    <div id="pagination" style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:wrap;"></div>
-  </div>
-
-  <div id="detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:1rem;">
-    <div style="max-width:700px;margin:2rem auto;background:var(--color-bg-card);border:2px solid var(--color-text-primary);padding:1.5rem;position:relative;">
-      <button id="detail-close" style="position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-primary);">&times;</button>
-      <div id="detail-content"></div>
-    </div>
-  </div>
-
-  <script src="../js/app.js?v=4"></script>
-  <script>
-    var sourceLabels = {
-      local_gov_hotline: '政务热线',
-      social_media_weibo: '微博',
-      social_media_douyin: '抖音',
-      community_feedback: '社区反馈',
-      gov_platform: '政务平台'
-    };
-
-    var currentQuery = '';
-    var currentPage = 1;
-    var pageSize = 10;
-
-    function loadTopics() {
-      fetchApi('/api/routing/topics')
-        .then(function(data) {
-          var sel = document.getElementById('search-filter-topic');
-          var topics = data.topics || [];
-          for (var i = 0; i < topics.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = topics[i].id;
-            opt.textContent = topics[i].name;
-            sel.appendChild(opt);
-          }
-        })
-        .catch(function() {});
-    }
-
-    function doSearch() {
-      currentQuery = document.getElementById('search-input').value.trim();
-      if (!currentQuery) {
-        document.getElementById('empty-state').style.display = 'block';
-        document.getElementById('search-results').innerHTML = '';
-        document.getElementById('pagination').innerHTML = '';
-        return;
-      }
-
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('error-msg').style.display = 'none';
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('search-results').innerHTML = '';
-      document.getElementById('pagination').innerHTML = '';
-
-      var body = {
-        query: currentQuery,
-        top_k: 30,
-        page: currentPage,
-        page_size: pageSize,
-      };
-      var topic = document.getElementById('search-filter-topic').value;
-      var sentiment = document.getElementById('search-filter-sentiment').value;
-      var risk = document.getElementById('search-filter-risk').value;
-      if (topic) body.topic_id = topic;
-      if (sentiment) body.sentiment = sentiment;
-      if (risk) body.risk_level = risk;
-
-      fetchApi('/api/embedding/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-        .then(function(data) {
-          document.getElementById('loading').style.display = 'none';
-          if (!data.results || data.results.length === 0) {
-            document.getElementById('empty-state').textContent = '未找到相关结果';
-            document.getElementById('empty-state').style.display = 'block';
-            return;
-          }
-          renderResults(data.results);
-          renderPagination(data.pagination);
-        })
-        .catch(function(err) {
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error-msg').textContent = '搜索失败: ' + err.message;
-          document.getElementById('error-msg').style.display = 'block';
+    <script src="../data/mock/mock_data.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/store.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/interactions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Interactions.init();
+            SearchPage.init();
         });
-    }
 
-    function renderResults(results) {
-      var html = '';
-      for (var i = 0; i < results.length; i++) {
-        var r = results[i];
-        var similarity = (1.0 - (r.distance || 0)).toFixed(3);
-        html += '<div class="card card-link" style="margin-bottom:0.75rem;" data-id="' + escapeHtml(r.id) + '">'
-          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;">'
-          + '<div style="flex:1;">'
-          + '<div style="font-weight:700;font-size:0.95rem;margin-bottom:0.35rem;">' + escapeHtml(r.title || '无标题') + '</div>'
-          + '<div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:0.5rem;">'
-          + escapeHtml(sourceLabels[r.source] || r.source || '')
-          + ' &middot; ' + formatDate(r.publish_time)
-          + '</div>'
-          + '<div style="font-size:0.85rem;line-height:1.6;color:var(--color-text-primary);">' + escapeHtml(r.text_preview || '') + '</div>'
-          + '</div>'
-          + '<div style="text-align:right;min-width:100px;">'
-          + '<div style="font-size:0.75rem;color:var(--color-text-secondary);margin-bottom:0.25rem;">相似度</div>'
-          + '<div style="font-size:1.1rem;font-weight:700;color:var(--color-accent-cyan);">' + similarity + '</div>'
-          + '<div style="margin-top:0.35rem;">' + sentimentBadge(r.sentiment) + ' ' + riskBadge(r.risk_level) + '</div>'
-          + '</div>'
-          + '</div>'
-          + '</div>';
-      }
-      document.getElementById('search-results').innerHTML = html;
+        var SearchPage = {
+            currentPage: 1,
+            pageSize: 20,
 
-      var cards = document.querySelectorAll('#search-results .card-link');
-      for (var j = 0; j < cards.length; j++) {
-        cards[j].addEventListener('click', function() { showDetail(this.getAttribute('data-id')); });
-      }
-    }
+            init: function() {
+                var self = this;
 
-    function renderPagination(pg) {
-      var el = document.getElementById('pagination');
-      if (!pg || pg.total_pages <= 1) {
-        el.innerHTML = '';
-        return;
-      }
-      var html = '';
-      if (pg.page > 1) {
-        html += '<button class="btn" data-page="' + (pg.page - 1) + '">&laquo; 上一页</button>';
-      }
-      html += '<span style="font-size:0.85rem;color:var(--color-text-secondary);">第 ' + pg.page + ' / ' + pg.total_pages + ' 页，共 ' + pg.total + ' 条</span>';
-      if (pg.page < pg.total_pages) {
-        html += '<button class="btn" data-page="' + (pg.page + 1) + '">下一页 &raquo;</button>';
-      }
-      el.innerHTML = html;
+                document.getElementById('btn-search').addEventListener('click', function() { self.doSearch(); });
+                document.getElementById('search-query').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') self.doSearch();
+                });
 
-      var btns = el.querySelectorAll('button[data-page]');
-      for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener('click', function() {
-          currentPage = parseInt(this.getAttribute('data-page'));
-          doSearch();
-        });
-      }
-    }
+                ['filter-topic', 'filter-sentiment', 'filter-risk'].forEach(function(id) {
+                    document.getElementById(id).addEventListener('change', function() {
+                        if (document.getElementById('search-query').value.trim()) {
+                            self.currentPage = 1;
+                            self.doSearch();
+                        }
+                    });
+                });
+            },
 
-    function showDetail(id) {
-      fetchApi('/api/content/' + encodeURIComponent(id))
-        .then(function(data) {
-          var similarity = '';
-          if (data.topic_similarity) {
-            similarity = '<div><strong>主题相似度:</strong> ' + data.topic_similarity.toFixed(3) + '</div>';
-          }
-          var html = '<h2 style="margin-bottom:1rem;font-size:1.1rem;">' + escapeHtml(data.title || '无标题') + '</h2>'
-            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem;margin-bottom:1rem;">'
-            + '<div><strong>ID:</strong> ' + escapeHtml(data.id) + '</div>'
-            + '<div><strong>来源:</strong> ' + escapeHtml(sourceLabels[data.source] || data.source) + '</div>'
-            + '<div><strong>发布时间:</strong> ' + formatDate(data.publish_time) + '</div>'
-            + '<div><strong>情感:</strong> ' + sentimentBadge(data.sentiment) + '</div>'
-            + '<div><strong>风险:</strong> ' + riskBadge(data.risk_level) + '</div>'
-            + similarity
-            + '</div>';
-          if (data.summary) {
-            html += '<div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;"><strong>摘要:</strong> ' + escapeHtml(data.summary) + '</div>';
-          }
-          html += '<div style="margin-bottom:0.75rem;"><strong style="font-size:0.85rem;">原文:</strong><div style="margin-top:0.5rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;line-height:1.7;white-space:pre-wrap;">' + escapeHtml(data.clean_text || data.raw_text) + '</div></div>';
-          document.getElementById('detail-content').innerHTML = html;
-          document.getElementById('detail-modal').style.display = 'block';
-        })
-        .catch(function(err) { alert('加载详情失败: ' + err.message); });
-    }
+            doSearch: function() {
+                var self = this;
+                var query = document.getElementById('search-query').value.trim();
+                if (!query) return;
 
-    document.getElementById('search-btn').addEventListener('click', function() { currentPage = 1; doSearch(); });
-    document.getElementById('search-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') { currentPage = 1; doSearch(); } });
-    document.getElementById('search-filter-topic').addEventListener('change', function() { currentPage = 1; doSearch(); });
-    document.getElementById('search-filter-sentiment').addEventListener('change', function() { currentPage = 1; doSearch(); });
-    document.getElementById('search-filter-risk').addEventListener('change', function() { currentPage = 1; doSearch(); });
+                var filters = {
+                    topic_id: document.getElementById('filter-topic').value || undefined,
+                    sentiment: document.getElementById('filter-sentiment').value || undefined,
+                    risk_level: document.getElementById('filter-risk').value || undefined,
+                    page: this.currentPage,
+                    page_size: this.pageSize
+                };
 
-    document.getElementById('detail-close').addEventListener('click', function() {
-      document.getElementById('detail-modal').style.display = 'none';
-    });
-    document.getElementById('detail-modal').addEventListener('click', function(e) {
-      if (e.target === this) this.style.display = 'none';
-    });
+                document.getElementById('search-results').innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>搜索中...</div>';
 
-    document.getElementById('empty-state').style.display = 'block';
-    loadTopics();
-  </script>
+                var startTime = Date.now();
+
+                ApiService.semanticSearch(query, filters).then(function(data) {
+                    var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                    var items = data.items || [];
+                    var total = data.total || items.length;
+
+                    document.getElementById('results-info').textContent =
+                        '搜索结果 (' + total + '条)  用时 ' + elapsed + 's';
+
+                    var enriched = items.map(function(item) {
+                        return Object.assign({}, item, {
+                            source: item.source || '-',
+                            publish_time: item.publish_time || item.created_at || ''
+                        });
+                    });
+
+                    Components.renderContentList('search-results', enriched);
+
+                    Components.renderPagination('search-pagination', {
+                        page: self.currentPage,
+                        page_size: self.pageSize,
+                        total: total,
+                        total_pages: Math.ceil(total / self.pageSize)
+                    }, function(page) {
+                        self.currentPage = page;
+                        self.doSearch();
+                        window.scrollTo(0, 0);
+                    });
+                }).catch(function(err) {
+                    document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>搜索失败: ' + err.message + '</p></div>';
+                });
+            }
+        };
+    </script>
 </body>
 </html>

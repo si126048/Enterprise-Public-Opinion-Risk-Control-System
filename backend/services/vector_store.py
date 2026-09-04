@@ -114,6 +114,18 @@ def search_anchors(query_embedding: np.ndarray, top_k: int = 5) -> List[Dict[str
     return items
 
 
+def get_embeddings_by_ids(chroma_ids: List[str]) -> Dict[str, np.ndarray]:
+    if not chroma_ids:
+        return {}
+    collection = _get_content_collection()
+    result = collection.get(ids=chroma_ids, include=["embeddings"])
+    mapping = {}
+    if result and result["ids"]:
+        for cid, emb in zip(result["ids"], result["embeddings"]):
+            mapping[cid] = np.array(emb, dtype=np.float32)
+    return mapping
+
+
 def get_content_count() -> int:
     collection = _get_content_collection()
     return collection.count()

@@ -103,6 +103,130 @@ class MockLLMProvider(BaseLLMProvider):
         )
 
 
+class SimulatedDeepSeekProvider(BaseLLMProvider):
+    NEGATIVE_KEYWORDS = [
+        "投诉", "无人管", "没人修", "太差", "不满", "糟糕", "严重",
+        "恶劣", "脏乱", "危险", "破损", "故障", "堵塞", "拥堵",
+        "混乱", "噪音", "扰民", "推诿", "不作为", "意见很大",
+    ]
+    POSITIVE_KEYWORDS = [
+        "点赞", "不错", "好评", "完成", "方便", "效率", "及时",
+        "满意", "感谢", "改善", "整洁", "畅通", "安全", "舒适",
+    ]
+    HIGH_RISK_KEYWORDS = [
+        "安全隐患", "砸到人", "着火", "危险", "爆炸", "坍塌",
+        "伤人", "中毒", "紧急", "危及",
+    ]
+
+    def analyze(self, text: str, topic_name: str, metadata: Dict = None) -> LLMAnalysisResult:
+        h = hash(text) % 1000
+        neg_count = sum(1 for kw in self.NEGATIVE_KEYWORDS if kw in text)
+        pos_count = sum(1 for kw in self.POSITIVE_KEYWORDS if kw in text)
+        high_risk_count = sum(1 for kw in self.HIGH_RISK_KEYWORDS if kw in text)
+
+        score = neg_count - pos_count + (h % 3 - 1) * 0.3
+
+        if len(text.strip()) < 10:
+            sentiment = "uncertain"
+            sentiment_confidence = 0.28
+        elif score > 0.5:
+            sentiment = "negative"
+            sentiment_confidence = min(0.60 + neg_count * 0.06, 0.92)
+        elif score < -0.5:
+            sentiment = "positive"
+            sentiment_confidence = min(0.60 + pos_count * 0.06, 0.92)
+        else:
+            sentiment = "neutral"
+            sentiment_confidence = 0.50 + (h % 10) * 0.01
+
+        if high_risk_count >= 2:
+            risk_level = "high"
+            risk_confidence = 0.80
+        elif high_risk_count == 1:
+            risk_level = "medium"
+            risk_confidence = 0.65
+        elif sentiment == "negative":
+            risk_level = "medium"
+            risk_confidence = 0.50
+        else:
+            risk_level = "low"
+            risk_confidence = 0.65
+
+        sentences = text.replace("！", "。").replace("\n", "。").split("。")
+        first = sentences[0].strip() if sentences else text[:80]
+        summary = f"[DeepSeek] {topic_name}: {first[:70]}..." if len(first) > 70 else f"[DeepSeek] {topic_name}: {first}"
+
+        theory_perspective = THEORY_MAP.get(topic_name, "基层治理综合评估")
+
+        return LLMAnalysisResult(
+            sentiment=sentiment,
+            sentiment_confidence=round(sentiment_confidence, 2),
+            risk_level=risk_level,
+            risk_confidence=round(risk_confidence, 2),
+            summary=summary,
+            theory_perspective=theory_perspective,
+        )
+
+
+class SimulatedQwenProvider(BaseLLMProvider):
+    NEGATIVE_KEYWORDS = [
+        "投诉", "无人管", "没人修", "太差", "不满", "严重",
+        "恶劣", "脏乱", "危险", "破损", "故障", "堵塞",
+        "混乱", "噪音", "扰民", "不作为",
+    ]
+    POSITIVE_KEYWORDS = [
+        "点赞", "不错", "好评", "完成", "方便", "满意",
+        "感谢", "改善", "整洁", "畅通", "安全",
+    ]
+    HIGH_RISK_KEYWORDS = [
+        "安全隐患", "着火", "危险", "爆炸", "坍塌",
+        "伤人", "中毒", "紧急",
+    ]
+
+    def analyze(self, text: str, topic_name: str, metadata: Dict = None) -> LLMAnalysisResult:
+        h = hash(text) % 1000
+        neg_count = sum(1 for kw in self.NEGATIVE_KEYWORDS if kw in text)
+        pos_count = sum(1 for kw in self.POSITIVE_KEYWORDS if kw in text)
+        high_risk_count = sum(1 for kw in self.HIGH_RISK_KEYWORDS if kw in text)
+
+        if len(text.strip()) < 10:
+            sentiment = "uncertain"
+            sentiment_confidence = 0.32
+        elif neg_count > pos_count + 2:
+            sentiment = "negative"
+            sentiment_confidence = min(0.58 + neg_count * 0.04, 0.88)
+        elif pos_count > neg_count + 1:
+            sentiment = "positive"
+            sentiment_confidence = min(0.58 + pos_count * 0.04, 0.88)
+        else:
+            sentiment = "neutral"
+            sentiment_confidence = 0.55 + (h % 8) * 0.01
+
+        if high_risk_count >= 3:
+            risk_level = "high"
+            risk_confidence = 0.78
+        elif high_risk_count >= 1:
+            risk_level = "medium"
+            risk_confidence = 0.60
+        else:
+            risk_level = "low"
+            risk_confidence = 0.72
+
+        first_part = text.split("。")[0].split("！")[0].strip()
+        summary = f"[Qwen] {topic_name} — {first_part[:60]}" if first_part else f"[Qwen] {topic_name}"
+
+        theory_perspective = THEORY_MAP.get(topic_name, "基层治理综合评估")
+
+        return LLMAnalysisResult(
+            sentiment=sentiment,
+            sentiment_confidence=round(sentiment_confidence, 2),
+            risk_level=risk_level,
+            risk_confidence=round(risk_confidence, 2),
+            summary=summary,
+            theory_perspective=theory_perspective,
+        )
+
+
 _provider = None
 
 
@@ -114,9 +238,21 @@ def get_provider() -> BaseLLMProvider:
     provider_name = config["llm"]["provider"]
     if provider_name == "mock":
         _provider = MockLLMProvider()
+    elif provider_name == "deepseek":
+        _provider = SimulatedDeepSeekProvider()
+    elif provider_name == "qwen":
+        _provider = SimulatedQwenProvider()
     else:
         raise ValueError(f"Unknown LLM provider: {provider_name}")
     return _provider
+
+
+def get_all_providers():
+    return [
+        ("mock", MockLLMProvider()),
+        ("deepseek", SimulatedDeepSeekProvider()),
+        ("qwen", SimulatedQwenProvider()),
+    ]
 
 
 def analyze_content(text: str, topic_name: str, content_id: str = None,

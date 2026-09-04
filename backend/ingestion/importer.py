@@ -17,6 +17,30 @@ def _now() -> str:
     return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _upsert_source_ledger(conn, source_name: str, count: int):
+    existing = conn.execute(
+        "SELECT id, record_count FROM source_ledger WHERE source_name = ?",
+        (source_name,),
+    ).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE source_ledger SET record_count = record_count + ? WHERE id = ?",
+            (count, existing["id"]),
+        )
+    else:
+        conn.execute(
+            """INSERT INTO source_ledger
+               (id, source_name, data_type, access_date, record_count, verified)
+               VALUES (?, ?, 'csv_import', ?, ?, 0)""",
+            (
+                str(uuid.uuid4()),
+                source_name,
+                datetime.utcnow().strftime("%Y-%m-%d"),
+                count,
+            ),
+        )
+
+
 def import_csv(file_path: str) -> Dict:
     path = Path(file_path)
     if not path.exists():
@@ -86,6 +110,10 @@ def import_csv(file_path: str) -> Dict:
                 stats["error_details"].append(f"Row {row_num}: {str(e)}")
 
         conn.commit()
+
+        if stats["imported"] > 0:
+            _upsert_source_ledger(conn, path.stem, stats["imported"])
+
     finally:
         conn.close()
 
@@ -149,6 +177,16 @@ def import_from_dict(records: List[Dict]) -> Dict:
                 stats["error_details"].append(f"Record {idx}: {str(e)}")
 
         conn.commit()
+
+        if stats["imported"] > 0:
+            source_counts = {}
+            for idx2, row2 in enumerate(records, start=1):
+                src = row2.get("source", "").strip()
+                if src:
+                    source_counts[src] = source_counts.get(src, 0) + 1
+            for src_name, cnt in source_counts.items():
+                _upsert_source_ledger(conn, src_name, cnt)
+
     finally:
         conn.close()
 

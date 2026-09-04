@@ -56,11 +56,11 @@ wuhua-opinion-monitor/
 ## 实施进度
 
 - [x] Phase 0: 环境与骨架
-- [ ] Phase 1: 事实数据库
-- [ ] Phase 2: Embedding 服务
-- [ ] Phase 3: 主题路由 + LLM
-- [ ] Phase 4: Dashboard + 语义搜索
-- [ ] Phase 5: Unknown Negative 发现
-- [ ] Phase 6: 课程化收尾
+- [x] Phase 1: 事实数据库
+- [x] Phase 2: Embedding 服务
+- [x] Phase 3: 主题路由 + LLM
+- [x] Phase 4: Dashboard + 语义搜索
+- [x] Phase 5: Unknown Negative 发现
+- [x] Phase 6: 课程化收尾
 
 详见 [PROJECT_LOG.md](PROJECT_LOG.md)

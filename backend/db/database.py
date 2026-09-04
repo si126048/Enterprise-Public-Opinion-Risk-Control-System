@@ -107,6 +107,21 @@ CREATE TABLE IF NOT EXISTS source_ledger (
     record_count INTEGER,
     verified BOOLEAN DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS cross_validation_results (
+    id TEXT PRIMARY KEY,
+    content_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    sentiment TEXT,
+    sentiment_confidence REAL,
+    risk_level TEXT,
+    risk_confidence REAL,
+    summary TEXT,
+    theory_perspective TEXT,
+    created_at DATETIME,
+    FOREIGN KEY (content_id) REFERENCES raw_content(id)
+);
 """
 
 
