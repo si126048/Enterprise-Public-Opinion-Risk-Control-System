@@ -437,7 +437,10 @@
 .topic-rank-name {
   font-size: 0.85rem;
   font-weight: 600;
-  flex: 0 0 80px;
+  flex: 0 0 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topic-rank-bar {

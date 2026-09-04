@@ -21,7 +21,7 @@ var TimelinePlayer = (function() {
         var base = 8000 + i * 1200 + Math.round(Math.random() * 2000);
         monthData[m] = {
             total: base,
-            negative: Math.round(base * (0.18 + Math.random() * 0.1)),
+            low_credibility: Math.round(base * (0.05 + Math.random() * 0.05)),
             high_risk: Math.round(20 + Math.random() * 30)
         };
     });
@@ -64,7 +64,7 @@ var TimelinePlayer = (function() {
             '<div class="timeline-info">' +
                 '<span class="timeline-date">' + dates[currentIndex] + '</span>' +
                 '<span class="timeline-stat">总量 <strong>' + formatNum(monthData[dates[currentIndex]].total) + '</strong></span>' +
-                '<span class="timeline-stat">负面 <strong>' + formatNum(monthData[dates[currentIndex]].negative) + '</strong></span>' +
+                '<span class="timeline-stat">低信度 <strong>' + formatNum(monthData[dates[currentIndex]].low_credibility) + '</strong></span>' +
             '</div>';
     }
 

@@ -161,17 +161,15 @@
                     card.style.animationDelay = (i * 0.06) + 's';
                     card.style.cursor = 'pointer';
 
-                    var negRate = topic.negative_rate ? (topic.negative_rate * 100).toFixed(1) + '%' : '-';
-
                     card.innerHTML =
                         '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem">' +
                             '<div>' +
                                 '<div class="card-title">[' + escapeHtml(topicId) + '] ' + escapeHtml(name) + '</div>' +
                                 '<div class="text-muted" style="font-size:0.8rem">' + count + ' 条内容</div>' +
                             '</div>' +
-                            '<span class="badge badge-negative" style="font-size:0.75rem">负面率 ' + negRate + '</span>' +
+                            '<span class="badge badge-outline" style="font-size:0.75rem">' + (topic.risk_weight || '中') + '风险</span>' +
                         '</div>' +
-                        (topic.definition ? '<p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:0.75rem">' + escapeHtml(topic.definition) + '</p>' : '') +
+                        (topic.description ? '<p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:0.75rem;line-height:1.5">' + escapeHtml(topic.description) + '</p>' : '') +
                         '<div style="font-size:0.8rem;color:var(--color-text-muted)">点击查看主题详情 →</div>';
 
                     card.addEventListener('click', function() {
@@ -191,12 +189,16 @@
                 title.textContent = '[' + topicId + '] ' + (topic.name || topicId);
 
                 var count = topic.content_count || topic.count || 0;
-                var negRate = topic.negative_rate ? (topic.negative_rate * 100).toFixed(1) + '%' : '-';
+                var anchorCount = topic.anchor_count || 0;
 
                 var html = '<div class="grid grid-2 mb-2">';
                 html += '<div class="stat-card"><div class="stat-value">' + count + '</div><div class="stat-label">内容数</div></div>';
-                html += '<div class="stat-card"><div class="stat-value">' + negRate + '</div><div class="stat-label">负面率</div></div>';
+                html += '<div class="stat-card"><div class="stat-value">' + anchorCount + '</div><div class="stat-label">语义锚点</div></div>';
                 html += '</div>';
+
+                if (topic.description) {
+                    html += '<p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:1rem;line-height:1.6">' + escapeHtml(topic.description) + '</p>';
+                }
 
                 if (topic.anchors && topic.anchors.length > 0) {
                     html += '<div class="section-title" style="font-size:0.8rem">语义锚点</div>';

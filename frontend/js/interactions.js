@@ -70,7 +70,7 @@ var Interactions = (function() {
     function renderDashboardStats(stats) {
         var cards = [
             { label: '总舆情', value: stats.total_count || stats.total || 0 },
-            { label: '负面比例', value: Math.round((stats.negative_rate || 0) * 100) + '%' },
+            { label: '低信度', value: Math.round((stats.low_credibility_rate || 0) * 100) + '%' },
             { label: '社区热度', value: Math.round(stats.community_heat_score || 0) },
             { label: '产品数', value: stats.product_distribution ? Object.keys(stats.product_distribution).length : 0 },
             { label: '平台数', value: stats.platform_distribution ? Object.keys(stats.platform_distribution).length : 0 }
@@ -79,7 +79,7 @@ var Interactions = (function() {
 
         if (stats.trend_data) {
             var trendData = stats.trend_data.dates.map(function(date, i) {
-                return { date: date, total: stats.trend_data.total[i], negative: stats.trend_data.negative[i] };
+                return { date: date, total: stats.trend_data.total[i], low_credibility: stats.trend_data.low_credibility[i] };
             });
             Charts.initTrend('chart-trend', trendData);
         }
@@ -113,13 +113,13 @@ var Interactions = (function() {
         });
 
         var rankData = sorted.map(function(t) {
-            return { name: t.topic_id || t.name || t.id, count: t.content_count || t.count || 0 };
+            return { name: t.name || t.topic_id || t.id, count: t.content_count || t.count || 0 };
         });
 
         Components.renderTopicRank('topic-rank', rankData);
 
         var topicDist = sorted.slice(0, 8).map(function(t) {
-            return { name: t.topic_id || t.name || t.id, count: t.content_count || t.count || 0 };
+            return { name: t.name || t.topic_id || t.id, count: t.content_count || t.count || 0 };
         });
         Charts.initTopicDistribution('chart-topic-dist', topicDist);
     }
@@ -131,8 +131,8 @@ var Interactions = (function() {
 
             var cards = [
                 { label: productName + ' · 总量', value: stats.total || 0 },
-                { label: '负面数量', value: stats.negative || 0 },
-                { label: '负面率', value: stats.total > 0 ? Math.round(stats.negative / stats.total * 100) + '%' : '0%' }
+                { label: '平台覆盖', value: stats.platform_distribution ? Object.keys(stats.platform_distribution).length : 0 },
+                { label: '社区热度', value: Math.round(stats.community_heat_score || 0) }
             ];
             Components.renderStatCards('stats-cards', cards);
         },
