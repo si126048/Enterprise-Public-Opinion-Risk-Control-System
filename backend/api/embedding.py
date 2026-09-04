@@ -17,7 +17,7 @@ class SearchRequest(BaseModel):
     query: str
     top_k: int = 10
     source: Optional[str] = None
-    sentiment: Optional[str] = None
+    credibility_level: Optional[str] = None
     topic_id: Optional[str] = None
     risk_level: Optional[str] = None
     date_from: Optional[str] = None
@@ -124,12 +124,8 @@ async def semantic_search(req: SearchRequest):
 
     query_vector = embedding_service.embed_text(req.query)
 
-    where_filter = None
-    if req.source:
-        where_filter = {"source": req.source}
-
     search_top_k = req.top_k * 3 if req.top_k < 100 else req.top_k
-    results = vector_store.search_content(query_vector, top_k=search_top_k, where=where_filter)
+    results = vector_store.search_content(query_vector, top_k=search_top_k)
 
     if not results:
         return {"query": req.query, "results": [], "total": 0, "pagination": {"page": 1, "page_size": req.page_size, "total": 0, "total_pages": 0}}
@@ -142,9 +138,12 @@ async def semantic_search(req: SearchRequest):
         filter_conditions = [f"rc.id IN ({placeholders})"]
         filter_params = list(content_ids)
 
-        if req.sentiment:
-            filter_conditions.append("ca.sentiment = ?")
-            filter_params.append(req.sentiment)
+        if req.source:
+            filter_conditions.append("rc.platform = ?")
+            filter_params.append(req.source)
+        if req.credibility_level:
+            filter_conditions.append("ca.credibility_level = ?")
+            filter_params.append(req.credibility_level)
         if req.topic_id:
             filter_conditions.append("ca.topic_id = ?")
             filter_params.append(req.topic_id)
@@ -167,8 +166,8 @@ async def semantic_search(req: SearchRequest):
 
         offset = (req.page - 1) * req.page_size
         rows = conn.execute(
-            f"""SELECT rc.id, rc.source, rc.title, rc.clean_text, rc.publish_time,
-                       ca.sentiment, ca.risk_level, ca.topic_id
+            f"""SELECT rc.id, rc.platform as source, rc.title, rc.clean_text, rc.publish_time,
+                       ca.credibility_level, ca.risk_level, ca.topic_id
                 FROM raw_content rc
                 LEFT JOIN content_analysis ca ON rc.id = ca.content_id
                 WHERE {where_sql}

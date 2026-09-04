@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS content_analysis (
     content_id TEXT PRIMARY KEY,
     topic_id TEXT,
     topic_similarity REAL,
-    sentiment TEXT CHECK(sentiment IN ('positive','neutral','negative','uncertain')),
-    sentiment_confidence REAL,
+    credibility_level TEXT CHECK(credibility_level IN ('high','medium','low','uncertain')),
+    credibility_confidence REAL,
     risk_level TEXT CHECK(risk_level IN ('low','medium','high','uncertain')),
     risk_confidence REAL,
     credibility_score REAL,
@@ -137,8 +137,8 @@ CREATE TABLE IF NOT EXISTS cross_validation_results (
     content_id TEXT NOT NULL,
     provider TEXT NOT NULL,
     model TEXT NOT NULL,
-    sentiment TEXT,
-    sentiment_confidence REAL,
+    credibility_level TEXT,
+    credibility_confidence REAL,
     risk_level TEXT,
     risk_confidence REAL,
     summary TEXT,
@@ -204,11 +204,123 @@ def get_connection() -> sqlite3.Connection:
     return conn
 
 
+def _migrate_schema(conn: sqlite3.Connection):
+    """Migrate old sentiment columns to credibility_level."""
+    SENTIMENT_TO_CREDIBILITY = {
+        "positive": "high",
+        "neutral": "medium",
+        "negative": "low",
+        "uncertain": "uncertain",
+    }
+    tables = ["content_analysis", "cross_validation_results"]
+    for table in tables:
+        cols = [row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+        if "sentiment" not in cols or "credibility_level" in cols:
+            # Check if values need mapping even though column is already renamed
+            if "credibility_level" in cols:
+                existing_vals = [r[0] for r in conn.execute(f"SELECT DISTINCT credibility_level FROM {table}").fetchall()]
+                old_vals = set(SENTIMENT_TO_CREDIBILITY.keys())
+                needs_update = any(v in old_vals for v in existing_vals)
+                if needs_update:
+                    # Must recreate table to fix CHECK constraint
+                    old_sql_row = conn.execute(
+                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+                    ).fetchone()
+                    if old_sql_row:
+                        old_sql = old_sql_row[0]
+                        new_sql = old_sql.replace(
+                            "CHECK(credibility_level IN ('positive','neutral','negative','uncertain'))",
+                            "CHECK(credibility_level IN ('high','medium','low','uncertain'))"
+                        ).replace(
+                            "CHECK (credibility_level IN ('positive', 'neutral', 'negative', 'uncertain'))",
+                            "CHECK (credibility_level IN ('high', 'medium', 'low', 'uncertain'))"
+                        )
+                        conn.execute(f"ALTER TABLE {table} RENAME TO {table}_migration_backup")
+                        conn.execute(new_sql)
+                        # Get new column list
+                        new_cols = [row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+                        col_list = ", ".join(new_cols)
+                        # Copy data with value mapping
+                        for old_val, new_val in SENTIMENT_TO_CREDIBILITY.items():
+                            select_exprs = []
+                            for c in new_cols:
+                                if c == "credibility_level":
+                                    select_exprs.append(f"'{new_val}'")
+                                else:
+                                    select_exprs.append(c)
+                            mapped_select = ", ".join(select_exprs)
+                            conn.execute(f"""
+                                INSERT INTO {table} ({col_list})
+                                SELECT {mapped_select}
+                                FROM {table}_migration_backup WHERE credibility_level = ?
+                            """, (old_val,))
+                        conn.execute(f"DROP TABLE {table}_migration_backup")
+            continue
+
+        # Get old table SQL and build new schema
+        old_sql_row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+        ).fetchone()
+        if not old_sql_row:
+            continue
+        old_sql = old_sql_row[0]
+
+        # Build new CREATE TABLE SQL by replacing column names and CHECK values
+        new_sql = old_sql
+        new_sql = new_sql.replace("sentiment_confidence", "credibility_confidence")
+        new_sql = new_sql.replace("sentiment", "credibility_level")
+        new_sql = new_sql.replace(
+            "CHECK(credibility_level IN ('positive','neutral','negative','uncertain'))",
+            "CHECK(credibility_level IN ('high','medium','low','uncertain'))"
+        )
+        # Handle variations in CHECK constraint formatting
+        new_sql = new_sql.replace(
+            "CHECK (credibility_level IN ('positive', 'neutral', 'negative', 'uncertain'))",
+            "CHECK (credibility_level IN ('high', 'medium', 'low', 'uncertain'))"
+        )
+
+        # Rename old table, create new, copy data
+        conn.execute(f"ALTER TABLE {table} RENAME TO {table}_migration_backup")
+        conn.execute(new_sql.replace(table + "_migration_backup", table))
+
+        # Build column mapping for INSERT
+        new_cols = [row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+        col_pairs = []
+        for c in new_cols:
+            old_name = c
+            if c == "credibility_level":
+                old_name = "sentiment"
+            elif c == "credibility_confidence":
+                old_name = "sentiment_confidence"
+            col_pairs.append((c, old_name))
+
+        insert_cols = ", ".join(c[0] for c in col_pairs)
+
+        # Copy all rows, mapping sentiment values
+        for old_val, new_val in SENTIMENT_TO_CREDIBILITY.items():
+            # Build SELECT with sentiment replaced by literal, sentiment_confidence kept as column
+            select_exprs = []
+            for new_name, old_name in col_pairs:
+                if old_name == "sentiment":
+                    select_exprs.append(f"'{new_val}'")
+                else:
+                    select_exprs.append(old_name)
+            mapped_select = ", ".join(select_exprs)
+            conn.execute(f"""
+                INSERT INTO {table} ({insert_cols})
+                SELECT {mapped_select}
+                FROM {table}_migration_backup WHERE sentiment = ?
+            """, (old_val,))
+
+        conn.execute(f"DROP TABLE {table}_migration_backup")
+
+
 def init_db():
     import datetime
     conn = get_connection()
     try:
         conn.executescript(SCHEMA_SQL)
+        _migrate_schema(conn)
         conn.commit()
 
         now = datetime.datetime.now().isoformat()

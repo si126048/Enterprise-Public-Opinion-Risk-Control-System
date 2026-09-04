@@ -21,7 +21,6 @@
             <li><a href="content.html">舆情列表</a></li>
             <li><a href="search.html">语义搜索</a></li>
             <li><a href="topics.html">风险主题</a></li>
-            <li><a href="review.html">审核</a></li>
             <li><a href="validation.html" class="active">验证</a></li>
         </ul>
         <div class="nav-actions">
@@ -64,15 +63,9 @@
             <!-- Charts -->
             <div class="section">
                 <div class="section-title">Provider 对比</div>
-                <div class="grid grid-2">
-                    <div class="card">
-                        <div class="card-title">情感分布</div>
-                        <div id="chart-sentiment" style="width:100%;height:300px;"></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-title">风险分布</div>
-                        <div id="chart-risk" style="width:100%;height:300px;"></div>
-                    </div>
+                <div class="card">
+                    <div class="card-title">风险分布</div>
+                    <div id="chart-risk" style="width:100%;height:300px;"></div>
                 </div>
             </div>
 
@@ -137,10 +130,10 @@
             return d.innerHTML;
         }
 
-        function sentimentBadge(s) {
-            var cls = { positive: 'badge-positive', negative: 'badge-negative', neutral: 'badge-neutral', uncertain: 'badge-uncertain' };
-            var labels = { positive: '正面', negative: '负面', neutral: '中性', uncertain: '不确定' };
-            return '<span class="badge ' + (cls[s] || 'badge-neutral') + '">' + (labels[s] || s || '-') + '</span>';
+        function credibilityBadge(c) {
+            var cls = { high: 'badge-high', medium: 'badge-medium', low: 'badge-low', uncertain: 'badge-uncertain' };
+            var labels = { high: '高可信', medium: '中可信', low: '低可信', uncertain: '不确定' };
+            return '<span class="badge ' + (cls[c] || 'badge-neutral') + '">' + (labels[c] || c || '-') + '</span>';
         }
 
         function riskBadge(r) {
@@ -172,27 +165,8 @@
             var ps = data.provider_stats || {};
             var providers = ['mock', 'deepseek', 'qwen'];
             var providerLabels = { mock: 'Mock', deepseek: 'DeepSeek', qwen: 'Qwen' };
-            var sentiments = ['positive', 'neutral', 'negative', 'uncertain'];
             var risks = ['low', 'medium', 'high', 'uncertain'];
-            var sentLabels = { positive: '正面', neutral: '中性', negative: '负面', uncertain: '不确定' };
             var riskLabels = { low: '低', medium: '中', high: '高', uncertain: '不确定' };
-
-            var sentChart = echarts.init(document.getElementById('chart-sentiment'));
-            var sentSeries = providers.map(function(p) {
-                return {
-                    name: providerLabels[p],
-                    type: 'bar',
-                    data: sentiments.map(function(s) { return (ps[p] && ps[p].sentiment && ps[p].sentiment[s]) || 0; })
-                };
-            });
-            sentChart.setOption({
-                tooltip: { trigger: 'axis' },
-                legend: { data: providers.map(function(p) { return providerLabels[p]; }) },
-                xAxis: { type: 'category', data: sentiments.map(function(s) { return sentLabels[s]; }) },
-                yAxis: { type: 'value' },
-                series: sentSeries,
-                color: ['#14D0D0', '#FFD700', '#F65413']
-            });
 
             var riskChart = echarts.init(document.getElementById('chart-risk'));
             var riskSeries = providers.map(function(p) {
@@ -212,7 +186,6 @@
             });
 
             window.addEventListener('resize', function() {
-                sentChart.resize();
                 riskChart.resize();
             });
         }
@@ -243,20 +216,20 @@
                 for (var i = 0; i < results.length; i++) {
                     byProvider[results[i].provider] = results[i];
                 }
-                var sentiments = [byProvider.mock, byProvider.deepseek, byProvider.qwen];
-                var allSame = sentiments.every(function(s) { return s && s.sentiment === sentiments[0].sentiment; });
-                var risks = sentiments.map(function(s) { return s ? s.risk_level : null; });
+                var credibilities = [byProvider.mock, byProvider.deepseek, byProvider.qwen];
+                var allSame = credibilities.every(function(s) { return s && s.credibility_level === credibilities[0].credibility_level; });
+                var risks = credibilities.map(function(s) { return s ? s.risk_level : null; });
                 var risksSame = risks.every(function(r) { return r && r === risks[0]; });
 
                 var html = '<tr>';
                 html += '<td>' + escapeHtml(singleId.substring(0, 8)) + '...</td>';
                 html += '<td>' + escapeHtml(results[0].platform || results[0].source || '-') + '</td>';
                 html += '<td>' + escapeHtml((results[0].clean_text || '').substring(0, 40)) + '</td>';
-                html += '<td>' + sentimentBadge(byProvider.mock ? byProvider.mock.sentiment : '-') + ' ' + riskBadge(byProvider.mock ? byProvider.mock.risk_level : '-') + '</td>';
-                html += '<td>' + sentimentBadge(byProvider.deepseek ? byProvider.deepseek.sentiment : '-') + ' ' + riskBadge(byProvider.deepseek ? byProvider.deepseek.risk_level : '-') + '</td>';
-                html += '<td>' + sentimentBadge(byProvider.qwen ? byProvider.qwen.sentiment : '-') + ' ' + riskBadge(byProvider.qwen ? byProvider.qwen.risk_level : '-') + '</td>';
+                html += '<td>' + credibilityBadge(byProvider.mock ? byProvider.mock.credibility_level : '-') + ' ' + riskBadge(byProvider.mock ? byProvider.mock.risk_level : '-') + '</td>';
+                html += '<td>' + credibilityBadge(byProvider.deepseek ? byProvider.deepseek.credibility_level : '-') + ' ' + riskBadge(byProvider.deepseek ? byProvider.deepseek.risk_level : '-') + '</td>';
+                html += '<td>' + credibilityBadge(byProvider.qwen ? byProvider.qwen.credibility_level : '-') + ' ' + riskBadge(byProvider.qwen ? byProvider.qwen.risk_level : '-') + '</td>';
                 var matchCls = (allSame && risksSame) ? 'validation-match' : 'validation-mismatch';
-                var matchTxt = (allSame && risksSame) ? '完全一致' : (allSame ? '情感一致' : (risksSame ? '风险一致' : '不一致'));
+                var matchTxt = (allSame && risksSame) ? '完全一致' : (allSame ? '信度一致' : (risksSame ? '风险一致' : '不一致'));
                 html += '<td><span class="' + matchCls + '">' + matchTxt + '</span></td>';
                 html += '</tr>';
                 tbody.innerHTML = html;
@@ -280,21 +253,21 @@
                     byP[items[m].provider] = items[m];
                 }
 
-                var sents = [byP.mock, byP.deepseek, byP.qwen].map(function(p) { return p ? p.sentiment : null; });
+                var sents = [byP.mock, byP.deepseek, byP.qwen].map(function(p) { return p ? p.credibility_level : null; });
                 var rsk = [byP.mock, byP.deepseek, byP.qwen].map(function(p) { return p ? p.risk_level : null; });
                 var sentMatch = sents.every(function(s) { return s && s === sents[0]; });
                 var riskMatch = rsk.every(function(r) { return r && r === rsk[0]; });
 
                 var matchCls2 = (sentMatch && riskMatch) ? 'validation-match' : 'validation-mismatch';
-                var matchTxt2 = (sentMatch && riskMatch) ? '一致' : (sentMatch ? '情感=' : (riskMatch ? '风险=' : '差异'));
+                var matchTxt2 = (sentMatch && riskMatch) ? '一致' : (sentMatch ? '信度=' : (riskMatch ? '风险=' : '差异'));
 
                 rows += '<tr style="cursor:pointer;" onclick="ValidationPage.showDetail(\'' + cid + '\')">';
                 rows += '<td>' + escapeHtml(cid.substring(0, 8)) + '...</td>';
                 rows += '<td>' + escapeHtml(items[0].platform || items[0].source || '-') + '</td>';
                 rows += '<td>' + escapeHtml((items[0].clean_text || '').substring(0, 30)) + '</td>';
-                rows += '<td>' + sentimentBadge(byP.mock ? byP.mock.sentiment : '-') + '</td>';
-                rows += '<td>' + sentimentBadge(byP.deepseek ? byP.deepseek.sentiment : '-') + '</td>';
-                rows += '<td>' + sentimentBadge(byP.qwen ? byP.qwen.sentiment : '-') + '</td>';
+                rows += '<td>' + credibilityBadge(byP.mock ? byP.mock.credibility_level : '-') + '</td>';
+                rows += '<td>' + credibilityBadge(byP.deepseek ? byP.deepseek.credibility_level : '-') + '</td>';
+                rows += '<td>' + credibilityBadge(byP.qwen ? byP.qwen.credibility_level : '-') + '</td>';
                 rows += '<td><span class="' + matchCls2 + '">' + matchTxt2 + '</span></td>';
                 rows += '</tr>';
             }
@@ -314,7 +287,7 @@
                     html += '<div class="card" style="margin-bottom:0.5rem;padding:0.75rem;">'
                         + '<strong>' + escapeHtml(r.provider) + '</strong> (' + escapeHtml(r.model) + ')<br>'
                         + '<span style="font-size:0.85rem;">'
-                        + '情感: ' + sentimentBadge(r.sentiment)
+                        + '信度: ' + credibilityBadge(r.credibility_level)
                         + ' 风险: ' + riskBadge(r.risk_level)
                         + '</span><br>'
                         + '<span style="font-size:0.8rem;color:var(--color-text-muted);">'

@@ -20,7 +20,6 @@
             <li><a href="content.html" class="active">舆情列表</a></li>
             <li><a href="search.html">语义搜索</a></li>
             <li><a href="topics.html">风险主题</a></li>
-            <li><a href="review.html" class="nav-highlight">审核</a></li>
             <li><a href="risk_events.html">风控事件</a></li>
         </ul>
         <div class="nav-actions">
@@ -51,12 +50,14 @@
                         <option value="知乎">知乎</option>
                         <option value="B站">B站</option>
                         <option value="TapTap">TapTap</option>
+                        <option value="小黑盒">小黑盒</option>
+                        <option value="米游社">米游社</option>
                     </select>
-                    <select id="filter-sentiment" class="select" style="min-width:120px">
-                        <option value="">全部情感</option>
-                        <option value="positive">正面</option>
-                        <option value="neutral">中性</option>
-                        <option value="negative">负面</option>
+                    <select id="filter-credibility" class="select" style="min-width:120px">
+                        <option value="">全部信度</option>
+                        <option value="high">高可信</option>
+                        <option value="medium">中可信</option>
+                        <option value="low">低可信</option>
                     </select>
                     <select id="filter-risk" class="select" style="min-width:120px">
                         <option value="">全部风险</option>
@@ -125,7 +126,7 @@
 
                 document.getElementById('filter-product').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
                 document.getElementById('filter-platform').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
-                document.getElementById('filter-sentiment').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
+                document.getElementById('filter-credibility').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
                 document.getElementById('filter-risk').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
 
                 var searchInput = document.getElementById('filter-search');
@@ -157,7 +158,7 @@
                     page_size: this.pageSize,
                     product_name: document.getElementById('filter-product').value || undefined,
                     platform: document.getElementById('filter-platform').value || undefined,
-                    sentiment: document.getElementById('filter-sentiment').value || undefined,
+                    credibility_level: document.getElementById('filter-credibility').value || undefined,
                     risk_level: document.getElementById('filter-risk').value || undefined,
                     search: document.getElementById('filter-search').value || undefined
                 };

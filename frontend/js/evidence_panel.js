@@ -63,10 +63,10 @@ var EvidencePanel = (function() {
         html += '<div class="evidence-section">' +
             '<div class="evidence-label">分析结果</div>' +
             '<div class="evidence-grid">' +
-                '<div><span class="ev-label">情感</span><span class="ev-val">' + sentimentLabel(data.sentiment) + '</span></div>' +
+                '<div><span class="ev-label">信度</span><span class="ev-val">' + credibilityLabel(data.credibility_level) + '</span></div>' +
                 '<div><span class="ev-label">风险</span><span class="ev-val">' + riskLabel(data.risk_level) + '</span></div>' +
                 '<div><span class="ev-label">主题</span><span class="ev-val">' + escapeHtml(data.topic_id || '-') + '</span></div>' +
-                '<div><span class="ev-label">置信度</span><span class="ev-val">' + (data.sentiment_confidence ? (data.sentiment_confidence * 100).toFixed(1) + '%' : '-') + '</span></div>' +
+                '<div><span class="ev-label">置信度</span><span class="ev-val">' + (data.credibility_confidence ? (data.credibility_confidence * 100).toFixed(1) + '%' : '-') + '</span></div>' +
             '</div>' +
             '</div>';
 
@@ -95,9 +95,9 @@ var EvidencePanel = (function() {
         return html;
     }
 
-    function sentimentLabel(s) {
-        var map = { positive: '正面', negative: '负面', neutral: '中性' };
-        return map[s] || s || '-';
+    function credibilityLabel(c) {
+        var map = { high: '高可信', low: '低可信', medium: '中可信' };
+        return map[c] || c || '-';
     }
 
     function riskLabel(r) {

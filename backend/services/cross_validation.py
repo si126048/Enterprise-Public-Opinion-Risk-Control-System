@@ -60,13 +60,13 @@ def run_cross_validation(content_id=None, batch_size=50):
                     if existing:
                         conn.execute(
                             """UPDATE cross_validation_results
-                               SET sentiment=?, sentiment_confidence=?,
+                               SET credibility_level=?, credibility_confidence=?,
                                    risk_level=?, risk_confidence=?,
                                    summary=?, theory_perspective=?,
                                    model=?, created_at=?
                                WHERE id = ?""",
                             (
-                                result.sentiment, result.sentiment_confidence,
+                                result.credibility_level, result.credibility_confidence,
                                 result.risk_level, result.risk_confidence,
                                 result.summary, result.theory_perspective,
                                 model_name, datetime.now().isoformat(),
@@ -76,13 +76,13 @@ def run_cross_validation(content_id=None, batch_size=50):
                     else:
                         conn.execute(
                             """INSERT INTO cross_validation_results
-                               (id, content_id, provider, model, sentiment,
-                                sentiment_confidence, risk_level, risk_confidence,
+                               (id, content_id, provider, model, credibility_level,
+                                credibility_confidence, risk_level, risk_confidence,
                                 summary, theory_perspective, created_at)
                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                             (
                                 result_id, row["id"], provider_name, model_name,
-                                result.sentiment, result.sentiment_confidence,
+                                result.credibility_level, result.credibility_confidence,
                                 result.risk_level, result.risk_confidence,
                                 result.summary, result.theory_perspective,
                                 datetime.now().isoformat(),
@@ -134,10 +134,10 @@ def get_validation_summary():
 
         provider_stats = {}
         for provider in ["mock", "deepseek", "qwen"]:
-            sentiment_rows = conn.execute(
-                """SELECT sentiment, COUNT(*) as cnt
+            credibility_rows = conn.execute(
+                """SELECT credibility_level, COUNT(*) as cnt
                    FROM cross_validation_results WHERE provider = ?
-                   GROUP BY sentiment""",
+                   GROUP BY credibility_level""",
                 (provider,),
             ).fetchall()
             risk_rows = conn.execute(
@@ -147,7 +147,7 @@ def get_validation_summary():
                 (provider,),
             ).fetchall()
             provider_stats[provider] = {
-                "sentiment": {r["sentiment"]: r["cnt"] for r in sentiment_rows},
+                "credibility": {r["credibility_level"]: r["cnt"] for r in credibility_rows},
                 "risk": {r["risk_level"]: r["cnt"] for r in risk_rows},
             }
 
@@ -157,7 +157,7 @@ def get_validation_summary():
 
         agreement_sql = """
             SELECT content_id,
-                   COUNT(DISTINCT sentiment) as sent_variants,
+                   COUNT(DISTINCT credibility_level) as cred_variants,
                    COUNT(DISTINCT risk_level) as risk_variants
             FROM cross_validation_results
             GROUP BY content_id
@@ -165,9 +165,9 @@ def get_validation_summary():
         """
         agreement_rows = conn.execute(agreement_sql).fetchall()
         full_agree = sum(1 for r in agreement_rows
-                         if r["sent_variants"] == 1 and r["risk_variants"] == 1)
+                         if r["cred_variants"] == 1 and r["risk_variants"] == 1)
         partial_agree = sum(1 for r in agreement_rows
-                            if r["sent_variants"] == 1 or r["risk_variants"] == 1)
+                            if r["cred_variants"] == 1 or r["risk_variants"] == 1)
         total_compared = len(agreement_rows)
 
         return {

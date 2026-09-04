@@ -6,6 +6,7 @@ from backend.crawler.parsers.zhihu import ZhihuCrawler
 from backend.crawler.parsers.bilibili import BilibiliCrawler
 from backend.crawler.parsers.taptap import TaptapCrawler
 from backend.crawler.parsers.xiaoheihe import XiaoheiheCrawler
+from backend.crawler.parsers.miyoushe import MiyousheCrawler
 
 _REGISTRY: Dict[str, Type] = {
     "weibo": WeiboCrawler,
@@ -14,6 +15,7 @@ _REGISTRY: Dict[str, Type] = {
     "bilibili": BilibiliCrawler,
     "taptap": TaptapCrawler,
     "xiaoheihe": XiaoheiheCrawler,
+    "miyoushe": MiyousheCrawler,
 }
 
 

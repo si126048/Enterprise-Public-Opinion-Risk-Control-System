@@ -63,59 +63,12 @@ var Charts = (function() {
         });
     }
 
-    function initSentimentDistribution(containerId, data) {
-        var chart = getOrCreate(containerId);
-        if (!chart) return;
-
-        var colorMap = {
-            '正面': '#14D0D0',
-            '中性': '#8A8A8A',
-            '负面': '#F65413',
-            'positive': '#14D0D0',
-            'neutral': '#8A8A8A',
-            'negative': '#F65413'
-        };
-
-        var chartData = data.map(function(d) {
-            return {
-                name: d.name,
-                value: d.value,
-                itemStyle: { color: colorMap[d.name] || colorMap[d.key] || '#8A8A8A' }
-            };
-        });
-
-        chart.setOption({
-            tooltip: {
-                trigger: 'item',
-                formatter: '{b}: {c} ({d}%)'
-            },
-            series: [{
-                type: 'pie',
-                radius: ['45%', '70%'],
-                center: ['50%', '50%'],
-                data: chartData,
-                label: {
-                    color: '#4A4A4A',
-                    fontSize: 12,
-                    formatter: '{b}\n{d}%'
-                },
-                emphasis: {
-                    scaleSize: 6
-                },
-                itemStyle: {
-                    borderColor: '#F5F2EB',
-                    borderWidth: 2
-                }
-            }]
-        });
-    }
-
     function initTrend(containerId, data) {
         var chart = getOrCreate(containerId);
         if (!chart) return;
 
         var dates = data.map(function(d) { return d.date; });
-        var hasNegative = data.some(function(d) { return d.negative !== undefined; });
+        var hasLowCredibility = data.some(function(d) { return d.low_credibility !== undefined; });
 
         var series = [{
             name: '舆情量',
@@ -138,11 +91,11 @@ var Charts = (function() {
             }
         }];
 
-        if (hasNegative) {
+        if (hasLowCredibility) {
             series.push({
-                name: '负面量',
+                name: '低信度量',
                 type: 'line',
-                data: data.map(function(d) { return d.negative || 0; }),
+                data: data.map(function(d) { return d.low_credibility || 0; }),
                 smooth: true,
                 symbol: 'circle',
                 symbolSize: 6,
@@ -181,36 +134,6 @@ var Charts = (function() {
         });
     }
 
-    function initRiskDistribution(containerId, data) {
-        var chart = getOrCreate(containerId);
-        if (!chart) return;
-
-        var colorMap = {
-            '高': '#E53935', '中': '#FFD700', '低': '#43A047',
-            'high': '#E53935', 'medium': '#FFD700', 'low': '#43A047'
-        };
-
-        var chartData = data.map(function(d) {
-            return {
-                name: d.name,
-                value: d.value,
-                itemStyle: { color: colorMap[d.name] || colorMap[d.key] || '#8A8A8A' }
-            };
-        });
-
-        chart.setOption({
-            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-            series: [{
-                type: 'pie',
-                radius: ['45%', '70%'],
-                center: ['50%', '50%'],
-                data: chartData,
-                label: { color: '#4A4A4A', fontSize: 12, formatter: '{b}\n{d}%' },
-                itemStyle: { borderColor: '#F5F2EB', borderWidth: 2 }
-            }]
-        });
-    }
-
     function initBarChart(containerId, data, options) {
         var chart = getOrCreate(containerId);
         if (!chart) return;
@@ -246,9 +169,6 @@ var Charts = (function() {
         if (stats.topic_distribution) {
             initTopicDistribution('chart-topic-dist', stats.topic_distribution);
         }
-        if (stats.sentiment_distribution) {
-            initSentimentDistribution('chart-sentiment-dist', stats.sentiment_distribution);
-        }
         if (stats.daily_trend) {
             initTrend('chart-trend', stats.daily_trend);
         }
@@ -281,9 +201,7 @@ var Charts = (function() {
 
     return {
         initTopicDistribution: initTopicDistribution,
-        initSentimentDistribution: initSentimentDistribution,
         initTrend: initTrend,
-        initRiskDistribution: initRiskDistribution,
         initBarChart: initBarChart,
         updateForProduct: updateForProduct,
         reset: reset,

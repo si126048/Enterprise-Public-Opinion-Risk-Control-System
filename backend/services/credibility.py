@@ -18,6 +18,8 @@ PLATFORM_TRUST = {
     "zhihu": 0.80,
     "bilibili": 0.85,
     "taptap": 0.90,
+    "xiaoheihe": 0.80,
+    "miyoushe": 0.85,
 }
 
 DEFAULT_WEIGHTS = {
@@ -25,7 +27,7 @@ DEFAULT_WEIGHTS = {
     "activity_score": 0.15,
     "interaction_authenticity": 0.20,
     "content_consistency": 0.15,
-    "sentiment_intensity": 0.15,
+    "credibility_intensity": 0.15,
     "platform_trust": 0.15,
     "engagement_depth": 0.10,
 }
@@ -37,7 +39,7 @@ def compute_credibility(
     likes: int = 0,
     comments: int = 0,
     shares: int = 0,
-    sentiment: str = "neutral",
+    credibility_level: str = "medium",
     platform: str = "weibo",
     content_length: int = 0,
     has_screenshot: bool = False,
@@ -47,7 +49,7 @@ def compute_credibility(
     activity_score = _score_activity(post_count)
     interaction_authenticity = _score_interaction_authenticity(likes, comments, shares)
     content_consistency = _score_content_consistency(content_length, has_screenshot)
-    sentiment_intensity = _score_sentiment_intensity(sentiment)
+    credibility_intensity = _score_credibility_intensity(credibility_level)
     platform_trust = PLATFORM_TRUST.get(platform, 0.70)
     engagement_depth = _score_engagement_depth(game_level)
 
@@ -56,7 +58,7 @@ def compute_credibility(
         "activity_score": activity_score,
         "interaction_authenticity": interaction_authenticity,
         "content_consistency": content_consistency,
-        "sentiment_intensity": sentiment_intensity,
+        "credibility_intensity": credibility_intensity,
         "platform_trust": platform_trust,
         "engagement_depth": engagement_depth,
     }
@@ -124,12 +126,14 @@ def _score_content_consistency(content_length: int, has_screenshot: bool) -> flo
     return min(score, 1.0)
 
 
-def _score_sentiment_intensity(sentiment: str) -> float:
-    if sentiment in ("positive", "negative"):
-        return 0.80
-    if sentiment == "neutral":
-        return 0.50
-    return 0.30
+def _score_credibility_intensity(credibility_level: str) -> float:
+    if credibility_level == "high":
+        return 0.85
+    if credibility_level == "medium":
+        return 0.60
+    if credibility_level == "low":
+        return 0.30
+    return 0.25
 
 
 def _score_engagement_depth(game_level: int) -> float:
@@ -153,7 +157,7 @@ def batch_credibility(items: list) -> list:
             likes=item.get("likes", 0),
             comments=item.get("comments", 0),
             shares=item.get("shares", 0),
-            sentiment=item.get("sentiment", "neutral"),
+            credibility_level=item.get("credibility_level", "medium"),
             platform=item.get("platform", "weibo"),
             content_length=len(item.get("content", "")),
             has_screenshot=item.get("has_screenshot", False),

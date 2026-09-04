@@ -144,7 +144,7 @@ def analyze_pending_content(batch_size: int = 50) -> dict:
                 wconn.execute("""
                     INSERT OR REPLACE INTO content_analysis
                     (content_id, topic_id, topic_similarity,
-                     sentiment, sentiment_confidence,
+                     credibility_level, credibility_confidence,
                      risk_level, risk_confidence,
                      summary, theory_perspective,
                      llm_model, analysis_version,
@@ -152,7 +152,7 @@ def analyze_pending_content(batch_size: int = 50) -> dict:
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
                 """, (
                     content_id, topic_id, topic_similarity,
-                    result.sentiment, result.sentiment_confidence,
+                    result.credibility_level, result.credibility_confidence,
                     result.risk_level, result.risk_confidence,
                     result.summary, result.theory_perspective,
                     config["llm"]["model"], "v1",

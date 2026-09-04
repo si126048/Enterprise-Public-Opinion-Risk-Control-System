@@ -11,9 +11,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 3842,
         negative_rate: 0.72,
-        risk_distribution: { high: 680, medium: 1520, low: 1642 },
-        sentiment_distribution: { positive: 380, neutral: 920, negative: 2542 },
-        platform_distribution: { weibo: 1200, xiaohongshu: 860, zhihu: 520, bilibili: 980, taptap: 282 }
+        platform_distribution: { weibo: 1200, xiaohongshu: 860, zhihu: 520, bilibili: 980, taptap: 282, xiaoheihe: 340, miyoushe: 420 }
     },
     {
         topic_id: 'G002',
@@ -27,9 +25,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 4215,
         negative_rate: 0.81,
-        risk_distribution: { high: 1120, medium: 1850, low: 1245 },
-        sentiment_distribution: { positive: 210, neutral: 640, negative: 3365 },
-        platform_distribution: { weibo: 1450, xiaohongshu: 920, zhihu: 680, bilibili: 780, taptap: 385 }
+        platform_distribution: { weibo: 1450, xiaohongshu: 920, zhihu: 680, bilibili: 780, taptap: 385, xiaoheihe: 410, miyoushe: 490 }
     },
     {
         topic_id: 'G003',
@@ -43,9 +39,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 2960,
         negative_rate: 0.58,
-        risk_distribution: { high: 320, medium: 1180, low: 1460 },
-        sentiment_distribution: { positive: 820, neutral: 600, negative: 1540 },
-        platform_distribution: { weibo: 980, xiaohongshu: 720, zhihu: 380, bilibili: 640, taptap: 240 }
+        platform_distribution: { weibo: 980, xiaohongshu: 720, zhihu: 380, bilibili: 640, taptap: 240, xiaoheihe: 260, miyoushe: 310 }
     },
     {
         topic_id: 'G004',
@@ -59,9 +53,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 1850,
         negative_rate: 0.85,
-        risk_distribution: { high: 280, medium: 740, low: 830 },
-        sentiment_distribution: { positive: 90, neutral: 310, negative: 1450 },
-        platform_distribution: { weibo: 420, xiaohongshu: 310, zhihu: 280, bilibili: 380, taptap: 460 }
+        platform_distribution: { weibo: 420, xiaohongshu: 310, zhihu: 280, bilibili: 380, taptap: 460, xiaoheihe: 180, miyoushe: 220 }
     },
     {
         topic_id: 'G005',
@@ -75,9 +67,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 3120,
         negative_rate: 0.78,
-        risk_distribution: { high: 780, medium: 1240, low: 1100 },
-        sentiment_distribution: { positive: 180, neutral: 580, negative: 2360 },
-        platform_distribution: { weibo: 1100, xiaohongshu: 520, zhihu: 480, bilibili: 720, taptap: 300 }
+        platform_distribution: { weibo: 1100, xiaohongshu: 520, zhihu: 480, bilibili: 720, taptap: 300, xiaoheihe: 280, miyoushe: 350 }
     },
     {
         topic_id: 'G006',
@@ -91,9 +81,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 1680,
         negative_rate: 0.65,
-        risk_distribution: { high: 180, medium: 680, low: 820 },
-        sentiment_distribution: { positive: 240, neutral: 510, negative: 930 },
-        platform_distribution: { weibo: 520, xiaohongshu: 380, zhihu: 320, bilibili: 340, taptap: 120 }
+        platform_distribution: { weibo: 520, xiaohongshu: 380, zhihu: 320, bilibili: 340, taptap: 120, xiaoheihe: 150, miyoushe: 180 }
     },
     {
         topic_id: 'G007',
@@ -107,9 +95,7 @@ var MOCK_TOPICS = [
         ],
         content_count: 2450,
         negative_rate: 0.74,
-        risk_distribution: { high: 620, medium: 980, low: 850 },
-        sentiment_distribution: { positive: 160, neutral: 540, negative: 1750 },
-        platform_distribution: { weibo: 980, xiaohongshu: 320, zhihu: 520, bilibili: 380, taptap: 250 }
+        platform_distribution: { weibo: 980, xiaohongshu: 320, zhihu: 520, bilibili: 380, taptap: 250, xiaoheihe: 200, miyoushe: 240 }
     },
     {
         topic_id: 'G008',
@@ -123,8 +109,6 @@ var MOCK_TOPICS = [
         ],
         content_count: 1240,
         negative_rate: 0.68,
-        risk_distribution: { high: 340, medium: 520, low: 380 },
-        sentiment_distribution: { positive: 120, neutral: 340, negative: 780 },
-        platform_distribution: { weibo: 420, xiaohongshu: 180, zhihu: 280, bilibili: 220, taptap: 140 }
+        platform_distribution: { weibo: 420, xiaohongshu: 180, zhihu: 280, bilibili: 220, taptap: 140, xiaoheihe: 100, miyoushe: 120 }
     }
 ];

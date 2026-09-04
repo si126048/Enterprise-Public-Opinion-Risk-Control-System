@@ -74,7 +74,7 @@ async def analyze_single(content_id: str):
             wconn.execute("""
                 INSERT OR REPLACE INTO content_analysis
                 (content_id, topic_id, topic_similarity,
-                 sentiment, sentiment_confidence,
+                 credibility_level, credibility_confidence,
                  risk_level, risk_confidence,
                  summary, theory_perspective,
                  llm_model, analysis_version,
@@ -82,7 +82,7 @@ async def analyze_single(content_id: str):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
             """, (
                 content_id, topic_id, topic_similarity,
-                result.sentiment, result.sentiment_confidence,
+                result.credibility_level, result.credibility_confidence,
                 result.risk_level, result.risk_confidence,
                 result.summary, result.theory_perspective,
                 config["llm"]["model"], "v1",
@@ -95,7 +95,7 @@ async def analyze_single(content_id: str):
         return {
             "status": "ok",
             "content_id": content_id,
-            "sentiment": result.sentiment,
+            "credibility_level": result.credibility_level,
             "risk_level": result.risk_level,
             "topic_id": topic_id,
             "topic_name": topic_name,

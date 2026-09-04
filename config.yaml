@@ -45,6 +45,12 @@ companies:
       - name: "taptap"
         enabled: true
         search_type: "review_search"
+      - name: "xiaoheihe"
+        enabled: true
+        search_type: "community_search"
+      - name: "miyoushe"
+        enabled: true
+        search_type: "community_search"
 
 topics:
   company_specific: true
@@ -83,9 +89,9 @@ topics:
       risk_weight: "高"
 
 embedding:
-  provider: "bge-m3"
-  model_name: "BAAI/bge-m3"
-  vector_dimension: 1024
+  provider: "qwen"
+  model_name: "Qwen/Qwen3-Embedding-4B"
+  vector_dimension: 2560
   normalize: true
   batch_size: 32
   preprocess_version: "v1"
@@ -97,7 +103,7 @@ credibility:
     account_activity: 0.15
     engagement_authenticity: 0.20
     content_consistency: 0.15
-    sentiment_intensity: 0.15
+    credibility_intensity: 0.15
     platform_credibility: 0.15
     game_level: 0.10
 
@@ -142,7 +148,7 @@ crawler:
   max_retries: 3
   retry_backoff: 5.0
   user_agent: "EnterpriseRiskMonitor/1.0"
-  respect_robots_txt: true
+  respect_robots_txt: false
   max_pages_per_crawl: 200
   days_back: 30
   max_requests_per_minute: 60
@@ -187,3 +193,16 @@ crawler:
       delay: 3.0
       max_pages: 30
       description: "小黑盒游戏社区帖子/评论"
+    miyoushe:
+      enabled: true
+      base_url: "https://bbs-api.miyoushe.com"
+      delay: 3.0
+      max_pages: 30
+      description: "米游社官方社区帖子/评论"
+
+review_agent:
+  enabled: true
+  min_samples_for_approve: 3
+  merge_threshold: 0.70
+  coherence_ratio: 0.60
+  auto_run_after_discovery: true

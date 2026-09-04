@@ -59,9 +59,9 @@ var Components = (function() {
 
         el.innerHTML = '';
         items.forEach(function(item, i) {
-            var sentimentClass = 'sentiment-' + (item.sentiment || 'neutral');
+            var credibilityClass = 'credibility-' + (item.credibility_level || 'medium');
             var div = document.createElement('div');
-            div.className = 'content-card card-stagger ' + sentimentClass;
+            div.className = 'content-card card-stagger ' + credibilityClass;
             div.style.animationDelay = (i * 0.05) + 's';
             div.setAttribute('data-id', item.id);
 
@@ -121,39 +121,6 @@ var Components = (function() {
                 var fill = div.querySelector('.topic-rank-bar-fill');
                 if (fill) fill.style.width = pct + '%';
             }, 100 + i * 50);
-        });
-    }
-
-    function renderHighRiskTable(container, items) {
-        var el = typeof container === 'string' ? document.getElementById(container) : container;
-        if (!el) return;
-
-        if (!items || items.length === 0) {
-            el.innerHTML = '<div class="empty-state"><p>暂无高风险样本</p></div>';
-            return;
-        }
-
-        var html = '<table class="data-table"><thead><tr>' +
-            '<th>标题</th><th>平台</th><th>产品</th><th>时间</th><th>风险</th>' +
-            '</tr></thead><tbody>';
-
-        items.forEach(function(item) {
-            html += '<tr data-id="' + item.id + '" style="cursor:pointer">' +
-                '<td>' + escapeHtml((item.title || item.clean_text || '').substring(0, 50)) + '</td>' +
-                '<td>' + escapeHtml(item.platform || '-') + '</td>' +
-                '<td>' + escapeHtml(item.product_name || '-') + '</td>' +
-                '<td>' + formatDate(item.publish_time) + '</td>' +
-                '<td><span class="badge badge-high">高</span></td>' +
-                '</tr>';
-        });
-
-        html += '</tbody></table>';
-        el.innerHTML = html;
-
-        el.querySelectorAll('tr[data-id]').forEach(function(row) {
-            row.addEventListener('click', function() {
-                showContentDetail(row.getAttribute('data-id'));
-            });
         });
     }
 
@@ -219,7 +186,7 @@ var Components = (function() {
             if (body) {
                 body.innerHTML =
                     '<div style="margin-bottom:1rem">' +
-                        '<span class="badge badge-' + (data.sentiment || 'neutral') + '">' + (data.sentiment || '-') + '</span> ' +
+                        '<span class="badge badge-' + (data.credibility_level || 'medium') + '">' + (data.credibility_level || '-') + '</span> ' +
                         '<span class="badge badge-' + (data.risk_level === 'high' ? 'high' : data.risk_level === 'medium' ? 'medium' : 'low') + '">' + (data.risk_level || '-') + '</span>' +
                     '</div>' +
                     '<h3 style="margin-bottom:0.5rem">' + escapeHtml(data.title || '无标题') + '</h3>' +
@@ -322,7 +289,6 @@ var Components = (function() {
         renderStatCards: renderStatCards,
         renderContentList: renderContentList,
         renderTopicRank: renderTopicRank,
-        renderHighRiskTable: renderHighRiskTable,
         renderPagination: renderPagination,
         showContentDetail: showContentDetail,
         animateNumber: animateNumber,

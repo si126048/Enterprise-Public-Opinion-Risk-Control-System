@@ -6,9 +6,11 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
 
+from backend.config import get_config
 from backend.db.database import get_connection
 from backend.discovery import clusterer
 from backend.services import embedding_service, vector_store
+from backend.services.review_agent import _do_approve, _do_ignore, _do_merge, review_all_pending
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,14 @@ router = APIRouter(prefix="/api/discovery", tags=["discovery"])
 @router.post("/run")
 async def run_discovery():
     result = clusterer.run_discovery()
-    return {"status": "ok", "result": result}
+    agent_result = None
+    config = get_config()
+    if result.get("candidates_created", 0) > 0 and config.get("review_agent", {}).get("auto_run_after_discovery"):
+        try:
+            agent_result = review_all_pending()
+        except Exception as e:
+            logger.warning("Auto review after discovery failed: %s", e)
+    return {"status": "ok", "result": result, "agent_review": agent_result}
 
 
 @router.get("/candidates")
@@ -77,7 +86,7 @@ async def get_candidate_detail(candidate_id: str):
             placeholders = ",".join("?" * len(repr_ids))
             rows = conn.execute(
                 f"""SELECT rc.id, rc.title, rc.clean_text, rc.source, rc.publish_time,
-                           ca.sentiment, ca.risk_level, ca.summary
+                           ca.credibility_level, ca.risk_level, ca.summary
                     FROM raw_content rc
                     LEFT JOIN content_analysis ca ON rc.id = ca.content_id
                     WHERE rc.id IN ({placeholders})""",
@@ -107,47 +116,9 @@ async def approve_candidate(candidate_id: str):
         if candidate["status"] != "pending":
             raise HTTPException(400, f"Candidate status is '{candidate['status']}', not 'pending'")
 
-        proposed_anchors = json.loads(candidate.get("proposed_anchors_json") or "[]")
-        now = datetime.now().isoformat()
-        topic_id = "topic_" + uuid.uuid4().hex[:8]
-
-        conn.execute(
-            """INSERT INTO topics (id, name, description, status, version, created_at, updated_at)
-               VALUES (?, ?, ?, 'active', 1, ?, ?)""",
-            (topic_id, candidate["name"], candidate["description"], now, now),
-        )
-
-        space_id = embedding_service.get_space_id()
-        anchor_ids = []
-        anchor_texts = []
-        anchor_metas = []
-        for idx, anchor_text in enumerate(proposed_anchors):
-            anchor_id = f"anchor_{topic_id}_{idx}"
-            conn.execute(
-                """INSERT INTO topic_anchors
-                   (id, topic_id, text, embedding_space_id, status, created_at)
-                   VALUES (?, ?, ?, ?, 'active', ?)""",
-                (anchor_id, topic_id, anchor_text, space_id, now),
-            )
-            anchor_ids.append(anchor_id)
-            anchor_texts.append(anchor_text)
-            anchor_metas.append({"topic_id": topic_id, "text": anchor_text})
-
-        conn.execute(
-            """UPDATE candidate_topics
-               SET status = 'approved', reviewed_at = ?, updated_at = ?
-               WHERE id = ?""",
-            (now, now, candidate_id),
-        )
-        conn.commit()
+        topic_id = _do_approve(conn, candidate)
     finally:
         conn.close()
-
-    if anchor_texts:
-        vectors = embedding_service.embed_batch(anchor_texts)
-        vector_store.add_anchor_embeddings(anchor_ids, vectors, anchor_metas)
-        logger.info("Approved candidate %s → topic %s with %d anchors",
-                     candidate_id, topic_id, len(anchor_ids))
 
     return {"status": "ok", "topic_id": topic_id}
 
@@ -167,14 +138,7 @@ async def ignore_candidate(candidate_id: str, request: Request):
         if dict(candidate)["status"] != "pending":
             raise HTTPException(400, "Candidate is not pending")
 
-        now = datetime.now().isoformat()
-        conn.execute(
-            """UPDATE candidate_topics
-               SET status = 'ignored', reviewed_at = ?, review_comment = ?
-               WHERE id = ?""",
-            (now, comment, candidate_id),
-        )
-        conn.commit()
+        _do_ignore(conn, candidate_id, comment)
     finally:
         conn.close()
 
@@ -205,44 +169,9 @@ async def merge_candidate(candidate_id: str, request: Request):
         if not target:
             raise HTTPException(404, "Target topic not found")
 
-        proposed_anchors = json.loads(candidate.get("proposed_anchors_json") or "[]")
-        now = datetime.now().isoformat()
-        space_id = embedding_service.get_space_id()
-
-        anchor_ids = []
-        anchor_texts = []
-        anchor_metas = []
-        existing_count = conn.execute(
-            "SELECT COUNT(*) FROM topic_anchors WHERE topic_id = ?", (target_topic_id,)
-        ).fetchone()[0]
-
-        for idx, anchor_text in enumerate(proposed_anchors):
-            anchor_id = f"anchor_{target_topic_id}_{existing_count + idx}"
-            conn.execute(
-                """INSERT INTO topic_anchors
-                   (id, topic_id, text, embedding_space_id, status, created_at)
-                   VALUES (?, ?, ?, ?, 'active', ?)""",
-                (anchor_id, target_topic_id, anchor_text, space_id, now),
-            )
-            anchor_ids.append(anchor_id)
-            anchor_texts.append(anchor_text)
-            anchor_metas.append({"topic_id": target_topic_id, "text": anchor_text})
-
-        conn.execute(
-            """UPDATE candidate_topics
-               SET status = 'merged', reviewed_at = ?, review_comment = ?
-               WHERE id = ?""",
-            (now, f"Merged into {target_topic_id}", candidate_id),
-        )
-        conn.commit()
+        _do_merge(conn, candidate, target_topic_id)
     finally:
         conn.close()
-
-    if anchor_texts:
-        vectors = embedding_service.embed_batch(anchor_texts)
-        vector_store.add_anchor_embeddings(anchor_ids, vectors, anchor_metas)
-        logger.info("Merged candidate %s → topic %s with %d anchors",
-                     candidate_id, target_topic_id, len(anchor_ids))
 
     return {"status": "ok", "target_topic_id": target_topic_id}
 

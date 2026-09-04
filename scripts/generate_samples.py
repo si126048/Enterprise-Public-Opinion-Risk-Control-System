@@ -132,11 +132,13 @@ PRODUCTS = {
 }
 
 PLATFORMS = {
-    "微博": {"weight": 0.35, "source_type": "social_media", "url_tpl": "https://weibo.com/{uid}", "followers_range": (500, 50000)},
-    "小红书": {"weight": 0.20, "source_type": "social_media", "url_tpl": "https://xiaohongshu.com/{uid}", "followers_range": (200, 20000)},
-    "知乎": {"weight": 0.18, "source_type": "forum", "url_tpl": "https://zhihu.com/{uid}", "followers_range": (100, 30000)},
-    "B站": {"weight": 0.20, "source_type": "social_media", "url_tpl": "https://bilibili.com/{uid}", "followers_range": (1000, 100000)},
-    "TapTap": {"weight": 0.07, "source_type": "forum", "url_tpl": "https://taptap.com/{uid}", "followers_range": (50, 10000)},
+    "微博": {"weight": 0.30, "source_type": "social_media", "url_tpl": "https://weibo.com/{uid}", "followers_range": (500, 50000)},
+    "小红书": {"weight": 0.18, "source_type": "social_media", "url_tpl": "https://xiaohongshu.com/{uid}", "followers_range": (200, 20000)},
+    "知乎": {"weight": 0.15, "source_type": "forum", "url_tpl": "https://zhihu.com/{uid}", "followers_range": (100, 30000)},
+    "B站": {"weight": 0.17, "source_type": "social_media", "url_tpl": "https://bilibili.com/{uid}", "followers_range": (1000, 100000)},
+    "TapTap": {"weight": 0.06, "source_type": "forum", "url_tpl": "https://taptap.com/{uid}", "followers_range": (50, 10000)},
+    "小黑盒": {"weight": 0.07, "source_type": "forum", "url_tpl": "https://xiaoheihe.cn/{uid}", "followers_range": (100, 30000)},
+    "米游社": {"weight": 0.07, "source_type": "forum", "url_tpl": "https://miyoushe.com/{uid}", "followers_range": (200, 50000)},
 }
 
 TAGS_MAP = {
@@ -149,7 +151,7 @@ TAGS_MAP = {
 
 VER_POOL = ["4.8", "4.9", "5.0", "2.5", "2.6", "1.3", "1.4", "3.0"]
 
-SENTIMENT_WEIGHTS = {"negative": 0.45, "neutral": 0.35, "positive": 0.20}
+CREDIBILITY_WEIGHTS = {"low": 0.45, "medium": 0.35, "high": 0.20}
 
 
 def pick_product():
@@ -164,18 +166,18 @@ def pick_platform():
     return random.choices(platforms, weights=weights, k=1)[0]
 
 
-def pick_sentiment():
+def pick_credibility_level():
     return random.choices(
-        list(SENTIMENT_WEIGHTS.keys()),
-        weights=list(SENTIMENT_WEIGHTS.values()),
+        list(CREDIBILITY_WEIGHTS.keys()),
+        weights=list(CREDIBILITY_WEIGHTS.values()),
         k=1
     )[0]
 
 
-def generate_content(product, sentiment):
+def generate_content(product, credibility_level):
     pdata = PRODUCTS[product]
-    key_map = {"negative": "templates_neg", "neutral": "templates_neu", "positive": "templates_pos"}
-    templates = pdata[key_map[sentiment]]
+    key_map = {"low": "templates_neg", "medium": "templates_neu", "high": "templates_pos"}
+    templates = pdata[key_map[credibility_level]]
     text = random.choice(templates)
     ver = random.choice(VER_POOL)
     text = text.replace("{ver}", ver)
@@ -185,14 +187,14 @@ def generate_content(product, sentiment):
 def generate_record(record_id):
     product = pick_product()
     platform = pick_platform()
-    sentiment = pick_sentiment()
+    credibility_level = pick_credibility_level()
 
     pdata = PRODUCTS[product]
     pldata = PLATFORMS[platform]
 
     author = random.choice(pdata["authors"])
     followers = random.randint(*pldata["followers_range"])
-    content = generate_content(product, sentiment)
+    content = generate_content(product, credibility_level)
     tags = ",".join(random.sample(TAGS_MAP.get(product, []), k=random.randint(1, 2)))
 
     uid = f"user_{random.randint(100000, 999999)}"
@@ -202,11 +204,11 @@ def generate_record(record_id):
     hours_offset = random.randint(0, 23)
     publish_time = (datetime(2026, 9, 4) - timedelta(days=days_ago, hours=hours_offset)).strftime("%Y-%m-%d %H:%M:%S")
 
-    if sentiment == "negative":
+    if credibility_level == "low":
         likes = random.randint(50, 2000)
         comments = random.randint(20, 500)
         shares = random.randint(10, 300)
-    elif sentiment == "positive":
+    elif credibility_level == "high":
         likes = random.randint(100, 5000)
         comments = random.randint(30, 800)
         shares = random.randint(20, 500)

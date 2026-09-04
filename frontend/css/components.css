@@ -62,9 +62,9 @@
   box-shadow: 0 6px 24px rgba(0,0,0,0.08);
 }
 
-.content-card.sentiment-positive { border-left-color: var(--color-positive); }
-.content-card.sentiment-negative { border-left-color: var(--color-negative); }
-.content-card.sentiment-neutral { border-left-color: var(--color-neutral); }
+.content-card.credibility-high { border-left-color: var(--color-positive); }
+.content-card.credibility-low { border-left-color: var(--color-negative); }
+.content-card.credibility-medium { border-left-color: var(--color-neutral); }
 
 .content-card .card-risk-tag {
   position: absolute;

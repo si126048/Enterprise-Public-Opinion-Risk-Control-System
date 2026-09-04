@@ -29,15 +29,15 @@ function formatDate(dateStr) {
   return y + '-' + m + '-' + day + ' ' + h + ':' + min;
 }
 
-function sentimentBadge(sentiment) {
-  var cls = 'badge badge-' + (sentiment || 'uncertain');
+function credibilityBadge(credibility) {
+  var cls = 'badge badge-' + (credibility || 'uncertain');
   var labels = {
-    positive: '正面',
-    negative: '负面',
-    neutral: '中性',
+    high: '高可信',
+    low: '低可信',
+    medium: '中可信',
     uncertain: '不确定'
   };
-  return '<span class="' + cls + '">' + (labels[sentiment] || sentiment || '-') + '</span>';
+  return '<span class="' + cls + '">' + (labels[credibility] || credibility || '-') + '</span>';
 }
 
 function riskBadge(risk) {

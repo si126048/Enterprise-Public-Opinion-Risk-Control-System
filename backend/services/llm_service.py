@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LLMAnalysisResult:
-    sentiment: str
-    sentiment_confidence: float
+    credibility_level: str
+    credibility_confidence: float
     risk_level: str
     risk_confidence: float
     summary: str
@@ -41,17 +41,18 @@ THEORY_MAP = {
 
 
 class MockLLMProvider(BaseLLMProvider):
-    NEGATIVE_KEYWORDS = [
-        "退坑", "弃坑", "垃圾", "太差", "差评", "失望", "恶心",
-        "逼氪", "骗氪", "割韭菜", "吃相难看", "暗改", "削弱",
-        "卡顿", "闪退", "掉帧", "bug", "崩溃", "优化差",
-        "不平衡", "超标", "下水道", "拉踩", "摆烂", "敷衍",
-        "策划", "运营", "装死", "冷处理", "删帖", "控评",
+    LOW_KEYWORDS = [
+        "听说", "据说", "谣言", "虚假", "编造", "无证据", "不实",
+        "道听途说", "未经验证", "存疑", "可疑", "伪造",
+        "退坑", "弃坑", "垃圾", "太差", "差评", "失望",
+        "逼氪", "骗氪", "割韭菜", "吃相难看",
+        "卡顿", "闪退", "掉帧", "bug", "崩溃",
     ]
-    POSITIVE_KEYWORDS = [
-        "好玩", "神作", "良心", "好评", "推荐", "不错", "惊艳",
-        "优化好", "流畅", "福利多", "良心运营", "尊重玩家",
-        "剧情好", "美术棒", "音乐赞", "手感好", "值得",
+    HIGH_KEYWORDS = [
+        "数据", "来源", "引用", "官方", "证实", "可查",
+        "有据可查", "实锤", "确凿", "权威", "可靠",
+        "好玩", "神作", "良心", "好评", "推荐", "不错",
+        "优化好", "流畅", "福利多", "剧情好", "美术棒",
     ]
     HIGH_RISK_KEYWORDS = [
         "维权", "举报", "投诉", "315", "消费者", "欺诈",
@@ -60,22 +61,22 @@ class MockLLMProvider(BaseLLMProvider):
     ]
 
     def analyze(self, text: str, topic_name: str, metadata: Dict = None) -> LLMAnalysisResult:
-        neg_count = sum(1 for kw in self.NEGATIVE_KEYWORDS if kw in text)
-        pos_count = sum(1 for kw in self.POSITIVE_KEYWORDS if kw in text)
+        low_count = sum(1 for kw in self.LOW_KEYWORDS if kw in text)
+        high_count = sum(1 for kw in self.HIGH_KEYWORDS if kw in text)
         high_risk_count = sum(1 for kw in self.HIGH_RISK_KEYWORDS if kw in text)
 
         if len(text.strip()) < 10:
-            sentiment = "uncertain"
-            sentiment_confidence = 0.30
-        elif neg_count > pos_count + 1:
-            sentiment = "negative"
-            sentiment_confidence = min(0.65 + neg_count * 0.05, 0.95)
-        elif pos_count > neg_count:
-            sentiment = "positive"
-            sentiment_confidence = min(0.65 + pos_count * 0.05, 0.95)
+            credibility_level = "uncertain"
+            credibility_confidence = 0.30
+        elif low_count > high_count + 1:
+            credibility_level = "low"
+            credibility_confidence = min(0.65 + low_count * 0.05, 0.95)
+        elif high_count > low_count:
+            credibility_level = "high"
+            credibility_confidence = min(0.65 + high_count * 0.05, 0.95)
         else:
-            sentiment = "neutral"
-            sentiment_confidence = 0.55
+            credibility_level = "medium"
+            credibility_confidence = 0.55
 
         if high_risk_count >= 2:
             risk_level = "high"
@@ -83,7 +84,7 @@ class MockLLMProvider(BaseLLMProvider):
         elif high_risk_count == 1:
             risk_level = "medium"
             risk_confidence = 0.70
-        elif sentiment == "negative":
+        elif credibility_level == "low":
             risk_level = "medium"
             risk_confidence = 0.55
         else:
@@ -98,8 +99,8 @@ class MockLLMProvider(BaseLLMProvider):
         theory_perspective = THEORY_MAP.get(topic_name, "基层治理综合评估")
 
         return LLMAnalysisResult(
-            sentiment=sentiment,
-            sentiment_confidence=round(sentiment_confidence, 2),
+            credibility_level=credibility_level,
+            credibility_confidence=round(credibility_confidence, 2),
             risk_level=risk_level,
             risk_confidence=round(risk_confidence, 2),
             summary=summary,
@@ -108,14 +109,15 @@ class MockLLMProvider(BaseLLMProvider):
 
 
 class SimulatedDeepSeekProvider(BaseLLMProvider):
-    NEGATIVE_KEYWORDS = [
-        "投诉", "无人管", "没人修", "太差", "不满", "糟糕", "严重",
-        "恶劣", "脏乱", "危险", "破损", "故障", "堵塞", "拥堵",
-        "混乱", "噪音", "扰民", "推诿", "不作为", "意见很大",
+    LOW_KEYWORDS = [
+        "听说", "据说", "谣言", "虚假", "不实", "无证据",
+        "投诉", "无人管", "没人修", "太差", "不满", "糟糕",
+        "恶劣", "故障", "混乱", "推诿", "不作为",
     ]
-    POSITIVE_KEYWORDS = [
-        "点赞", "不错", "好评", "完成", "方便", "效率", "及时",
-        "满意", "感谢", "改善", "整洁", "畅通", "安全", "舒适",
+    HIGH_KEYWORDS = [
+        "数据", "来源", "引用", "官方", "证实", "可查",
+        "点赞", "不错", "好评", "完成", "方便", "效率",
+        "满意", "感谢", "改善", "安全",
     ]
     HIGH_RISK_KEYWORDS = [
         "安全隐患", "砸到人", "着火", "危险", "爆炸", "坍塌",
@@ -124,24 +126,24 @@ class SimulatedDeepSeekProvider(BaseLLMProvider):
 
     def analyze(self, text: str, topic_name: str, metadata: Dict = None) -> LLMAnalysisResult:
         h = hash(text) % 1000
-        neg_count = sum(1 for kw in self.NEGATIVE_KEYWORDS if kw in text)
-        pos_count = sum(1 for kw in self.POSITIVE_KEYWORDS if kw in text)
+        low_count = sum(1 for kw in self.LOW_KEYWORDS if kw in text)
+        high_count = sum(1 for kw in self.HIGH_KEYWORDS if kw in text)
         high_risk_count = sum(1 for kw in self.HIGH_RISK_KEYWORDS if kw in text)
 
-        score = neg_count - pos_count + (h % 3 - 1) * 0.3
+        score = low_count - high_count + (h % 3 - 1) * 0.3
 
         if len(text.strip()) < 10:
-            sentiment = "uncertain"
-            sentiment_confidence = 0.28
+            credibility_level = "uncertain"
+            credibility_confidence = 0.28
         elif score > 0.5:
-            sentiment = "negative"
-            sentiment_confidence = min(0.60 + neg_count * 0.06, 0.92)
+            credibility_level = "low"
+            credibility_confidence = min(0.60 + low_count * 0.06, 0.92)
         elif score < -0.5:
-            sentiment = "positive"
-            sentiment_confidence = min(0.60 + pos_count * 0.06, 0.92)
+            credibility_level = "high"
+            credibility_confidence = min(0.60 + high_count * 0.06, 0.92)
         else:
-            sentiment = "neutral"
-            sentiment_confidence = 0.50 + (h % 10) * 0.01
+            credibility_level = "medium"
+            credibility_confidence = 0.50 + (h % 10) * 0.01
 
         if high_risk_count >= 2:
             risk_level = "high"
@@ -149,7 +151,7 @@ class SimulatedDeepSeekProvider(BaseLLMProvider):
         elif high_risk_count == 1:
             risk_level = "medium"
             risk_confidence = 0.65
-        elif sentiment == "negative":
+        elif credibility_level == "low":
             risk_level = "medium"
             risk_confidence = 0.50
         else:
@@ -163,8 +165,8 @@ class SimulatedDeepSeekProvider(BaseLLMProvider):
         theory_perspective = THEORY_MAP.get(topic_name, "基层治理综合评估")
 
         return LLMAnalysisResult(
-            sentiment=sentiment,
-            sentiment_confidence=round(sentiment_confidence, 2),
+            credibility_level=credibility_level,
+            credibility_confidence=round(credibility_confidence, 2),
             risk_level=risk_level,
             risk_confidence=round(risk_confidence, 2),
             summary=summary,
@@ -173,14 +175,15 @@ class SimulatedDeepSeekProvider(BaseLLMProvider):
 
 
 class SimulatedQwenProvider(BaseLLMProvider):
-    NEGATIVE_KEYWORDS = [
-        "投诉", "无人管", "没人修", "太差", "不满", "严重",
-        "恶劣", "脏乱", "危险", "破损", "故障", "堵塞",
-        "混乱", "噪音", "扰民", "不作为",
+    LOW_KEYWORDS = [
+        "听说", "据说", "谣言", "虚假", "不实",
+        "投诉", "无人管", "没人修", "太差", "不满",
+        "恶劣", "故障", "混乱", "不作为",
     ]
-    POSITIVE_KEYWORDS = [
-        "点赞", "不错", "好评", "完成", "方便", "满意",
-        "感谢", "改善", "整洁", "畅通", "安全",
+    HIGH_KEYWORDS = [
+        "数据", "来源", "引用", "官方", "证实", "可查",
+        "点赞", "不错", "好评", "完成", "满意",
+        "感谢", "改善", "安全",
     ]
     HIGH_RISK_KEYWORDS = [
         "安全隐患", "着火", "危险", "爆炸", "坍塌",
@@ -189,22 +192,22 @@ class SimulatedQwenProvider(BaseLLMProvider):
 
     def analyze(self, text: str, topic_name: str, metadata: Dict = None) -> LLMAnalysisResult:
         h = hash(text) % 1000
-        neg_count = sum(1 for kw in self.NEGATIVE_KEYWORDS if kw in text)
-        pos_count = sum(1 for kw in self.POSITIVE_KEYWORDS if kw in text)
+        low_count = sum(1 for kw in self.LOW_KEYWORDS if kw in text)
+        high_count = sum(1 for kw in self.HIGH_KEYWORDS if kw in text)
         high_risk_count = sum(1 for kw in self.HIGH_RISK_KEYWORDS if kw in text)
 
         if len(text.strip()) < 10:
-            sentiment = "uncertain"
-            sentiment_confidence = 0.32
-        elif neg_count > pos_count + 2:
-            sentiment = "negative"
-            sentiment_confidence = min(0.58 + neg_count * 0.04, 0.88)
-        elif pos_count > neg_count + 1:
-            sentiment = "positive"
-            sentiment_confidence = min(0.58 + pos_count * 0.04, 0.88)
+            credibility_level = "uncertain"
+            credibility_confidence = 0.32
+        elif low_count > high_count + 2:
+            credibility_level = "low"
+            credibility_confidence = min(0.58 + low_count * 0.04, 0.88)
+        elif high_count > low_count + 1:
+            credibility_level = "high"
+            credibility_confidence = min(0.58 + high_count * 0.04, 0.88)
         else:
-            sentiment = "neutral"
-            sentiment_confidence = 0.55 + (h % 8) * 0.01
+            credibility_level = "medium"
+            credibility_confidence = 0.55 + (h % 8) * 0.01
 
         if high_risk_count >= 3:
             risk_level = "high"
@@ -222,8 +225,8 @@ class SimulatedQwenProvider(BaseLLMProvider):
         theory_perspective = THEORY_MAP.get(topic_name, "基层治理综合评估")
 
         return LLMAnalysisResult(
-            sentiment=sentiment,
-            sentiment_confidence=round(sentiment_confidence, 2),
+            credibility_level=credibility_level,
+            credibility_confidence=round(credibility_confidence, 2),
             risk_level=risk_level,
             risk_confidence=round(risk_confidence, 2),
             summary=summary,
@@ -276,7 +279,7 @@ def analyze_content(text: str, topic_name: str, content_id: str = None,
             input_ids=[content_id] if content_id else [],
             raw_output=json.dumps({"text_length": len(text), "topic": topic_name}),
             parsed_output=json.dumps({
-                "sentiment": result.sentiment,
+                "credibility_level": result.credibility_level,
                 "risk_level": result.risk_level,
                 "summary": result.summary,
             }),

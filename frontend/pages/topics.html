@@ -20,7 +20,6 @@
             <li><a href="content.html">舆情列表</a></li>
             <li><a href="search.html">语义搜索</a></li>
             <li><a href="topics.html" class="active">风险主题</a></li>
-            <li><a href="review.html" class="nav-highlight">审核</a></li>
             <li><a href="risk_events.html">风控事件</a></li>
         </ul>
         <div class="nav-actions">
@@ -194,13 +193,9 @@
                 var count = topic.content_count || topic.count || 0;
                 var negRate = topic.negative_rate ? (topic.negative_rate * 100).toFixed(1) + '%' : '-';
 
-                var html = '<div class="grid grid-3 mb-2">';
+                var html = '<div class="grid grid-2 mb-2">';
                 html += '<div class="stat-card"><div class="stat-value">' + count + '</div><div class="stat-label">内容数</div></div>';
                 html += '<div class="stat-card"><div class="stat-value">' + negRate + '</div><div class="stat-label">负面率</div></div>';
-
-                var riskDist = topic.risk_distribution || {};
-                var highPct = count > 0 ? Math.round((riskDist.high || 0) / count * 100) : 0;
-                html += '<div class="stat-card"><div class="stat-value">' + highPct + '%</div><div class="stat-label">高风险占比</div></div>';
                 html += '</div>';
 
                 if (topic.anchors && topic.anchors.length > 0) {
@@ -210,24 +205,8 @@
                     });
                 }
 
-                if (topic.sentiment_distribution) {
-                    html += '<div class="section-title" style="font-size:0.8rem;margin-top:1rem">情感分布</div>';
-                    html += '<div id="topic-sentiment-chart" style="height:160px"></div>';
-                }
-
                 body.innerHTML = html;
                 modal.classList.add('active');
-
-                if (topic.sentiment_distribution) {
-                    setTimeout(function() {
-                        var sd = topic.sentiment_distribution;
-                        Charts.initSentimentDistribution('topic-sentiment-chart', [
-                            { name: '正面', value: sd.positive || 0 },
-                            { name: '中性', value: sd.neutral || 0 },
-                            { name: '负面', value: sd.negative || 0 }
-                        ]);
-                    }, 100);
-                }
             }
         };
 

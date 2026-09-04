@@ -71,16 +71,11 @@ var Interactions = (function() {
         var cards = [
             { label: '总舆情', value: stats.total_count || stats.total || 0 },
             { label: '负面比例', value: Math.round((stats.negative_rate || 0) * 100) + '%' },
-            { label: '高风险事件', value: stats.high_risk_count || (stats.risk_distribution ? stats.risk_distribution.high || 0 : 0) },
             { label: '社区热度', value: Math.round(stats.community_heat_score || 0) },
             { label: '产品数', value: stats.product_distribution ? Object.keys(stats.product_distribution).length : 0 },
             { label: '平台数', value: stats.platform_distribution ? Object.keys(stats.platform_distribution).length : 0 }
         ];
         Components.renderStatCards('stats-cards', cards);
-
-        if (stats.recent_high_risk) {
-            Components.renderHighRiskTable('high-risk-table', stats.recent_high_risk);
-        }
 
         if (stats.trend_data) {
             var trendData = stats.trend_data.dates.map(function(date, i) {
@@ -127,28 +122,6 @@ var Interactions = (function() {
             return { name: t.topic_id || t.name || t.id, count: t.content_count || t.count || 0 };
         });
         Charts.initTopicDistribution('chart-topic-dist', topicDist);
-
-        var sentimentData = [];
-        if (sorted.length > 0) {
-            var totalPos = 0, totalNeg = 0, totalNeu = 0;
-            sorted.forEach(function(t) {
-                if (t.sentiment_distribution) {
-                    totalPos += t.sentiment_distribution.positive || 0;
-                    totalNeg += t.sentiment_distribution.negative || 0;
-                    totalNeu += t.sentiment_distribution.neutral || 0;
-                }
-            });
-            if (totalPos + totalNeg + totalNeu > 0) {
-                sentimentData = [
-                    { name: '正面', value: totalPos },
-                    { name: '中性', value: totalNeu },
-                    { name: '负面', value: totalNeg }
-                ];
-            }
-        }
-        if (sentimentData.length > 0) {
-            Charts.initSentimentDistribution('chart-sentiment-dist', sentimentData);
-        }
     }
 
     var StatsPanel = {
@@ -159,8 +132,7 @@ var Interactions = (function() {
             var cards = [
                 { label: productName + ' · 总量', value: stats.total || 0 },
                 { label: '负面数量', value: stats.negative || 0 },
-                { label: '负面率', value: stats.total > 0 ? Math.round(stats.negative / stats.total * 100) + '%' : '0%' },
-                { label: '高风险', value: stats.high_risk || 0 }
+                { label: '负面率', value: stats.total > 0 ? Math.round(stats.negative / stats.total * 100) + '%' : '0%' }
             ];
             Components.renderStatCards('stats-cards', cards);
         },

@@ -13,7 +13,9 @@ var PlatformDistribution = (function() {
         '小红书': '#FF2442',
         '知乎': '#0066FF',
         'B站': '#00A1D6',
-        'TapTap': '#15C51A'
+        'TapTap': '#15C51A',
+        '小黑盒': '#1B1B1B',
+        '米游社': '#00B4E8'
     };
 
     var productColors = {

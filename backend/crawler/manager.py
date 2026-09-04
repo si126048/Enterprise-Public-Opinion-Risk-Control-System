@@ -16,9 +16,20 @@ logger = logging.getLogger(__name__)
 class CrawlerManager:
 
     def __init__(self):
-        config = load_config()
-        self.config = config.get("crawler", {})
+        self._full_config = load_config()
+        self.config = self._full_config.get("crawler", {})
         self._registry = get_parser_registry()
+
+    def _get_keywords(self) -> List[str]:
+        companies = self._full_config.get("companies", [])
+        keywords = []
+        for company in companies:
+            if company.get("is_active", True):
+                keywords.extend(company.get("keywords", []))
+        return keywords
+
+    def _get_company_id(self) -> str:
+        return self._full_config.get("app", {}).get("default_company", "mihoyo")
 
     def list_crawlers(self) -> List[Dict]:
         result = []
@@ -49,7 +60,9 @@ class CrawlerManager:
         crawler = crawler_cls(name=crawler_name, site_config=site_cfg, global_config=self.config)
 
         try:
-            records = crawler.crawl()
+            keywords = self._get_keywords()
+            company_id = self._get_company_id()
+            records = crawler.crawl(keywords=keywords, company_id=company_id)
 
             import_stats = {"total": 0, "imported": 0, "skipped_duplicate": 0, "errors": 0}
             if records:

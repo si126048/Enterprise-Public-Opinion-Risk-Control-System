@@ -8,7 +8,7 @@ var AppStore = (function() {
         currentCompany: 'mihoyo',
         currentProduct: null,
         filters: {
-            sentiment: null,
+            credibility_level: null,
             topic: null,
             risk_level: null,
             platform: null,

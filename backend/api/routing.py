@@ -25,11 +25,6 @@ async def analysis_status():
         ).fetchone()["c"]
         analyzed = conn.execute("SELECT COUNT(*) as c FROM content_analysis").fetchone()["c"]
 
-        sentiment_rows = conn.execute("""
-            SELECT sentiment, COUNT(*) as count
-            FROM content_analysis GROUP BY sentiment
-        """).fetchall()
-
         topic_rows = conn.execute("""
             SELECT t.id, t.name, COUNT(ca.content_id) as count
             FROM content_analysis ca
@@ -37,17 +32,10 @@ async def analysis_status():
             GROUP BY ca.topic_id ORDER BY count DESC
         """).fetchall()
 
-        risk_rows = conn.execute("""
-            SELECT risk_level, COUNT(*) as count
-            FROM content_analysis GROUP BY risk_level
-        """).fetchall()
-
         return {
             "total_content": total,
             "analyzed": analyzed,
             "pending": max(0, total - analyzed),
-            "sentiment_distribution": {r["sentiment"]: r["count"] for r in sentiment_rows},
-            "risk_distribution": {r["risk_level"]: r["count"] for r in risk_rows},
             "topic_distribution": [
                 {"topic_id": r["id"], "name": r["name"], "count": r["count"]}
                 for r in topic_rows
@@ -96,7 +84,7 @@ async def get_topic_detail(topic_id: str):
         ).fetchall()
 
         content = conn.execute("""
-            SELECT ca.content_id, ca.sentiment, ca.risk_level, ca.summary,
+            SELECT ca.content_id, ca.credibility_level, ca.risk_level, ca.summary,
                    ca.topic_similarity, ca.review_status,
                    rc.title, rc.source
             FROM content_analysis ca

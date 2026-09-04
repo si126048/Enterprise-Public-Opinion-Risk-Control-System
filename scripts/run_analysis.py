@@ -202,7 +202,7 @@ def run_analysis():
                 likes=item["likes"] or 0,
                 comments=item["comments"] or 0,
                 shares=item["shares"] or 0,
-                sentiment=result.sentiment,
+                credibility_level=result.credibility_level,
                 platform=item["platform"] or "weibo",
                 content_length=item["content_length"] or len(text),
             )
@@ -228,7 +228,7 @@ def run_analysis():
                 wconn.execute("""
                     INSERT OR REPLACE INTO content_analysis
                     (content_id, topic_id, topic_similarity,
-                     sentiment, sentiment_confidence,
+                     credibility_level, credibility_confidence,
                      risk_level, risk_confidence,
                      summary, theory_perspective,
                      credibility_score, credibility_factors,
@@ -238,7 +238,7 @@ def run_analysis():
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
                 """, (
                     content_id, topic_id, topic_similarity,
-                    result.sentiment, result.sentiment_confidence,
+                    result.credibility_level, result.credibility_confidence,
                     result.risk_level, result.risk_confidence,
                     result.summary, result.theory_perspective,
                     cred.overall, json.dumps(cred.factors, ensure_ascii=False),
@@ -254,7 +254,7 @@ def run_analysis():
             logger.info("[%d/%d] %s → %s | %s | %s | cred=%.2f | heat=%.4f",
                         stats["analyzed"], stats["total"],
                         content_id[:8], topic_name,
-                        result.sentiment, result.risk_level,
+                        result.credibility_level, result.risk_level,
                         cred.overall, heat)
 
         except Exception as e:

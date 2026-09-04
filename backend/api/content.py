@@ -13,7 +13,7 @@ async def list_content(
     company_id: Optional[str] = None,
     product_name: Optional[str] = None,
     platform: Optional[str] = None,
-    sentiment: Optional[str] = None,
+    credibility_level: Optional[str] = None,
     topic_id: Optional[str] = None,
     search: Optional[str] = None,
     risk_level: Optional[str] = None,
@@ -36,9 +36,9 @@ async def list_content(
         if platform:
             conditions.append("rc.platform = ?")
             params.append(platform)
-        if sentiment:
-            conditions.append("ca.sentiment = ?")
-            params.append(sentiment)
+        if credibility_level:
+            conditions.append("ca.credibility_level = ?")
+            params.append(credibility_level)
         if topic_id:
             conditions.append("ca.topic_id = ?")
             params.append(topic_id)
@@ -76,7 +76,7 @@ async def list_content(
                 rc.platform, rc.source_type, rc.author, rc.followers,
                 rc.content, rc.title, rc.url, rc.publish_time, rc.crawl_time,
                 rc.likes, rc.comments, rc.shares, rc.tags, rc.created_at,
-                ca.topic_id, ca.sentiment, ca.sentiment_confidence,
+                ca.topic_id, ca.credibility_level, ca.credibility_confidence,
                 ca.risk_level, ca.risk_confidence, ca.summary,
                 ca.credibility_score, ca.community_heat_score,
                 ca.review_status, ca.topic_similarity
@@ -125,7 +125,7 @@ async def get_content(content_id: str):
                 rc.content_hash, rc.title, rc.url, rc.publish_time, rc.crawl_time,
                 rc.likes, rc.comments, rc.shares, rc.tags, rc.metadata_json,
                 rc.created_at,
-                ca.topic_id, ca.sentiment, ca.sentiment_confidence,
+                ca.topic_id, ca.credibility_level, ca.credibility_confidence,
                 ca.risk_level, ca.risk_confidence, ca.summary,
                 ca.credibility_score, ca.credibility_factors,
                 ca.community_heat_score, ca.risk_advice,
@@ -161,17 +161,17 @@ async def stats_overview(company_id: Optional[str] = None):
             JOIN raw_content rc ON ca.content_id = rc.id {company_filter}
         """, company_params).fetchone()["c"]
 
-        sentiment_rows = conn.execute(f"""
-            SELECT ca.sentiment, COUNT(*) as count
+        credibility_rows = conn.execute(f"""
+            SELECT ca.credibility_level, COUNT(*) as count
             FROM content_analysis ca
             JOIN raw_content rc ON ca.content_id = rc.id
             {company_filter}
-            GROUP BY ca.sentiment
+            GROUP BY ca.credibility_level
         """, company_params).fetchall()
-        sentiment_dist = {r["sentiment"]: r["count"] for r in sentiment_rows}
+        credibility_dist = {r["credibility_level"]: r["count"] for r in credibility_rows}
 
-        negative = sentiment_dist.get("negative", 0)
-        negative_rate = round(negative / analyzed, 4) if analyzed > 0 else 0
+        low_cred = credibility_dist.get("low", 0)
+        low_cred_rate = round(low_cred / analyzed, 4) if analyzed > 0 else 0
 
         topic_rows = conn.execute(f"""
             SELECT t.id, t.name, COUNT(ca.content_id) as count
@@ -210,25 +210,9 @@ async def stats_overview(company_id: Optional[str] = None):
         """, company_params).fetchall()
         product_dist = {r["product_name"]: r["count"] for r in product_rows}
 
-        risk_rows = conn.execute(f"""
-            SELECT ca.risk_level, COUNT(*) as count
-            FROM content_analysis ca
-            JOIN raw_content rc ON ca.content_id = rc.id
-            {company_filter}
-            GROUP BY ca.risk_level
-        """, company_params).fetchall()
-        risk_dist = {r["risk_level"]: r["count"] for r in risk_rows}
-
-        high_risk_count = conn.execute(f"""
-            SELECT COUNT(*) as c FROM content_analysis ca
-            JOIN raw_content rc ON ca.content_id = rc.id
-            {company_filter}
-            {"AND" if company_filter else "WHERE"} ca.risk_level = 'high'
-        """, company_params).fetchone()["c"]
-
         trend_rows = conn.execute(f"""
             SELECT DATE(rc.publish_time) as day, COUNT(*) as total,
-                   SUM(CASE WHEN ca.sentiment = 'negative' THEN 1 ELSE 0 END) as negative
+                   SUM(CASE WHEN ca.credibility_level = 'low' THEN 1 ELSE 0 END) as low_credibility
             FROM raw_content rc
             LEFT JOIN content_analysis ca ON rc.id = ca.content_id
             {company_filter}
@@ -238,7 +222,7 @@ async def stats_overview(company_id: Optional[str] = None):
         """, company_params).fetchall()
         trend_dates = [r["day"] for r in trend_rows]
         trend_total = [r["total"] for r in trend_rows]
-        trend_negative = [r["negative"] for r in trend_rows]
+        trend_low_cred = [r["low_credibility"] for r in trend_rows]
 
         heat_row = conn.execute(f"""
             SELECT AVG(ca.community_heat_score) as avg_heat
@@ -248,36 +232,20 @@ async def stats_overview(company_id: Optional[str] = None):
         """, company_params).fetchone()
         avg_heat = round(heat_row["avg_heat"] or 0, 1)
 
-        high_risk_where = f"{company_filter}{'AND' if company_filter else 'WHERE'} ca.risk_level = 'high'" if company_filter else "WHERE ca.risk_level = 'high'"
-        high_risk_rows = conn.execute(f"""
-            SELECT rc.id, rc.title, rc.platform, rc.author, rc.publish_time,
-                   ca.sentiment, ca.risk_level, ca.summary
-            FROM raw_content rc
-            JOIN content_analysis ca ON rc.id = ca.content_id
-            {high_risk_where}
-            ORDER BY rc.publish_time DESC
-            LIMIT 5
-        """, company_params).fetchall()
-        recent_high_risk = [dict(r) for r in high_risk_rows]
-
         return {
             "total_count": total,
             "total_analyzed": analyzed,
-            "negative_count": negative,
-            "negative_rate": negative_rate,
-            "high_risk_count": high_risk_count,
+            "low_credibility_count": low_cred,
+            "low_credibility_rate": low_cred_rate,
             "community_heat_score": avg_heat,
-            "sentiment_distribution": sentiment_dist,
             "topic_distribution": topic_dist,
             "platform_distribution": platform_dist,
             "product_distribution": product_dist,
-            "risk_distribution": risk_dist,
             "trend_data": {
                 "dates": trend_dates,
                 "total": trend_total,
-                "negative": trend_negative,
+                "low_credibility": trend_low_cred,
             },
-            "recent_high_risk": recent_high_risk,
         }
     finally:
         conn.close()
@@ -295,8 +263,7 @@ async def stats_product(product_name: str, company_id: Optional[str] = None):
 
         row = conn.execute(f"""
             SELECT COUNT(*) as total,
-                   SUM(CASE WHEN ca.sentiment = 'negative' THEN 1 ELSE 0 END) as negative,
-                   SUM(CASE WHEN ca.risk_level = 'high' THEN 1 ELSE 0 END) as high_risk
+                   SUM(CASE WHEN ca.credibility_level = 'low' THEN 1 ELSE 0 END) as low_credibility
             FROM raw_content rc
             LEFT JOIN content_analysis ca ON rc.id = ca.content_id
             {base_filter}
@@ -314,15 +281,6 @@ async def stats_product(product_name: str, company_id: Optional[str] = None):
         """, base_params).fetchall()
         platform_dist = {r["platform"]: r["count"] for r in platform_rows}
 
-        sentiment_rows = conn.execute(f"""
-            SELECT ca.sentiment, COUNT(*) as count
-            FROM content_analysis ca
-            JOIN raw_content rc ON ca.content_id = rc.id
-            {base_filter}
-            GROUP BY ca.sentiment
-        """, base_params).fetchall()
-        sentiment_dist = {r["sentiment"]: r["count"] for r in sentiment_rows}
-
         topic_rows = conn.execute(f"""
             SELECT t.id, t.name, COUNT(ca.content_id) as count
             FROM content_analysis ca
@@ -337,11 +295,9 @@ async def stats_product(product_name: str, company_id: Optional[str] = None):
         return {
             "product": product_name,
             "total": row["total"],
-            "negative": row["negative"],
-            "high_risk": row["high_risk"],
-            "negative_rate": round(row["negative"] / row["total"], 4) if row["total"] > 0 else 0,
+            "low_credibility": row["low_credibility"],
+            "low_credibility_rate": round(row["low_credibility"] / row["total"], 4) if row["total"] > 0 else 0,
             "platform_distribution": platform_dist,
-            "sentiment_distribution": sentiment_dist,
             "topic_distribution": topic_dist,
         }
     finally:

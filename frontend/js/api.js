@@ -68,7 +68,7 @@ var ApiService = (function() {
             if (useMock) {
                 var items = (typeof MOCK_DATA !== 'undefined') ? MOCK_DATA : [];
                 var p = params || {};
-                if (p.sentiment) items = items.filter(function(i) { return i.sentiment === p.sentiment; });
+                if (p.credibility_level) items = items.filter(function(i) { return i.credibility_level === p.credibility_level; });
                 if (p.topic) items = items.filter(function(i) { return i.topic === p.topic; });
                 if (p.risk_level) items = items.filter(function(i) { return i.risk_level === p.risk_level; });
                 if (p.product_name) items = items.filter(function(i) { return i.product_name === p.product_name; });
@@ -128,9 +128,7 @@ var ApiService = (function() {
                 return mockDelay({
                     product: productName,
                     total: count,
-                    platform_distribution: {},
-                    sentiment_distribution: {},
-                    risk_distribution: {}
+                    platform_distribution: {}
                 });
             }
             return fetchApi('/api/stats/product/' + encodeURIComponent(productName));
@@ -148,7 +146,7 @@ var ApiService = (function() {
                             full_name: '上海米哈游网络科技股份有限公司',
                             is_active: true,
                             products: ['原神', '崩坏：星穹铁道', '绝区零', '未定事件簿'],
-                            platforms: ['微博', '小红书', '知乎', 'B站', 'TapTap']
+                            platforms: ['微博', '小红书', '知乎', 'B站', 'TapTap', '小黑盒', '米游社']
                         }
                     ]
                 });
@@ -166,7 +164,7 @@ var ApiService = (function() {
                         full_name: '上海米哈游网络科技股份有限公司',
                         is_active: true,
                         products: ['原神', '崩坏：星穹铁道', '绝区零', '未定事件簿'],
-                        platforms: ['微博', '小红书', '知乎', 'B站', 'TapTap']
+                        platforms: ['微博', '小红书', '知乎', 'B站', 'TapTap', '小黑盒', '米游社']
                     }
                 });
             }
@@ -215,42 +213,6 @@ var ApiService = (function() {
 
         analyzeContent: function() {
             return fetchApi('/api/routing/analyze', { method: 'POST' });
-        },
-
-        // Discovery
-        getDiscoveryCandidates: async function(status) {
-            await ensureDetected();
-            if (useMock) return mockDelay({ candidates: [], stats: { pending: 0 } });
-            var qs = status ? '?status=' + status : '';
-            return fetchApi('/api/discovery/candidates' + qs);
-        },
-
-        getDiscoveryCandidateById: function(id) {
-            return fetchApi('/api/discovery/candidates/' + encodeURIComponent(id));
-        },
-
-        runDiscovery: function() {
-            return fetchApi('/api/discovery/run', { method: 'POST' });
-        },
-
-        approveCandidate: function(id) {
-            return fetchApi('/api/discovery/' + id + '/approve', { method: 'POST' });
-        },
-
-        ignoreCandidate: function(id, comment) {
-            return fetchApi('/api/discovery/' + id + '/ignore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comment: comment || '' })
-            });
-        },
-
-        mergeCandidate: function(id, targetTopicId) {
-            return fetchApi('/api/discovery/' + id + '/merge', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target_topic_id: targetTopicId })
-            });
         },
 
         // Validation
@@ -310,7 +272,7 @@ var ApiService = (function() {
             await ensureDetected();
             if (useMock) {
                 return mockDelay({
-                    available_crawlers: 6, enabled_crawlers: 6, total_runs: 0, last_run: null
+                    available_crawlers: 7, enabled_crawlers: 7, total_runs: 0, last_run: null
                 });
             }
             return fetchApi('/api/crawler/status');
@@ -325,7 +287,8 @@ var ApiService = (function() {
                     { name: 'zhihu', enabled: true, registered: true, category: 'social', description: '知乎问题搜索爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.zhihu.com'] },
                     { name: 'bilibili', enabled: true, registered: true, category: 'social', description: 'B站视频评论爬虫', max_pages: 50, delay: 2.0, urls: ['https://www.bilibili.com'] },
                     { name: 'taptap', enabled: true, registered: true, category: 'social', description: 'TapTap游戏评分/评价爬虫', max_pages: 20, delay: 3.0, urls: ['https://www.taptap.cn'] },
-                    { name: 'xiaoheihe', enabled: true, registered: true, category: 'social', description: '小黑盒游戏社区帖子/评论爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.xiaoheihe.cn'] }
+                    { name: 'xiaoheihe', enabled: true, registered: true, category: 'social', description: '小黑盒游戏社区帖子/评论爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.xiaoheihe.cn'] },
+                    { name: 'miyoushe', enabled: true, registered: true, category: 'social', description: '米游社官方社区帖子/评论爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.miyoushe.com'] }
                 ]);
             }
             return fetchApi('/api/crawler/crawlers');
@@ -421,11 +384,11 @@ if (typeof window.escapeHtml === 'undefined') {
         return div.innerHTML;
     };
 }
-if (typeof window.sentimentBadge === 'undefined') {
-    window.sentimentBadge = function(sentiment) {
-        var cls = 'badge badge-' + (sentiment || 'uncertain');
-        var labels = { positive: '正面', negative: '负面', neutral: '中性', uncertain: '不确定' };
-        return '<span class="' + cls + '">' + (labels[sentiment] || sentiment || '-') + '</span>';
+if (typeof window.credibilityBadge === 'undefined') {
+    window.credibilityBadge = function(credibility) {
+        var cls = 'badge badge-' + (credibility || 'uncertain');
+        var labels = { high: '高可信', low: '低可信', medium: '中可信', uncertain: '不确定' };
+        return '<span class="' + cls + '">' + (labels[credibility] || credibility || '-') + '</span>';
     };
 }
 if (typeof window.riskBadge === 'undefined') {
