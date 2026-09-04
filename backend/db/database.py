@@ -221,8 +221,8 @@ def _migrate_schema(conn: sqlite3.Connection):
                 existing_vals = [r[0] for r in conn.execute(f"SELECT DISTINCT credibility_level FROM {table}").fetchall()]
                 old_vals = set(SENTIMENT_TO_CREDIBILITY.keys())
                 needs_update = any(v in old_vals for v in existing_vals)
+                new_vals = set(SENTIMENT_TO_CREDIBILITY.values())
                 if needs_update:
-                    # Must recreate table to fix CHECK constraint
                     old_sql_row = conn.execute(
                         "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
                     ).fetchone()
@@ -237,10 +237,8 @@ def _migrate_schema(conn: sqlite3.Connection):
                         )
                         conn.execute(f"ALTER TABLE {table} RENAME TO {table}_migration_backup")
                         conn.execute(new_sql)
-                        # Get new column list
                         new_cols = [row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
                         col_list = ", ".join(new_cols)
-                        # Copy data with value mapping
                         for old_val, new_val in SENTIMENT_TO_CREDIBILITY.items():
                             select_exprs = []
                             for c in new_cols:
@@ -254,6 +252,13 @@ def _migrate_schema(conn: sqlite3.Connection):
                                 SELECT {mapped_select}
                                 FROM {table}_migration_backup WHERE credibility_level = ?
                             """, (old_val,))
+                        already_new = [v for v in existing_vals if v in new_vals and v not in old_vals]
+                        for val in already_new:
+                            conn.execute(f"""
+                                INSERT INTO {table} ({col_list})
+                                SELECT {col_list}
+                                FROM {table}_migration_backup WHERE credibility_level = ?
+                            """, (val,))
                         conn.execute(f"DROP TABLE {table}_migration_backup")
             continue
 
