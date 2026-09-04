@@ -85,10 +85,25 @@ var Interactions = (function() {
         }
     }
 
+    var platformNameMap = {
+        'bilibili': 'B站',
+        'xiaoheihe': '小黑盒',
+        'taptap': 'TapTap'
+    };
+
+    function normalizePlatformName(name) {
+        return platformNameMap[name.toLowerCase()] || name;
+    }
+
     function renderDashboardDistributions(stats) {
         if (stats.platform_distribution) {
-            var platformData = Object.keys(stats.platform_distribution).map(function(k) {
-                return { name: k, value: stats.platform_distribution[k] };
+            var merged = {};
+            Object.keys(stats.platform_distribution).forEach(function(k) {
+                var normalName = normalizePlatformName(k);
+                merged[normalName] = (merged[normalName] || 0) + stats.platform_distribution[k];
+            });
+            var platformData = Object.keys(merged).map(function(k) {
+                return { name: k, value: merged[k] };
             });
             if (typeof PlatformDistribution !== 'undefined') {
                 PlatformDistribution.updatePlatform('chart-platform-dist', platformData);
