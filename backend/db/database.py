@@ -122,6 +122,21 @@ CREATE TABLE IF NOT EXISTS cross_validation_results (
     created_at DATETIME,
     FOREIGN KEY (content_id) REFERENCES raw_content(id)
 );
+
+CREATE TABLE IF NOT EXISTS crawl_run_log (
+    id TEXT PRIMARY KEY,
+    started_at DATETIME NOT NULL,
+    finished_at DATETIME,
+    status TEXT CHECK(status IN ('running','completed','failed','partial')),
+    triggered_by TEXT DEFAULT 'manual',
+    crawler_name TEXT,
+    total_fetched INTEGER DEFAULT 0,
+    total_imported INTEGER DEFAULT 0,
+    total_skipped_dup INTEGER DEFAULT 0,
+    total_errors INTEGER DEFAULT 0,
+    error_details TEXT,
+    config_snapshot TEXT
+);
 """
 
 

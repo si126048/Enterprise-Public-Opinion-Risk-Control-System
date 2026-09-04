@@ -13,6 +13,7 @@ from backend.api.routing import router as routing_router
 from backend.api.discovery import router as discovery_router
 from backend.api.sources import router as sources_router
 from backend.api.validation import router as validation_router
+from backend.api.crawler import router as crawler_router
 from backend.db.database import init_db
 from backend.services import embedding_service
 
@@ -39,6 +40,7 @@ app.include_router(routing_router)
 app.include_router(discovery_router)
 app.include_router(sources_router)
 app.include_router(validation_router)
+app.include_router(crawler_router)
 
 
 @app.on_event("startup")
