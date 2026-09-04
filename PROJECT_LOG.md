@@ -1,0 +1,120 @@
+# PROJECT_LOG
+
+## Phase 0: 环境与骨架
+- **Date**: 2026-09-03
+- **What**: 项目初始化，创建目录结构、配置文件、FastAPI 骨架、H5 页面骨架、样例 CSV
+- **AI/Tools**: Qoder (planning + implementation)
+- **Output**: ~26 files created
+- **Manual changes**: None
+- **Verification**:
+  - [x] GET /api/health returns 200 with correct JSON
+  - [x] H5 index.html accessible at http://localhost:8000
+  - [x] All 6 pages load (dashboard, content, search, topics, review, sources)
+  - [x] CSS variables match spec (all border-radius: 0, correct colors)
+  - [x] Sample CSV has 35 valid records (5 sources, 8 topics + edge cases)
+  - [x] config.yaml loads without error
+  - [x] All Python modules import successfully
+  - [x] Python 3.11.9 installed via winget
+  - [x] Dependencies installed: fastapi, uvicorn, pyyaml, python-dotenv, pydantic
+- **Version**: 0.1.0
+
+## Phase 1: 事实数据库
+- **Date**: 2026-09-03
+- **What**: 完整 SQLite schema（8 张表）、文本清洗器、CSV 导入器、内容 API 端点、前端内容列表页
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `backend/db/database.py` — 全量 DDL（raw_content, content_analysis, topics, topic_anchors, candidate_topics, embedding_spaces, ai_run_log, source_ledger）
+  - `scripts/init_db.py` — 数据库初始化 CLI
+  - `backend/ingestion/cleaner.py` — 文本清洗（去 HTML/Markdown 噪声，保留情绪表达）
+  - `backend/ingestion/importer.py` — CSV 导入 + SHA-256 去重
+  - `backend/api/ingest.py` — POST /api/ingest/import（文件上传）
+  - `backend/api/content.py` — GET /api/content（分页+过滤）、GET /api/content/{id}、GET /api/stats/overview
+  - `backend/api/health.py` — 更新为显示数据库连接状态和内容数量
+  - `backend/app.py` — 注册新路由
+  - `frontend/pages/content.html` — 完整内容列表页（过滤、搜索、分页、详情弹窗、CSV 导入按钮）
+  - `requirements.txt` — 添加 python-multipart
+- **Manual changes**: None
+- **Verification**:
+  - [x] init_db.py 创建 8 张表，结构正确
+  - [x] CSV 导入 35 条记录，0 错误
+  - [x] 重复导入跳过全部 35 条（去重正常）
+  - [x] GET /api/content 分页正确（35 条，7 页 × 5 条）
+  - [x] GET /api/content?source=local_gov_hotline 返回 8 条
+  - [x] GET /api/content/{id} 返回完整记录（含 raw_text, clean_text, content_hash）
+  - [x] POST /api/ingest/import 文件上传正常
+  - [x] GET /api/stats/overview 返回正确统计（35 条，5 个来源）
+  - [x] 全部 7 个前端页面可访问（200）
+  - [x] 清洗器测试通过（HTML/Markdown 去除，情绪表达保留）
+- **Version**: 0.2.0
+
+## Phase 2: Embedding 语义向量化
+- **Date**: 2026-09-03
+- **What**: 本地 Embedding 模型加载（Qwen3-Embedding-4B, CUDA）、Chroma 向量存储、Embedding 缓存、语义搜索 API
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `backend/services/embedding_service.py` — EmbeddingService 单例（模型加载、mean pooling + L2 归一化、embed_text/embed_batch、缓存读写）
+  - `backend/services/vector_store.py` — Chroma 向量存储封装（content_embeddings / anchor_embeddings 集合、cosine 搜索）
+  - `backend/api/embedding.py` — 4 个 API 端点（status, content, search, health）
+  - `backend/api/health.py` — 增加 embedding + vector_store 状态
+  - `backend/app.py` — 注册 embedding 路由 + startup 初始化（init_db, embedding_space 注册）
+  - `backend/services/embedding_service.py` — 修复 get_space_id/get_dimension global 变量作用域 bug
+  - `requirements.txt` — 添加 numpy>=1.24.0
+- **Manual changes**: None
+- **Verification**:
+  - [x] PyTorch 2.6.0+cu124 CUDA 可用（RTX 4060 Laptop 8.6GB）
+  - [x] 模型加载成功：device=cuda, dimension=2560, space_id=esp_8afbb8f773e888cf
+  - [x] GET /api/health → 200，显示 embedding loaded + vector_store 状态
+  - [x] GET /api/embedding/status → 200，35/35 embedded, 0 pending, 35 cache entries
+  - [x] POST /api/embedding/content → 200，首次嵌入 35 条内容
+  - [x] POST /api/embedding/content（重复调用）→ "All content already embedded"（缓存命中）
+  - [x] POST /api/embedding/search → 200，返回语义相关结果（distance 0.26-0.31）
+  - [x] GET /api/embedding/health → 200，embedding + vector_store 健康状态
+  - [x] embedding_spaces 表正确记录 active space
+  - [x] embedding_cache 表 35 条缓存记录
+- **Version**: 0.3.0
+
+## Phase 3: 主题路由 + LLM 分析
+- **Date**: 2026-09-04
+- **What**: 8 个预设主题种子数据、锚点嵌入向量、主题路由服务（anchor similarity + thresholds）、Mock LLM 内容分析（情感/风险/摘要/理论视角）、分析 API 端点、前端主题管理页
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `scripts/seed_topics.py` — 8 主题 × 4 锚点 = 32 锚点，写入 SQLite + Chroma
+  - `backend/services/routing_service.py` — route_topic() 锚点搜索 + 阈值分类（known/uncertain/unknown）、analyze_pending_content() 批量分析流水线
+  - `backend/services/llm_service.py` — BaseLLMProvider ABC + MockLLMProvider（关键词启发式情感/风险/摘要/理论映射）
+  - `backend/api/routing.py` — 4 个 API 端点（POST analyze, GET status, GET topics, GET topics/{id}）
+  - `backend/app.py` — 注册 routing 路由
+  - `backend/api/health.py` — 增加 analyzed_count + LLM ready 状态
+  - `frontend/pages/topics.html` — 完整主题管理页（分析按钮、统计卡片、主题卡片网格、详情弹窗）
+- **Manual changes**: None
+- **Key fix**: SQLite "database is locked" — analyze_pending_content() 改为先读取行列表、关闭连接，再逐条用短连接写入，避免与 embedding_cache/ai_run_log 写入冲突
+- **Verification**:
+  - [x] seed_topics.py 写入 8 主题 + 32 锚点到 DB + Chroma
+  - [x] POST /api/routing/analyze → 35/35 analyzed, 0 errors
+  - [x] GET /api/routing/status → sentiment (neg:1, neu:28, pos:5, unc:1), risk (high:1, med:11, low:23)
+  - [x] GET /api/routing/topics → 8 主题，content_count 总和 = 35
+  - [x] GET /api/routing/topics/topic_001 → 返回锚点 + 分析内容详情
+  - [x] 重复调用 analyze → 0 新增（幂等）
+  - [x] GET /api/health → analyzed_count: 35, embedding loaded on cuda
+  - [x] 前端主题页渲染正确（8 张主题卡片 + 统计信息）
+- **Version**: 0.4.0
+
+## Phase 4: Dashboard + 语义搜索
+- **Date**: 2026-09-04
+- **What**: 数据总览 Dashboard（统计卡片、ECharts 主题分布/情感分布/趋势图、高风险样本表）、语义搜索页（自然语言查询 + 多维过滤 + 分页 + 详情弹窗）、后端 API 增强（统计增强、搜索过滤分页、内容排序过滤）
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `backend/api/content.py` — stats_overview 增加 risk_distribution / recent_high_risk / daily_trend；list_content 增加 sort_by / sort_order / risk_level / date_from / date_to
+  - `backend/api/embedding.py` — SearchRequest 增加 sentiment / topic_id / risk_level / date_from / date_to / page / page_size；semantic_search 改为 post-filter + 分页模式
+  - `frontend/pages/dashboard.html` — 完整 Dashboard（6 统计卡片、ECharts 横向柱图/环形饼图/折线面积图、高风险表格 + 详情弹窗）
+  - `frontend/pages/search.html` — 完整搜索页（查询输入、主题/情感/风险过滤、结果卡片 + 相似度、分页、详情弹窗）
+  - `frontend/js/app.js` — 增加 formatNumber() + debounce() 工具函数
+- **Manual changes**: None
+- **Key fix**: ChromaDB HNSW 索引损坏（"Nothing found on disk"）— 删除并重建 content_embeddings + anchor_embeddings 集合，重新 seed 32 锚点 + embed 35 内容
+- **Verification**:
+  - [x] GET /api/stats/overview → risk_distribution (high:1, med:11, low:23), recent_high_risk (5 条), daily_trend
+  - [x] GET /api/content?sort_by=risk_level&sort_order=desc&risk_level=high → 1 条高风险
+  - [x] POST /api/embedding/search (query="物业管理问题") → 15 条结果
+  - [x] POST /api/embedding/search (risk_level=high) → 1 条；sentiment=negative → 1 条
+  - [x] Dashboard 页面：6 统计卡片（35 内容/35 已分析/2.9% 负面/1 高风险/8 主题/5 来源）、主题分布图、情感分布图、趋势图、高风险表格（5 条可点击详情）
+  - [x] Search 页面：查询返回结果卡片（标题/来源/摘要/相似度/情感风险徽章）、分页（35 条/4 页）、情感过滤（负面 → 1 条）
+- **Version**: 0.5.0

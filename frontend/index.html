@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五华区民意诉求语义分析系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1 class="header-title">五华区民意诉求语义分析系统</h1>
+      <span class="header-badge">DEMO v0.1.0</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="section">
+      <h2 class="section-title">功能导航</h2>
+      <div class="grid grid-3">
+        <a href="pages/dashboard.html" class="card card-link">
+          <div class="card-icon" style="color: var(--color-accent-cyan);">&#9632;</div>
+          <h3 class="card-title">数据总览</h3>
+          <p class="card-desc">样本总数、负面比例、主题分布、趋势图、高风险样本</p>
+        </a>
+        <a href="pages/content.html" class="card card-link">
+          <div class="card-icon" style="color: var(--color-accent-orange);">&#9632;</div>
+          <h3 class="card-title">内容列表</h3>
+          <p class="card-desc">已导入的民意诉求记录，支持按来源、主题、情感过滤</p>
+        </a>
+        <a href="pages/search.html" class="card card-link">
+          <div class="card-icon" style="color: var(--color-accent-yellow);">&#9632;</div>
+          <h3 class="card-title">语义搜索</h3>
+          <p class="card-desc">自然语言输入，基于 Embedding 的语义检索</p>
+        </a>
+        <a href="pages/topics.html" class="card card-link">
+          <div class="card-icon" style="color: var(--color-accent-blue);">&#9632;</div>
+          <h3 class="card-title">主题管理</h3>
+          <p class="card-desc">查看预置主题与语义锚点，了解主题分布情况</p>
+        </a>
+        <a href="pages/review.html" class="card card-link">
+          <div class="card-icon" style="color: var(--color-accent-orange);">&#9632;</div>
+          <h3 class="card-title">新主题审核</h3>
+          <p class="card-desc">审核 AI 发现的候选新主题，批准、合并或忽略</p>
+        </a>
+        <a href="pages/sources.html" class="card card-link">
+          <div class="card-icon" style="color: var(--color-accent-cyan);">&#9632;</div>
+          <h3 class="card-title">来源说明</h3>
+          <p class="card-desc">数据来源、采集方式、时间范围、伦理说明</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card info-card">
+        <h3 class="card-title">系统状态</h3>
+        <div id="health-status" class="health-status">加载中...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>昆明市五华区 | 课程演示项目</span>
+    <span class="demo-tag">Demo Mode</span>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      fetchApi('/api/health').then(function(data) {
+        var el = document.getElementById('health-status');
+        if (data && data.status === 'ok') {
+          el.innerHTML =
+            '<div class="status-row"><span class="status-dot status-ok"></span> 服务运行中</div>' +
+            '<div class="status-detail">版本: ' + data.version + '</div>' +
+            '<div class="status-detail">Embedding: ' + data.embedding.status + ' (' + data.embedding.model + ')</div>' +
+            '<div class="status-detail">LLM: ' + data.llm.status + ' (' + data.llm.provider + ')</div>';
+        } else {
+          el.innerHTML = '<div class="status-row"><span class="status-dot status-err"></span> 服务异常</div>';
+        }
+      }).catch(function() {
+        document.getElementById('health-status').innerHTML =
+          '<div class="status-row"><span class="status-dot status-err"></span> 无法连接后端</div>';
+      });
+    });
+  </script>
+</body>
+</html>

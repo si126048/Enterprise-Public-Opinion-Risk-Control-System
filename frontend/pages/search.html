@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>语义搜索 - 五华区民意诉求语义分析系统</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="page-header">
+    <a href="../index.html">&larr; 返回</a>
+    <h1>语义搜索</h1>
+  </div>
+  <div class="page-body">
+    <div class="search-bar">
+      <input type="text" class="input" id="search-input" placeholder="输入自然语言查询，如：小区物业管理问题...">
+      <button class="btn btn-primary" id="search-btn">搜索</button>
+    </div>
+    <div class="filter-bar">
+      <select class="select" id="search-filter-topic">
+        <option value="">全部主题</option>
+      </select>
+      <select class="select" id="search-filter-sentiment">
+        <option value="">全部情感</option>
+        <option value="negative">负面</option>
+        <option value="neutral">中性</option>
+        <option value="positive">正面</option>
+        <option value="uncertain">不确定</option>
+      </select>
+      <select class="select" id="search-filter-risk">
+        <option value="">全部风险</option>
+        <option value="high">高风险</option>
+        <option value="medium">中风险</option>
+        <option value="low">低风险</option>
+      </select>
+    </div>
+
+    <div id="loading" style="text-align:center;padding:2rem;color:var(--color-text-secondary);display:none;">搜索中...</div>
+    <div id="error-msg" style="display:none;padding:1rem;background:var(--color-danger);color:#fff;margin-bottom:1rem;"></div>
+    <div id="empty-state" style="display:none;text-align:center;padding:2rem;color:var(--color-text-secondary);">请输入查询内容开始搜索</div>
+
+    <div id="search-results"></div>
+
+    <div id="pagination" style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:wrap;"></div>
+  </div>
+
+  <div id="detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:1rem;">
+    <div style="max-width:700px;margin:2rem auto;background:var(--color-bg-card);border:2px solid var(--color-text-primary);padding:1.5rem;position:relative;">
+      <button id="detail-close" style="position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-primary);">&times;</button>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <script src="../js/app.js?v=4"></script>
+  <script>
+    var sourceLabels = {
+      local_gov_hotline: '政务热线',
+      social_media_weibo: '微博',
+      social_media_douyin: '抖音',
+      community_feedback: '社区反馈',
+      gov_platform: '政务平台'
+    };
+
+    var currentQuery = '';
+    var currentPage = 1;
+    var pageSize = 10;
+
+    function loadTopics() {
+      fetchApi('/api/routing/topics')
+        .then(function(data) {
+          var sel = document.getElementById('search-filter-topic');
+          var topics = data.topics || [];
+          for (var i = 0; i < topics.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = topics[i].id;
+            opt.textContent = topics[i].name;
+            sel.appendChild(opt);
+          }
+        })
+        .catch(function() {});
+    }
+
+    function doSearch() {
+      currentQuery = document.getElementById('search-input').value.trim();
+      if (!currentQuery) {
+        document.getElementById('empty-state').style.display = 'block';
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('search-results').innerHTML = '';
+      document.getElementById('pagination').innerHTML = '';
+
+      var body = {
+        query: currentQuery,
+        top_k: 30,
+        page: currentPage,
+        page_size: pageSize,
+      };
+      var topic = document.getElementById('search-filter-topic').value;
+      var sentiment = document.getElementById('search-filter-sentiment').value;
+      var risk = document.getElementById('search-filter-risk').value;
+      if (topic) body.topic_id = topic;
+      if (sentiment) body.sentiment = sentiment;
+      if (risk) body.risk_level = risk;
+
+      fetchApi('/api/embedding/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+        .then(function(data) {
+          document.getElementById('loading').style.display = 'none';
+          if (!data.results || data.results.length === 0) {
+            document.getElementById('empty-state').textContent = '未找到相关结果';
+            document.getElementById('empty-state').style.display = 'block';
+            return;
+          }
+          renderResults(data.results);
+          renderPagination(data.pagination);
+        })
+        .catch(function(err) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error-msg').textContent = '搜索失败: ' + err.message;
+          document.getElementById('error-msg').style.display = 'block';
+        });
+    }
+
+    function renderResults(results) {
+      var html = '';
+      for (var i = 0; i < results.length; i++) {
+        var r = results[i];
+        var similarity = (1.0 - (r.distance || 0)).toFixed(3);
+        html += '<div class="card card-link" style="margin-bottom:0.75rem;" data-id="' + escapeHtml(r.id) + '">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;">'
+          + '<div style="flex:1;">'
+          + '<div style="font-weight:700;font-size:0.95rem;margin-bottom:0.35rem;">' + escapeHtml(r.title || '无标题') + '</div>'
+          + '<div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:0.5rem;">'
+          + escapeHtml(sourceLabels[r.source] || r.source || '')
+          + ' &middot; ' + formatDate(r.publish_time)
+          + '</div>'
+          + '<div style="font-size:0.85rem;line-height:1.6;color:var(--color-text-primary);">' + escapeHtml(r.text_preview || '') + '</div>'
+          + '</div>'
+          + '<div style="text-align:right;min-width:100px;">'
+          + '<div style="font-size:0.75rem;color:var(--color-text-secondary);margin-bottom:0.25rem;">相似度</div>'
+          + '<div style="font-size:1.1rem;font-weight:700;color:var(--color-accent-cyan);">' + similarity + '</div>'
+          + '<div style="margin-top:0.35rem;">' + sentimentBadge(r.sentiment) + ' ' + riskBadge(r.risk_level) + '</div>'
+          + '</div>'
+          + '</div>'
+          + '</div>';
+      }
+      document.getElementById('search-results').innerHTML = html;
+
+      var cards = document.querySelectorAll('#search-results .card-link');
+      for (var j = 0; j < cards.length; j++) {
+        cards[j].addEventListener('click', function() { showDetail(this.getAttribute('data-id')); });
+      }
+    }
+
+    function renderPagination(pg) {
+      var el = document.getElementById('pagination');
+      if (!pg || pg.total_pages <= 1) {
+        el.innerHTML = '';
+        return;
+      }
+      var html = '';
+      if (pg.page > 1) {
+        html += '<button class="btn" data-page="' + (pg.page - 1) + '">&laquo; 上一页</button>';
+      }
+      html += '<span style="font-size:0.85rem;color:var(--color-text-secondary);">第 ' + pg.page + ' / ' + pg.total_pages + ' 页，共 ' + pg.total + ' 条</span>';
+      if (pg.page < pg.total_pages) {
+        html += '<button class="btn" data-page="' + (pg.page + 1) + '">下一页 &raquo;</button>';
+      }
+      el.innerHTML = html;
+
+      var btns = el.querySelectorAll('button[data-page]');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function() {
+          currentPage = parseInt(this.getAttribute('data-page'));
+          doSearch();
+        });
+      }
+    }
+
+    function showDetail(id) {
+      fetchApi('/api/content/' + encodeURIComponent(id))
+        .then(function(data) {
+          var similarity = '';
+          if (data.topic_similarity) {
+            similarity = '<div><strong>主题相似度:</strong> ' + data.topic_similarity.toFixed(3) + '</div>';
+          }
+          var html = '<h2 style="margin-bottom:1rem;font-size:1.1rem;">' + escapeHtml(data.title || '无标题') + '</h2>'
+            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem;margin-bottom:1rem;">'
+            + '<div><strong>ID:</strong> ' + escapeHtml(data.id) + '</div>'
+            + '<div><strong>来源:</strong> ' + escapeHtml(sourceLabels[data.source] || data.source) + '</div>'
+            + '<div><strong>发布时间:</strong> ' + formatDate(data.publish_time) + '</div>'
+            + '<div><strong>情感:</strong> ' + sentimentBadge(data.sentiment) + '</div>'
+            + '<div><strong>风险:</strong> ' + riskBadge(data.risk_level) + '</div>'
+            + similarity
+            + '</div>';
+          if (data.summary) {
+            html += '<div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;"><strong>摘要:</strong> ' + escapeHtml(data.summary) + '</div>';
+          }
+          html += '<div style="margin-bottom:0.75rem;"><strong style="font-size:0.85rem;">原文:</strong><div style="margin-top:0.5rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;line-height:1.7;white-space:pre-wrap;">' + escapeHtml(data.clean_text || data.raw_text) + '</div></div>';
+          document.getElementById('detail-content').innerHTML = html;
+          document.getElementById('detail-modal').style.display = 'block';
+        })
+        .catch(function(err) { alert('加载详情失败: ' + err.message); });
+    }
+
+    document.getElementById('search-btn').addEventListener('click', function() { currentPage = 1; doSearch(); });
+    document.getElementById('search-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') { currentPage = 1; doSearch(); } });
+    document.getElementById('search-filter-topic').addEventListener('change', function() { currentPage = 1; doSearch(); });
+    document.getElementById('search-filter-sentiment').addEventListener('change', function() { currentPage = 1; doSearch(); });
+    document.getElementById('search-filter-risk').addEventListener('change', function() { currentPage = 1; doSearch(); });
+
+    document.getElementById('detail-close').addEventListener('click', function() {
+      document.getElementById('detail-modal').style.display = 'none';
+    });
+    document.getElementById('detail-modal').addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+
+    document.getElementById('empty-state').style.display = 'block';
+    loadTopics();
+  </script>
+</body>
+</html>

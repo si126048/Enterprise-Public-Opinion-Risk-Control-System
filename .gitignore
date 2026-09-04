@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+data/app.db
+data/app.db-journal
+data/app.db-wal
+data/chroma_db/
+data/faiss_index/
+*.egg-info/
+.venv/
+venv/
+evidence/screenshots/*.png
+*.log
+.DS_Store
+Thumbs.db
+*.stackdump

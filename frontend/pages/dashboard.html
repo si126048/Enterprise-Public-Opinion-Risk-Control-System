@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据总览 - 五华区民意诉求语义分析系统</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+  <div class="page-header">
+    <a href="../index.html">&larr; 返回</a>
+    <h1>数据总览 Dashboard</h1>
+  </div>
+  <div class="page-body">
+    <div id="loading" style="text-align:center;padding:2rem;color:var(--color-text-secondary);">加载中...</div>
+    <div id="error-msg" style="display:none;padding:1rem;background:var(--color-danger);color:#fff;margin-bottom:1rem;"></div>
+
+    <div id="dashboard-content" style="display:none;">
+      <div class="grid grid-3" id="stats-cards" style="margin-bottom:1rem;"></div>
+      <div class="grid grid-2" style="margin-bottom:1rem;">
+        <div class="card">
+          <h3 class="card-title">主题分布</h3>
+          <div id="chart-topic" style="width:100%;height:300px;"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">情感分布</h3>
+          <div id="chart-sentiment" style="width:100%;height:300px;"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:1rem;">
+        <h3 class="card-title">发布趋势（近14天）</h3>
+        <div id="chart-trend" style="width:100%;height:250px;"></div>
+      </div>
+      <div class="card">
+        <h3 class="card-title">最近高风险样本</h3>
+        <div id="high-risk-list" style="overflow-x:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:1rem;">
+    <div style="max-width:700px;margin:2rem auto;background:var(--color-bg-card);border:2px solid var(--color-text-primary);padding:1.5rem;position:relative;">
+      <button id="detail-close" style="position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-primary);">&times;</button>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <script src="../js/app.js?v=4"></script>
+  <script>
+    var sourceLabels = {
+      local_gov_hotline: '政务热线',
+      social_media_weibo: '微博',
+      social_media_douyin: '抖音',
+      community_feedback: '社区反馈',
+      gov_platform: '政务平台'
+    };
+
+    function loadDashboard() {
+      fetchApi('/api/stats/overview')
+        .then(function(data) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('dashboard-content').style.display = 'block';
+          renderStatCards(data);
+          renderTopicChart(data.topic_distribution);
+          renderSentimentChart(data.sentiment_distribution);
+          renderTrendChart(data.daily_trend);
+          renderHighRiskList(data.recent_high_risk);
+        })
+        .catch(function(err) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error-msg').textContent = '加载失败: ' + err.message;
+          document.getElementById('error-msg').style.display = 'block';
+        });
+    }
+
+    function renderStatCards(data) {
+      var highRisk = (data.risk_distribution && data.risk_distribution.high) || 0;
+      var cards = [
+        { label: '总内容数', value: formatNumber(data.total_content), color: 'var(--color-accent-cyan)' },
+        { label: '已分析数', value: formatNumber(data.total_analyzed), color: 'var(--color-accent-blue)' },
+        { label: '负面率', value: (data.negative_rate * 100).toFixed(1) + '%', color: 'var(--color-accent-orange)' },
+        { label: '高风险数', value: formatNumber(highRisk), color: 'var(--color-danger)' },
+        { label: '主题数', value: formatNumber(data.topic_distribution ? data.topic_distribution.length : 0), color: 'var(--color-accent-yellow)' },
+        { label: '来源数', value: formatNumber(data.source_distribution ? Object.keys(data.source_distribution).length : 0), color: 'var(--color-text-primary)' },
+      ];
+      var html = '';
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        html += '<div class="card info-card" style="border-left-color:' + c.color + ';">'
+          + '<div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:0.25rem;">' + c.label + '</div>'
+          + '<div style="font-size:1.5rem;font-weight:700;">' + c.value + '</div>'
+          + '</div>';
+      }
+      document.getElementById('stats-cards').innerHTML = html;
+    }
+
+    function renderTopicChart(topics) {
+      var chart = echarts.init(document.getElementById('chart-topic'));
+      var names = [];
+      var counts = [];
+      for (var i = 0; i < topics.length; i++) {
+        names.push(topics[i].topic_name);
+        counts.push(topics[i].count);
+      }
+      chart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '3%', right: '8%', bottom: '3%', top: '5%', containLabel: true },
+        xAxis: { type: 'value' },
+        yAxis: { type: 'category', data: names, axisLabel: { fontSize: 12 } },
+        series: [{
+          type: 'bar',
+          data: counts,
+          itemStyle: { color: '#14D0D0' },
+          barWidth: '60%',
+        }],
+      });
+      window.addEventListener('resize', function() { chart.resize(); });
+    }
+
+    function renderSentimentChart(dist) {
+      var chart = echarts.init(document.getElementById('chart-sentiment'));
+      var labels = { positive: '正面', negative: '负面', neutral: '中性', uncertain: '不确定' };
+      var colors = { positive: '#14D0D0', negative: '#F65413', neutral: '#D0D0D0', uncertain: '#FFD700' };
+      var data = [];
+      var keys = Object.keys(dist);
+      for (var i = 0; i < keys.length; i++) {
+        data.push({ value: dist[keys[i]], name: labels[keys[i]] || keys[i], itemStyle: { color: colors[keys[i]] || '#999' } });
+      }
+      chart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        legend: { bottom: 0, textStyle: { fontSize: 12 } },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['50%', '45%'],
+          avoidLabelOverlap: true,
+          label: { fontSize: 12 },
+          data: data,
+        }],
+      });
+      window.addEventListener('resize', function() { chart.resize(); });
+    }
+
+    function renderTrendChart(trend) {
+      var chart = echarts.init(document.getElementById('chart-trend'));
+      var dates = [];
+      var counts = [];
+      for (var i = 0; i < trend.length; i++) {
+        dates.push(trend[i].date);
+        counts.push(trend[i].count);
+      }
+      chart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: '3%', right: '5%', bottom: '3%', top: '10%', containLabel: true },
+        xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 11, rotate: 30 } },
+        yAxis: { type: 'value', minInterval: 1 },
+        series: [{
+          type: 'line',
+          data: counts,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
+          lineStyle: { color: '#14D0D0', width: 2 },
+          itemStyle: { color: '#14D0D0' },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(20,208,208,0.3)' }, { offset: 1, color: 'rgba(20,208,208,0.02)' }] } },
+        }],
+      });
+      window.addEventListener('resize', function() { chart.resize(); });
+    }
+
+    function renderHighRiskList(items) {
+      var el = document.getElementById('high-risk-list');
+      if (!items || items.length === 0) {
+        el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--color-text-secondary);">暂无高风险样本</div>';
+        return;
+      }
+      var html = '<table class="data-table"><thead><tr><th>ID</th><th>标题</th><th>来源</th><th>情感</th><th>风险</th><th>发布时间</th></tr></thead><tbody>';
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        html += '<tr style="cursor:pointer;" data-id="' + escapeHtml(item.id) + '">'
+          + '<td>' + escapeHtml(item.id) + '</td>'
+          + '<td>' + escapeHtml(item.title || '-') + '</td>'
+          + '<td>' + escapeHtml(sourceLabels[item.source] || item.source) + '</td>'
+          + '<td>' + sentimentBadge(item.sentiment) + '</td>'
+          + '<td>' + riskBadge(item.risk_level) + '</td>'
+          + '<td>' + formatDate(item.publish_time) + '</td>'
+          + '</tr>';
+      }
+      html += '</tbody></table>';
+      el.innerHTML = html;
+
+      var rows = el.querySelectorAll('tr[data-id]');
+      for (var j = 0; j < rows.length; j++) {
+        rows[j].addEventListener('click', function() { showDetail(this.getAttribute('data-id')); });
+      }
+    }
+
+    function showDetail(id) {
+      fetchApi('/api/content/' + encodeURIComponent(id))
+        .then(function(data) {
+          var html = '<h2 style="margin-bottom:1rem;font-size:1.1rem;">' + escapeHtml(data.title || '无标题') + '</h2>'
+            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem;margin-bottom:1rem;">'
+            + '<div><strong>ID:</strong> ' + escapeHtml(data.id) + '</div>'
+            + '<div><strong>来源:</strong> ' + escapeHtml(sourceLabels[data.source] || data.source) + '</div>'
+            + '<div><strong>发布时间:</strong> ' + formatDate(data.publish_time) + '</div>'
+            + '<div><strong>情感:</strong> ' + sentimentBadge(data.sentiment) + '</div>'
+            + '<div><strong>风险:</strong> ' + riskBadge(data.risk_level) + '</div>'
+            + '</div>';
+          if (data.summary) {
+            html += '<div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;"><strong>摘要:</strong> ' + escapeHtml(data.summary) + '</div>';
+          }
+          html += '<div style="margin-bottom:0.75rem;"><strong style="font-size:0.85rem;">原文:</strong><div style="margin-top:0.5rem;padding:0.75rem;background:var(--color-bg-secondary);font-size:0.85rem;line-height:1.7;white-space:pre-wrap;">' + escapeHtml(data.clean_text || data.raw_text) + '</div></div>';
+          document.getElementById('detail-content').innerHTML = html;
+          document.getElementById('detail-modal').style.display = 'block';
+        })
+        .catch(function(err) { alert('加载详情失败: ' + err.message); });
+    }
+
+    document.getElementById('detail-close').addEventListener('click', function() {
+      document.getElementById('detail-modal').style.display = 'none';
+    });
+    document.getElementById('detail-modal').addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>

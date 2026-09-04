@@ -1,0 +1,46 @@
+app:
+  name: semantic-opinion-monitor
+  display_name: "五华区民意诉求语义分析系统"
+  demo_mode: true
+  version: "0.1.0"
+  host: "0.0.0.0"
+  port: 8000
+
+embedding:
+  provider: "local"
+  model_name: "Qwen/Qwen3-Embedding-4B"
+  model_revision: "main"
+  vector_dimension: 2560
+  normalize: true
+  batch_size: 32
+  preprocess_version: "v1"
+  cache_enabled: true
+
+routing:
+  top_k_anchors: 5
+  candidate_topics: 3
+  known_topic_threshold: 0.65
+  unknown_threshold: 0.55
+
+discovery:
+  min_cluster_size: 5
+  method: "hdbscan"
+
+llm:
+  provider: "mock"
+  model: "mock-v1"
+  temperature: 0.2
+  max_retries: 2
+  api_base: ""
+  api_key_env: "LLM_API_KEY"
+
+database:
+  path: "data/app.db"
+
+vector_store:
+  provider: "chroma"
+  persist_directory: "data/chroma_db"
+
+server:
+  workers: 1
+  reload: false

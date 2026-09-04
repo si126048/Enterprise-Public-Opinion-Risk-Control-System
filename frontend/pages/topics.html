@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主题管理 - 五华区民意诉求语义分析系统</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="page-header">
+    <a href="../index.html">&larr; 返回</a>
+    <h1>主题管理</h1>
+  </div>
+  <div class="page-body">
+    <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="btn-analyze">运行分析</button>
+      <span id="analyze-status" style="font-size:0.85rem;color:var(--color-text-secondary);"></span>
+    </div>
+
+    <div id="analysis-summary" style="display:none;margin-bottom:1.5rem;">
+      <div class="grid grid-3" id="summary-cards"></div>
+    </div>
+
+    <div id="loading" style="text-align:center;padding:2rem;color:var(--color-text-secondary);display:none;">加载中...</div>
+
+    <div class="grid grid-2" id="topics-grid"></div>
+
+    <div id="empty-state" style="display:none;text-align:center;padding:2rem;color:var(--color-text-secondary);">
+      暂无主题数据，请先运行种子脚本
+    </div>
+  </div>
+
+  <div id="topic-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:1rem;">
+    <div style="max-width:700px;margin:2rem auto;background:var(--color-bg-card);border:2px solid var(--color-text-primary);padding:1.5rem;position:relative;">
+      <button id="topic-modal-close" style="position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--color-text-primary);">&times;</button>
+      <div id="topic-modal-content"></div>
+    </div>
+  </div>
+
+  <script src="../js/app.js"></script>
+  <script>
+    function loadTopics() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('empty-state').style.display = 'none';
+
+      fetchApi('/api/routing/topics')
+        .then(function(data) {
+          document.getElementById('loading').style.display = 'none';
+          if (!data.topics || data.topics.length === 0) {
+            document.getElementById('empty-state').style.display = 'block';
+            return;
+          }
+          renderTopics(data.topics);
+          loadAnalysisStatus();
+        })
+        .catch(function(err) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('topics-grid').innerHTML =
+            '<div style="color:var(--color-danger);padding:1rem;">加载失败: ' + escapeHtml(err.message) + '</div>';
+        });
+    }
+
+    function loadAnalysisStatus() {
+      fetchApi('/api/routing/status')
+        .then(function(data) {
+          renderSummary(data);
+        })
+        .catch(function() {});
+    }
+
+    function renderSummary(data) {
+      var el = document.getElementById('analysis-summary');
+      el.style.display = 'block';
+
+      var sentimentHtml = '<div class="card info-card"><div class="card-title">情感分布</div><div style="font-size:0.85rem;">';
+      var sd = data.sentiment_distribution || {};
+      var sLabels = {positive:'正面',negative:'负面',neutral:'中性',uncertain:'不确定'};
+      for (var k in sLabels) {
+        sentimentHtml += '<div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">'
+          + '<span>' + sLabels[k] + '</span><strong>' + (sd[k] || 0) + '</strong></div>';
+      }
+      sentimentHtml += '</div></div>';
+
+      var riskHtml = '<div class="card info-card"><div class="card-title">风险分布</div><div style="font-size:0.85rem;">';
+      var rd = data.risk_distribution || {};
+      var rLabels = {low:'低风险',medium:'中风险',high:'高风险',uncertain:'不确定'};
+      for (var k in rLabels) {
+        riskHtml += '<div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">'
+          + '<span>' + rLabels[k] + '</span><strong>' + (rd[k] || 0) + '</strong></div>';
+      }
+      riskHtml += '</div></div>';
+
+      var progressHtml = '<div class="card info-card"><div class="card-title">分析进度</div><div style="font-size:0.85rem;">'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;"><span>总内容</span><strong>' + data.total_content + '</strong></div>'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;"><span>已分析</span><strong>' + data.analyzed + '</strong></div>'
+        + '<div style="display:flex;justify-content:space-between;"><span>待分析</span><strong>' + data.pending + '</strong></div>'
+        + '</div></div>';
+
+      document.getElementById('summary-cards').innerHTML = sentimentHtml + riskHtml + progressHtml;
+    }
+
+    function renderTopics(topics) {
+      var html = '';
+      for (var i = 0; i < topics.length; i++) {
+        var t = topics[i];
+        html += '<div class="card card-link" data-topic-id="' + escapeHtml(t.id) + '">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">'
+          + '<div class="card-title" style="margin-bottom:0;">' + escapeHtml(t.name) + '</div>'
+          + '<span class="badge badge-neutral">' + t.content_count + ' 条</span>'
+          + '</div>'
+          + '<div class="card-desc">' + escapeHtml(t.description) + '</div>'
+          + '<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--color-text-secondary);">'
+          + '锚点: ' + t.anchor_count + ' 个'
+          + '</div>'
+          + '</div>';
+      }
+      document.getElementById('topics-grid').innerHTML = html;
+
+      var cards = document.getElementById('topics-grid').querySelectorAll('.card-link');
+      for (var j = 0; j < cards.length; j++) {
+        cards[j].addEventListener('click', function() {
+          showTopicDetail(this.getAttribute('data-topic-id'));
+        });
+      }
+    }
+
+    function showTopicDetail(topicId) {
+      fetchApi('/api/routing/topics/' + encodeURIComponent(topicId))
+        .then(function(data) {
+          var t = data.topic;
+          var html = '<h2 style="margin-bottom:0.5rem;font-size:1.1rem;">' + escapeHtml(t.name) + '</h2>'
+            + '<div style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:1rem;">' + escapeHtml(t.description) + '</div>';
+
+          html += '<div style="margin-bottom:1rem;"><strong style="font-size:0.85rem;">语义锚点</strong>'
+            + '<div style="margin-top:0.5rem;">';
+          for (var i = 0; i < data.anchors.length; i++) {
+            html += '<div style="padding:0.4rem 0.6rem;background:var(--color-bg-secondary);font-size:0.85rem;margin-bottom:0.25rem;">'
+              + escapeHtml(data.anchors[i].text) + '</div>';
+          }
+          html += '</div></div>';
+
+          if (data.analyzed_content.length > 0) {
+            html += '<strong style="font-size:0.85rem;">已分析内容 (' + data.analyzed_content.length + ')</strong>'
+              + '<div style="overflow-x:auto;margin-top:0.5rem;"><table class="data-table"><thead><tr>'
+              + '<th>来源</th><th>标题</th><th>情感</th><th>风险</th><th>相似度</th>'
+              + '</tr></thead><tbody>';
+            for (var j = 0; j < data.analyzed_content.length; j++) {
+              var c = data.analyzed_content[j];
+              html += '<tr>'
+                + '<td>' + escapeHtml(c.source) + '</td>'
+                + '<td>' + escapeHtml(c.title || '-') + '</td>'
+                + '<td>' + sentimentBadge(c.sentiment) + '</td>'
+                + '<td>' + riskBadge(c.risk_level) + '</td>'
+                + '<td>' + (c.topic_similarity ? c.topic_similarity.toFixed(3) : '-') + '</td>'
+                + '</tr>';
+            }
+            html += '</tbody></table></div>';
+          } else {
+            html += '<div style="font-size:0.85rem;color:var(--color-text-secondary);">暂无已分析内容</div>';
+          }
+
+          document.getElementById('topic-modal-content').innerHTML = html;
+          document.getElementById('topic-modal').style.display = 'block';
+        })
+        .catch(function(err) {
+          alert('加载主题详情失败: ' + err.message);
+        });
+    }
+
+    document.getElementById('topic-modal-close').addEventListener('click', function() {
+      document.getElementById('topic-modal').style.display = 'none';
+    });
+    document.getElementById('topic-modal').addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+
+    document.getElementById('btn-analyze').addEventListener('click', function() {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = '分析中...';
+      document.getElementById('analyze-status').textContent = '正在运行分析...';
+
+      fetchApi('/api/routing/analyze', {method: 'POST'})
+        .then(function(data) {
+          btn.disabled = false;
+          btn.textContent = '运行分析';
+          var s = data.stats;
+          document.getElementById('analyze-status').textContent =
+            '分析完成: ' + s.analyzed + ' 条已分析, ' + s.errors + ' 条错误';
+          loadTopics();
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = '运行分析';
+          document.getElementById('analyze-status').textContent = '分析失败: ' + err.message;
+        });
+    });
+
+    loadTopics();
+  </script>
+</body>
+</html>
