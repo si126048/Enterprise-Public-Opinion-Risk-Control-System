@@ -72,19 +72,19 @@ var Components = (function() {
                 riskBadge = '<span class="card-risk-tag badge ' + riskClass + '">' + riskLabel + '</span>';
             }
 
-            var topicTag = item.topic_id ? '<span class="card-topic-tag">' + escapeHtml(item.topic_id) + '</span>' : '';
-            var source = item.source ? '<div class="card-source">来源：' + escapeHtml(item.source) + '</div>' : '';
+            var productTag = item.product_name ? '<span class="card-topic-tag">' + escapeHtml(item.product_name) + '</span>' : '';
+            var platform = item.platform ? '<div class="card-source">平台：' + escapeHtml(item.platform) + '</div>' : '';
             var time = item.publish_time ? formatDate(item.publish_time) : '';
             var text = item.clean_text || item.title || '';
 
             div.innerHTML =
                 '<div class="card-meta">' +
-                    topicTag +
+                    productTag +
                     '<span>' + time + '</span>' +
                 '</div>' +
                 riskBadge +
                 '<div class="card-text">' + escapeHtml(text.substring(0, 120)) + '</div>' +
-                source;
+                platform;
 
             div.addEventListener('click', function() {
                 showContentDetail(item.id);
@@ -134,13 +134,14 @@ var Components = (function() {
         }
 
         var html = '<table class="data-table"><thead><tr>' +
-            '<th>标题</th><th>来源</th><th>时间</th><th>风险</th>' +
+            '<th>标题</th><th>平台</th><th>产品</th><th>时间</th><th>风险</th>' +
             '</tr></thead><tbody>';
 
         items.forEach(function(item) {
             html += '<tr data-id="' + item.id + '" style="cursor:pointer">' +
                 '<td>' + escapeHtml((item.title || item.clean_text || '').substring(0, 50)) + '</td>' +
-                '<td>' + escapeHtml(item.source || '-') + '</td>' +
+                '<td>' + escapeHtml(item.platform || '-') + '</td>' +
+                '<td>' + escapeHtml(item.product_name || '-') + '</td>' +
                 '<td>' + formatDate(item.publish_time) + '</td>' +
                 '<td><span class="badge badge-high">高</span></td>' +
                 '</tr>';
@@ -222,7 +223,7 @@ var Components = (function() {
                         '<span class="badge badge-' + (data.risk_level === 'high' ? 'high' : data.risk_level === 'medium' ? 'medium' : 'low') + '">' + (data.risk_level || '-') + '</span>' +
                     '</div>' +
                     '<h3 style="margin-bottom:0.5rem">' + escapeHtml(data.title || '无标题') + '</h3>' +
-                    '<p class="text-muted mb-1">' + formatDate(data.publish_time) + ' · ' + escapeHtml(data.source || '-') + '</p>' +
+                    '<p class="text-muted mb-1">' + formatDate(data.publish_time) + ' · ' + escapeHtml(data.platform || '-') + ' · ' + escapeHtml(data.product_name || '-') + '</p>' +
                     '<div style="line-height:1.8;margin-top:1rem;padding:1rem;background:var(--color-bg-secondary)">' +
                         escapeHtml(data.clean_text || data.title || '') +
                     '</div>' +
@@ -278,6 +279,45 @@ var Components = (function() {
         });
     }
 
+    function renderSkeleton(container, type, count) {
+        var el = typeof container === 'string' ? document.getElementById(container) : container;
+        if (!el) return;
+        type = type || 'card';
+        count = count || 3;
+        var html = '';
+        if (type === 'card') {
+            for (var i = 0; i < count; i++) {
+                html += '<div class="skeleton skeleton-card"></div>';
+            }
+        } else if (type === 'stat') {
+            html = '<div class="grid grid-3">';
+            for (var j = 0; j < count; j++) {
+                html += '<div class="skeleton skeleton-stat"></div>';
+            }
+            html += '</div>';
+        } else if (type === 'list') {
+            for (var k = 0; k < count; k++) {
+                html += '<div style="padding:0.75rem 0">' +
+                    '<div class="skeleton skeleton-line w-40"></div>' +
+                    '<div class="skeleton skeleton-line w-80"></div>' +
+                    '<div class="skeleton skeleton-line w-60"></div>' +
+                    '</div>';
+            }
+        }
+        el.innerHTML = html;
+    }
+
+    function flashCard(el) {
+        if (!el) return;
+        el.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+        el.style.boxShadow = '0 0 16px rgba(255, 215, 0, 0.3)';
+        el.style.borderColor = 'var(--color-accent-yellow)';
+        setTimeout(function() {
+            el.style.boxShadow = '';
+            el.style.borderColor = '';
+        }, 800);
+    }
+
     return {
         renderStatCards: renderStatCards,
         renderContentList: renderContentList,
@@ -286,6 +326,8 @@ var Components = (function() {
         renderPagination: renderPagination,
         showContentDetail: showContentDetail,
         animateNumber: animateNumber,
-        initModal: initModal
+        initModal: initModal,
+        renderSkeleton: renderSkeleton,
+        flashCard: flashCard
     };
 })();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>语义搜索 - 五华民意·态势感知</title>
+    <title>语义搜索 - 企业舆情风控·态势感知</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/mobile.css">
@@ -13,19 +13,20 @@
     <nav class="navbar">
         <div class="nav-brand">
             <span class="brand-icon">◆</span>
-            <span class="brand-text">五华民意·态势感知</span>
+            <span class="brand-text">企业舆情风控</span>
         </div>
         <ul class="nav-links">
             <li><a href="../index.html">总览</a></li>
-            <li><a href="content.html">诉求列表</a></li>
+            <li><a href="content.html">舆情列表</a></li>
             <li><a href="search.html" class="active">语义搜索</a></li>
-            <li><a href="topics.html">主题库</a></li>
+            <li><a href="topics.html">风险主题</a></li>
             <li><a href="review.html" class="nav-highlight">审核</a></li>
-            <li><a href="sources.html">来源</a></li>
-            <li><a href="validation.html">验证</a></li>
+            <li><a href="risk_events.html">风控事件</a></li>
         </ul>
         <div class="nav-actions">
+            <select id="company-selector" class="company-selector" title="选择公司"></select>
             <span class="data-badge">数据更新: 今日</span>
+            <button class="theme-toggle" title="切换到夜间模式">☾</button>
             <button class="nav-toggle" aria-label="菜单">≡</button>
         </div>
     </nav>
@@ -36,20 +37,20 @@
             <div class="section">
                 <div class="section-title">语义搜索</div>
                 <div class="search-bar">
-                    <input type="text" id="search-query" class="input" placeholder="输入自然语言查询，如：物业管理问题、噪音投诉...">
+                    <input type="text" id="search-query" class="input" placeholder="输入自然语言查询，如：抽卡体验差、游戏卡顿、角色平衡性问题...">
                     <button id="btn-search" class="btn btn-primary">搜索</button>
                 </div>
                 <div class="filter-bar">
                     <select id="filter-topic" class="select" style="min-width:140px">
                         <option value="">全部主题</option>
-                        <option value="topic_001">物业管理</option>
-                        <option value="topic_002">市容环境</option>
-                        <option value="topic_003">交通出行</option>
-                        <option value="topic_004">教育入学</option>
-                        <option value="topic_005">医疗卫生</option>
-                        <option value="topic_006">社会保障</option>
-                        <option value="topic_007">公共安全</option>
-                        <option value="topic_008">文化服务</option>
+                        <option value="G001">版本节奏与内容</option>
+                        <option value="G002">抽卡与付费机制</option>
+                        <option value="G003">角色设计与平衡</option>
+                        <option value="G004">技术性能与优化</option>
+                        <option value="G005">社区运营与公关</option>
+                        <option value="G006">竞品与市场压力</option>
+                        <option value="G007">公司治理与舆情</option>
+                        <option value="G008">合规与监管</option>
                     </select>
                     <select id="filter-sentiment" class="select" style="min-width:120px">
                         <option value="">全部情感</option>
@@ -89,7 +90,7 @@
     <div id="detail-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3>诉求详情</h3>
+                <h3>舆情详情</h3>
                 <button class="modal-close">×</button>
             </div>
             <div id="detail-modal-body"></div>
@@ -98,8 +99,8 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <span>昆明市五华区 | 课程演示项目</span>
-        <span class="demo-tag">Demo Mode</span>
+        <span>企业舆情风控管理系统 v1.0.0</span>
+        <span class="demo-tag">演示数据</span>
     </footer>
 
     <script src="../data/mock/mock_data.js"></script>
@@ -107,8 +108,10 @@
     <script src="../js/store.js"></script>
     <script src="../js/components.js"></script>
     <script src="../js/interactions.js"></script>
+    <script src="../js/company_selector.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            CompanySelector.init();
             Interactions.init();
             SearchPage.init();
         });
@@ -154,7 +157,7 @@
 
                 ApiService.semanticSearch(query, filters).then(function(data) {
                     var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                    var items = data.items || [];
+                    var items = data.results || data.items || [];
                     var total = data.total || items.length;
 
                     document.getElementById('results-info').textContent =
@@ -162,8 +165,10 @@
 
                     var enriched = items.map(function(item) {
                         return Object.assign({}, item, {
-                            source: item.source || '-',
-                            publish_time: item.publish_time || item.created_at || ''
+                            platform: item.platform || '-',
+                            publish_time: item.publish_time || item.created_at || '',
+                            clean_text: item.clean_text || item.text_preview || item.title || '',
+                            similarity: item.similarity || (item.distance != null ? (1 - item.distance) : 0.5)
                         });
                     });
 

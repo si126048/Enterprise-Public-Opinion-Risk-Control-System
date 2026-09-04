@@ -4,16 +4,15 @@
 
 var ApiService = (function() {
     var useMock = true;
-    var autoDetected = false;
+    var detectPromise = null;
 
     function setMock(val) {
         useMock = !!val;
     }
 
     function autoDetectMock() {
-        if (autoDetected) return;
-        autoDetected = true;
-        fetch('/api/health').then(function(res) {
+        if (detectPromise) return detectPromise;
+        detectPromise = fetch('/api/health').then(function(res) {
             if (res.ok) {
                 useMock = false;
                 console.log('[ApiService] Backend detected, using real API');
@@ -21,9 +20,15 @@ var ApiService = (function() {
         }).catch(function() {
             console.log('[ApiService] No backend, using Mock 数据');
         });
+        return detectPromise;
+    }
+
+    function ensureDetected() {
+        return detectPromise || autoDetectMock();
     }
 
     async function fetchApi(endpoint, options) {
+        await ensureDetected();
         options = options || {};
         var url = endpoint.indexOf('/api/') === 0 ? endpoint : '/api/' + endpoint.replace(/^\/+/, '');
         var res = await fetch(url, options);
@@ -48,22 +53,27 @@ var ApiService = (function() {
     return {
         get useMock() { return useMock; },
         setMock: setMock,
+        ensureDetected: ensureDetected,
 
         // Health
-        getHealth: function() {
-            if (useMock) return mockDelay({ status: 'ok', version: '0.7.0-mock' });
+        getHealth: async function() {
+            await ensureDetected();
+            if (useMock) return mockDelay({ status: 'ok', version: '1.0.0-mock', name: '企业舆情风控管理系统' });
             return fetchApi('/api/health');
         },
 
         // Content
-        getContent: function(params) {
+        getContent: async function(params) {
+            await ensureDetected();
             if (useMock) {
                 var items = (typeof MOCK_DATA !== 'undefined') ? MOCK_DATA : [];
                 var p = params || {};
                 if (p.sentiment) items = items.filter(function(i) { return i.sentiment === p.sentiment; });
                 if (p.topic) items = items.filter(function(i) { return i.topic === p.topic; });
                 if (p.risk_level) items = items.filter(function(i) { return i.risk_level === p.risk_level; });
-                if (p.district) items = items.filter(function(i) { return i.district === p.district; });
+                if (p.product_name) items = items.filter(function(i) { return i.product_name === p.product_name; });
+                if (p.platform) items = items.filter(function(i) { return i.platform === p.platform || i.source === p.platform; });
+                if (p.company_id) items = items.filter(function(i) { return i.company_id === p.company_id; });
                 if (p.search) {
                     var q = p.search.toLowerCase();
                     items = items.filter(function(i) {
@@ -91,7 +101,8 @@ var ApiService = (function() {
             return fetchApi('/api/content?' + qs.toString());
         },
 
-        getContentById: function(id) {
+        getContentById: async function(id) {
+            await ensureDetected();
             if (useMock) {
                 var items = (typeof MOCK_DATA !== 'undefined') ? MOCK_DATA : [];
                 var item = items.find(function(i) { return i.id === id; });
@@ -100,15 +111,71 @@ var ApiService = (function() {
             return fetchApi('/api/content/' + id);
         },
 
-        getStatsOverview: function() {
+        getStatsOverview: async function() {
+            await ensureDetected();
             if (useMock) {
                 return mockDelay(typeof MOCK_STATS !== 'undefined' ? MOCK_STATS : {});
             }
             return fetchApi('/api/stats/overview');
         },
 
+        getProductStats: async function(productName) {
+            await ensureDetected();
+            if (useMock) {
+                var stats = typeof MOCK_STATS !== 'undefined' ? MOCK_STATS : {};
+                var pd = stats.product_distribution || {};
+                var count = pd[productName] || 0;
+                return mockDelay({
+                    product: productName,
+                    total: count,
+                    platform_distribution: {},
+                    sentiment_distribution: {},
+                    risk_distribution: {}
+                });
+            }
+            return fetchApi('/api/stats/product/' + encodeURIComponent(productName));
+        },
+
+        // Companies
+        getCompanies: async function() {
+            await ensureDetected();
+            if (useMock) {
+                return mockDelay({
+                    companies: [
+                        {
+                            id: 'mihoyo',
+                            name: '米哈游',
+                            full_name: '上海米哈游网络科技股份有限公司',
+                            is_active: true,
+                            products: ['原神', '崩坏：星穹铁道', '绝区零', '未定事件簿'],
+                            platforms: ['微博', '小红书', '知乎', 'B站', 'TapTap']
+                        }
+                    ]
+                });
+            }
+            return fetchApi('/api/companies');
+        },
+
+        getCompanyById: async function(id) {
+            await ensureDetected();
+            if (useMock) {
+                return mockDelay({
+                    company: {
+                        id: 'mihoyo',
+                        name: '米哈游',
+                        full_name: '上海米哈游网络科技股份有限公司',
+                        is_active: true,
+                        products: ['原神', '崩坏：星穹铁道', '绝区零', '未定事件簿'],
+                        platforms: ['微博', '小红书', '知乎', 'B站', 'TapTap']
+                    }
+                });
+            }
+            return fetchApi('/api/companies/' + id);
+        },
+
         // Semantic Search
-        semanticSearch: function(query, filters) {
+        semanticSearch: async function(query, filters) {
+            await ensureDetected();
             if (useMock) {
                 var items = (typeof MOCK_DATA !== 'undefined') ? MOCK_DATA : [];
                 var q = query.toLowerCase();
@@ -129,17 +196,19 @@ var ApiService = (function() {
         },
 
         // Topics
-        getTopics: function() {
+        getTopics: async function() {
+            await ensureDetected();
             if (useMock) {
                 return mockDelay({ topics: typeof MOCK_TOPICS !== 'undefined' ? MOCK_TOPICS : [] });
             }
             return fetchApi('/api/routing/topics');
         },
 
-        getTopicById: function(id) {
+        getTopicById: async function(id) {
+            await ensureDetected();
             if (useMock) {
                 var topics = (typeof MOCK_TOPICS !== 'undefined') ? MOCK_TOPICS : [];
-                return mockDelay(topics.find(function(t) { return t.id === id; }) || null);
+                return mockDelay(topics.find(function(t) { return t.topic_id === id; }) || null);
             }
             return fetchApi('/api/routing/topics/' + id);
         },
@@ -149,7 +218,8 @@ var ApiService = (function() {
         },
 
         // Discovery
-        getDiscoveryCandidates: function(status) {
+        getDiscoveryCandidates: async function(status) {
+            await ensureDetected();
             if (useMock) return mockDelay({ candidates: [], stats: { pending: 0 } });
             var qs = status ? '?status=' + status : '';
             return fetchApi('/api/discovery/candidates' + qs);
@@ -183,34 +253,9 @@ var ApiService = (function() {
             });
         },
 
-        // Sources
-        getSources: function() {
-            if (useMock) return mockDelay({ sources: [] });
-            return fetchApi('/api/sources');
-        },
-
-        getSourceById: function(id) {
-            if (useMock) return mockDelay({ source: { id: id, source_name: 'Mock来源', data_type: 'csv_import', record_count: 0, access_date: '-', description: '模拟数据', verified: false }, content_stats: { total: 0, analyzed: 0 } });
-            return fetchApi('/api/sources/' + id);
-        },
-
-        createSource: function(data) {
-            if (useMock) return mockDelay({ id: 'mock_' + Date.now(), message: 'created' });
-            return fetchApi('/api/sources', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        },
-
-        deleteSource: function(id) {
-            if (useMock) return mockDelay({ message: 'deleted' });
-            return fetchApi('/api/sources/' + id, { method: 'DELETE' });
-        },
-
-        syncSources: function() {
-            if (useMock) return mockDelay({ synced: 0 });
-            return fetchApi('/api/sources/sync', { method: 'POST' });
-        },
-
         // Validation
-        getValidationSummary: function() {
+        getValidationSummary: async function() {
+            await ensureDetected();
             if (useMock) {
                 return mockDelay({
                     total_analyses: 0, content_count: 0, full_agreement_rate: 0,
@@ -221,7 +266,8 @@ var ApiService = (function() {
             return fetchApi('/api/validation/summary');
         },
 
-        runValidation: function(contentId) {
+        runValidation: async function(contentId) {
+            await ensureDetected();
             if (useMock) return mockDelay({ stats: { processed: 0, content_count: 0, provider_count: 3 } });
             var body = contentId ? { content_id: contentId } : {};
             return fetchApi('/api/validation/run', {
@@ -231,15 +277,24 @@ var ApiService = (function() {
             });
         },
 
-        getValidationResults: function(contentId) {
+        getValidationResults: async function(contentId) {
+            await ensureDetected();
             if (useMock) return mockDelay({ results: [] });
             var qs = contentId ? '?content_id=' + contentId : '';
             return fetchApi('/api/validation/results' + qs);
         },
 
-        getValidationResultsByContent: function(contentId) {
+        getValidationResultsByContent: async function(contentId) {
+            await ensureDetected();
             if (useMock) return mockDelay({ results: [] });
             return fetchApi('/api/validation/results/' + contentId);
+        },
+
+        // Risk Events
+        getRiskEvents: async function() {
+            await ensureDetected();
+            if (useMock) return mockDelay({ events: [], total: 0 });
+            return fetchApi('/api/risk/events');
         },
 
         // Ingest
@@ -248,17 +303,78 @@ var ApiService = (function() {
                 method: 'POST',
                 body: formData
             });
-        }
+        },
+
+        // Crawler
+        getCrawlerStatus: async function() {
+            await ensureDetected();
+            if (useMock) {
+                return mockDelay({
+                    available_crawlers: 6, enabled_crawlers: 6, total_runs: 0, last_run: null
+                });
+            }
+            return fetchApi('/api/crawler/status');
+        },
+
+        getCrawlers: async function() {
+            await ensureDetected();
+            if (useMock) {
+                return mockDelay([
+                    { name: 'weibo', enabled: true, registered: true, category: 'social', description: '微博舆情爬虫（超话/热搜/品牌官微评论）', max_pages: 50, delay: 2.0, urls: ['https://weibo.com'] },
+                    { name: 'xiaohongshu', enabled: true, registered: true, category: 'social', description: '小红书笔记搜索爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.xiaohongshu.com'] },
+                    { name: 'zhihu', enabled: true, registered: true, category: 'social', description: '知乎问题搜索爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.zhihu.com'] },
+                    { name: 'bilibili', enabled: true, registered: true, category: 'social', description: 'B站视频评论爬虫', max_pages: 50, delay: 2.0, urls: ['https://www.bilibili.com'] },
+                    { name: 'taptap', enabled: true, registered: true, category: 'social', description: 'TapTap游戏评分/评价爬虫', max_pages: 20, delay: 3.0, urls: ['https://www.taptap.cn'] },
+                    { name: 'xiaoheihe', enabled: true, registered: true, category: 'social', description: '小黑盒游戏社区帖子/评论爬虫', max_pages: 30, delay: 3.0, urls: ['https://www.xiaoheihe.cn'] }
+                ]);
+            }
+            return fetchApi('/api/crawler/crawlers');
+        },
+
+        runCrawler: async function(name) {
+            await ensureDetected();
+            if (useMock) return mockDelay({ run_id: 'mock_' + Date.now(), crawler_name: name, status: 'completed', total_fetched: 0, total_imported: 0, total_skipped_dup: 0, total_errors: 0 });
+            return fetchApi('/api/crawler/run/' + name, { method: 'POST' });
+        },
+
+        runAllCrawlers: async function() {
+            await ensureDetected();
+            if (useMock) return mockDelay({ runs: [], total_imported: 0 });
+            return fetchApi('/api/crawler/run-all', { method: 'POST' });
+        },
+
+        getCrawlerRuns: async function(limit, offset) {
+            await ensureDetected();
+            if (useMock) return mockDelay({ runs: [], total: 0 });
+            var qs = '?limit=' + (limit || 20) + '&offset=' + (offset || 0);
+            return fetchApi('/api/crawler/runs' + qs);
+        },
+
+        getCrawlerRunDetail: async function(runId) {
+            await ensureDetected();
+            if (useMock) return mockDelay({ run: null });
+            return fetchApi('/api/crawler/runs/' + runId);
+        },
+
+        // Alias for backward compatibility
+        getSources: function() { return this.getCompanies(); }
     };
 })();
 
 // Global fetchApi (mock-aware) for pages that call it directly
-window.fetchApi = function(endpoint, options) {
+window.fetchApi = async function(endpoint, options) {
+    await ApiService.ensureDetected();
     if (ApiService.useMock) {
         var path = endpoint.indexOf('/api/') === 0 ? endpoint : '/api/' + endpoint;
         var method = (options && options.method || 'GET').toUpperCase();
 
         if (path === '/api/stats/overview') return ApiService.getStatsOverview();
+        if (path.indexOf('/api/stats/product/') === 0) {
+            var pn = decodeURIComponent(path.substring('/api/stats/product/'.length));
+            return ApiService.getProductStats(pn);
+        }
+        if (path === '/api/companies' && method === 'GET') return ApiService.getCompanies();
+        if (path.indexOf('/api/companies/') === 0 && method === 'GET') return ApiService.getCompanyById(path.split('/').pop());
         if (path === '/api/routing/topics') return ApiService.getTopics();
         if (path.indexOf('/api/validation/summary') === 0) return ApiService.getValidationSummary();
         if (path.indexOf('/api/validation/results/') === 0) {
@@ -268,11 +384,12 @@ window.fetchApi = function(endpoint, options) {
         if (path.indexOf('/api/validation/results') === 0) return ApiService.getValidationResults();
         if (path === '/api/validation/run') return ApiService.runValidation();
 
-        if (path === '/api/sources' && method === 'GET') return ApiService.getSources();
-        if (path === '/api/sources' && method === 'POST') return ApiService.createSource(options && options.body ? JSON.parse(options.body) : {});
-        if (path === '/api/sources/sync') return ApiService.syncSources();
-        if (path.indexOf('/api/sources/') === 0 && method === 'GET') return ApiService.getSourceById(path.split('/').pop());
-        if (path.indexOf('/api/sources/') === 0 && method === 'DELETE') return ApiService.deleteSource(path.split('/').pop());
+        if (path === '/api/crawler/status') return ApiService.getCrawlerStatus();
+        if (path === '/api/crawler/crawlers') return ApiService.getCrawlers();
+        if (path.indexOf('/api/crawler/run/') === 0 && method === 'POST') return ApiService.runCrawler(decodeURIComponent(path.split('/').pop()));
+        if (path === '/api/crawler/run-all' && method === 'POST') return ApiService.runAllCrawlers();
+        if (path.indexOf('/api/crawler/runs?') === 0) return ApiService.getCrawlerRuns();
+        if (path.indexOf('/api/crawler/runs/') === 0) return ApiService.getCrawlerRunDetail(decodeURIComponent(path.split('/').pop()));
 
         if (path === '/api/content') return ApiService.getContent();
     }

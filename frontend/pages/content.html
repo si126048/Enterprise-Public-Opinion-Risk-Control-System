@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>诉求列表 - 五华民意·态势感知</title>
+    <title>舆情列表 - 企业舆情风控·态势感知</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/mobile.css">
@@ -13,19 +13,20 @@
     <nav class="navbar">
         <div class="nav-brand">
             <span class="brand-icon">◆</span>
-            <span class="brand-text">五华民意·态势感知</span>
+            <span class="brand-text">企业舆情风控</span>
         </div>
         <ul class="nav-links">
             <li><a href="../index.html">总览</a></li>
-            <li><a href="content.html" class="active">诉求列表</a></li>
+            <li><a href="content.html" class="active">舆情列表</a></li>
             <li><a href="search.html">语义搜索</a></li>
-            <li><a href="topics.html">主题库</a></li>
+            <li><a href="topics.html">风险主题</a></li>
             <li><a href="review.html" class="nav-highlight">审核</a></li>
-            <li><a href="sources.html">来源</a></li>
-            <li><a href="validation.html">验证</a></li>
+            <li><a href="risk_events.html">风控事件</a></li>
         </ul>
         <div class="nav-actions">
+            <select id="company-selector" class="company-selector" title="选择公司"></select>
             <span class="data-badge">数据更新: 今日</span>
+            <button class="theme-toggle" title="切换到夜间模式">☾</button>
             <button class="nav-toggle" aria-label="菜单">≡</button>
         </div>
     </nav>
@@ -35,8 +36,21 @@
             <!-- Filter Bar -->
             <div class="section">
                 <div class="filter-bar">
-                    <select id="filter-source" class="select" style="min-width:140px">
-                        <option value="">全部来源</option>
+                    <select id="filter-product" class="select" style="min-width:120px">
+                        <option value="">全部产品</option>
+                        <option value="原神">原神</option>
+                        <option value="崩坏：星穹铁道">崩坏：星穹铁道</option>
+                        <option value="绝区零">绝区零</option>
+                        <option value="未定事件簿">未定事件簿</option>
+                        <option value="公司层面">公司层面</option>
+                    </select>
+                    <select id="filter-platform" class="select" style="min-width:120px">
+                        <option value="">全部平台</option>
+                        <option value="微博">微博</option>
+                        <option value="小红书">小红书</option>
+                        <option value="知乎">知乎</option>
+                        <option value="B站">B站</option>
+                        <option value="TapTap">TapTap</option>
                     </select>
                     <select id="filter-sentiment" class="select" style="min-width:120px">
                         <option value="">全部情感</option>
@@ -71,7 +85,7 @@
     <div id="detail-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3>诉求详情</h3>
+                <h3>舆情详情</h3>
                 <button class="modal-close">×</button>
             </div>
             <div id="detail-modal-body"></div>
@@ -80,8 +94,8 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <span>昆明市五华区 | 课程演示项目</span>
-        <span class="demo-tag">Demo Mode</span>
+        <span>企业舆情风控管理系统 v1.0.0</span>
+        <span class="demo-tag">演示数据</span>
     </footer>
 
     <script src="../data/mock/mock_data.js"></script>
@@ -89,8 +103,10 @@
     <script src="../js/store.js"></script>
     <script src="../js/components.js"></script>
     <script src="../js/interactions.js"></script>
+    <script src="../js/company_selector.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            CompanySelector.init();
             Interactions.init();
             ContentPage.init();
         });
@@ -101,14 +117,14 @@
 
             init: function() {
                 this.bindEvents();
-                this.loadSources();
                 this.loadData();
             },
 
             bindEvents: function() {
                 var self = this;
 
-                document.getElementById('filter-source').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
+                document.getElementById('filter-product').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
+                document.getElementById('filter-platform').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
                 document.getElementById('filter-sentiment').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
                 document.getElementById('filter-risk').addEventListener('change', function() { self.currentPage = 1; self.loadData(); });
 
@@ -134,25 +150,13 @@
                 });
             },
 
-            loadSources: function() {
-                ApiService.getSources().then(function(data) {
-                    var select = document.getElementById('filter-source');
-                    var items = data.items || [];
-                    items.forEach(function(s) {
-                        var opt = document.createElement('option');
-                        opt.value = s.source_name;
-                        opt.textContent = s.source_name;
-                        select.appendChild(opt);
-                    });
-                }).catch(function() {});
-            },
-
             loadData: function() {
                 var self = this;
                 var params = {
                     page: this.currentPage,
                     page_size: this.pageSize,
-                    source: document.getElementById('filter-source').value || undefined,
+                    product_name: document.getElementById('filter-product').value || undefined,
+                    platform: document.getElementById('filter-platform').value || undefined,
                     sentiment: document.getElementById('filter-sentiment').value || undefined,
                     risk_level: document.getElementById('filter-risk').value || undefined,
                     search: document.getElementById('filter-search').value || undefined

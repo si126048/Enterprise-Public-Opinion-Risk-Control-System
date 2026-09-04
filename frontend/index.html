@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五华民意·态势感知</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>企业舆情风控·态势感知</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/maps.css">
     <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
@@ -15,38 +13,38 @@
     <nav class="navbar">
         <div class="nav-brand">
             <span class="brand-icon">◆</span>
-            <span class="brand-text">五华民意·态势感知</span>
+            <span class="brand-text">企业舆情风控</span>
         </div>
         <ul class="nav-links">
             <li><a href="index.html" class="active">总览</a></li>
-            <li><a href="pages/content.html">诉求列表</a></li>
+            <li><a href="pages/content.html">舆情列表</a></li>
             <li><a href="pages/search.html">语义搜索</a></li>
-            <li><a href="pages/topics.html">主题库</a></li>
+            <li><a href="pages/topics.html">风险主题</a></li>
             <li><a href="pages/review.html" class="nav-highlight">审核</a></li>
-            <li><a href="pages/sources.html">来源</a></li>
-            <li><a href="pages/validation.html">验证</a></li>
+            <li><a href="pages/risk_events.html">风控事件</a></li>
         </ul>
         <div class="nav-actions">
+            <select id="company-selector" class="company-selector" title="选择公司"></select>
             <span class="data-badge">数据更新: 今日</span>
+            <button class="theme-toggle" title="切换到夜间模式">☾</button>
             <button class="nav-toggle" aria-label="菜单">≡</button>
         </div>
     </nav>
 
-    <!-- Dashboard Layout: Map + Panel -->
+    <!-- Dashboard Layout -->
     <div class="main-content">
         <div class="dashboard-layout">
-            <!-- Left: Map -->
+            <!-- Left: Distribution Charts -->
             <div class="dashboard-map">
-                <div id="map-container"></div>
-                <button class="map-reset-btn">↩ 重置视图</button>
-                <div class="map-legend">
-                    <h4>诉求密度</h4>
-                    <div class="map-legend-item"><span class="map-legend-color" style="background:#EDE8DF"></span> &lt;50</div>
-                    <div class="map-legend-item"><span class="map-legend-color" style="background:#F5E6A3"></span> 50-150</div>
-                    <div class="map-legend-item"><span class="map-legend-color" style="background:#FFD700"></span> 150-300</div>
-                    <div class="map-legend-item"><span class="map-legend-color" style="background:#F6A83D"></span> 300-500</div>
-                    <div class="map-legend-item"><span class="map-legend-color" style="background:#F65413"></span> &gt;500</div>
+                <div class="section">
+                    <div class="section-title">平台分布</div>
+                    <div id="chart-platform-dist" style="height: 280px;"></div>
                 </div>
+                <div class="section">
+                    <div class="section-title">产品分布</div>
+                    <div id="chart-product-dist" style="height: 280px;"></div>
+                </div>
+                <div id="timeline-container"></div>
             </div>
 
             <!-- Right: Panel -->
@@ -59,14 +57,14 @@
 
                 <!-- Topic Rank -->
                 <div class="section">
-                    <div class="section-title">主题排行</div>
+                    <div class="section-title">风险主题排行</div>
                     <div id="topic-rank"></div>
                 </div>
 
                 <!-- Trend Chart -->
                 <div class="section">
-                    <div class="section-title">近7天趋势</div>
-                    <div id="chart-trend" style="height: 180px;"></div>
+                    <div class="section-title">近期趋势</div>
+                    <div id="chart-trend" style="height: 200px;"></div>
                 </div>
 
                 <!-- Sentiment + Topic Charts -->
@@ -91,7 +89,7 @@
 
                 <!-- Content List (for drill-down) -->
                 <div class="section" id="dashboard-content-section" style="display:none">
-                    <div class="section-title">区域诉求</div>
+                    <div class="section-title">产品舆情</div>
                     <div id="dashboard-content-list"></div>
                 </div>
             </div>
@@ -102,7 +100,7 @@
     <div id="detail-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3>诉求详情</h3>
+                <h3>舆情详情</h3>
                 <button class="modal-close">×</button>
             </div>
             <div id="detail-modal-body"></div>
@@ -111,12 +109,11 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <span>昆明市五华区 | 课程演示项目</span>
-        <span class="demo-tag">Demo Mode</span>
+        <span>企业舆情风控管理系统 v1.0.0</span>
+        <span class="demo-tag">演示数据</span>
     </footer>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <script src="data/mock/mock_data.js"></script>
     <script src="data/mock/mock_stats.js"></script>
@@ -127,10 +124,18 @@
     <script src="js/charts.js"></script>
     <script src="js/map.js"></script>
     <script src="js/interactions.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/evidence_panel.js"></script>
+    <script src="js/company_selector.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            CompanySelector.init();
             Interactions.init();
             Interactions.initDashboard();
+
+            if (typeof TimelinePlayer !== 'undefined') {
+                TimelinePlayer.init('timeline-container');
+            }
         });
     </script>
 </body>

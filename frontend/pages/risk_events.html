@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风控事件 - 企业舆情风控·态势感知</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">◆</span>
+            <span class="brand-text">企业舆情风控</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">总览</a></li>
+            <li><a href="content.html">舆情列表</a></li>
+            <li><a href="search.html">语义搜索</a></li>
+            <li><a href="topics.html">风险主题</a></li>
+            <li><a href="review.html" class="nav-highlight">审核</a></li>
+            <li><a href="risk_events.html" class="active">风控事件</a></li>
+        </ul>
+        <div class="nav-actions">
+            <select id="company-selector" class="company-selector" title="选择公司"></select>
+            <span class="data-badge">数据更新: 今日</span>
+            <button class="theme-toggle" title="切换到夜间模式">☾</button>
+            <button class="nav-toggle" aria-label="菜单">≡</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="page-body">
+            <div class="section">
+                <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0">风控事件</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <select id="filter-risk-level" class="filter-select" style="background:rgba(255,255,255,0.06);color:#ccc;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.8rem;">
+                            <option value="">全部等级</option>
+                            <option value="high">高</option>
+                            <option value="medium">中</option>
+                            <option value="low">低</option>
+                        </select>
+                        <select id="filter-status" class="filter-select" style="background:rgba(255,255,255,0.06);color:#ccc;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.8rem;">
+                            <option value="">全部状态</option>
+                            <option value="open">待处理</option>
+                            <option value="closed">已关闭</option>
+                        </select>
+                        <button class="btn btn-primary" id="btn-auto-generate">自动生成事件</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-4 mb-2" id="event-summary-cards"></div>
+
+            <div class="section">
+                <div class="section-title">事件列表</div>
+                <div class="table-responsive">
+                    <table class="data-table" id="events-table">
+                        <thead>
+                            <tr>
+                                <th>事件ID</th>
+                                <th>标题</th>
+                                <th>风险主题</th>
+                                <th>风险等级</th>
+                                <th>关联内容</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-tbody">
+                            <tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section" id="advice-section" style="display:none;">
+                <div class="section-title">风控建议</div>
+                <div id="advice-content" class="card" style="white-space:pre-wrap;line-height:1.8;font-size:0.9rem;color:var(--color-text-secondary);"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="event-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modal-title">事件详情</h3>
+                <button class="modal-close" onclick="RiskEventsPage.closeModal()">&times;</button>
+            </div>
+            <div id="modal-body" style="padding:1.5rem;"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <span>企业舆情风控管理系统 v1.0.0</span>
+        <span class="demo-tag">演示数据</span>
+    </footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/store.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/interactions.js"></script>
+    <script src="../js/company_selector.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        var allEvents = [];
+
+        function riskBadge(level) {
+            var map = { critical: 'badge-negative', high: 'badge-negative', medium: 'badge-uncertain', low: 'badge-neutral' };
+            var labels = { critical: '严重', high: '高', medium: '中', low: '低' };
+            return '<span class="badge ' + (map[level] || 'badge-neutral') + '">' + (labels[level] || level) + '</span>';
+        }
+
+        function statusBadge(status) {
+            var map = { open: 'badge-uncertain', closed: 'badge-neutral' };
+            var labels = { open: '待处理', closed: '已关闭' };
+            return '<span class="badge ' + (map[status] || 'badge-neutral') + '">' + (labels[status] || status) + '</span>';
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function loadEvents() {
+            var riskLevel = document.getElementById('filter-risk-level').value;
+            var status = document.getElementById('filter-status').value;
+
+            ApiService.getRiskEvents().then(function(data) {
+                allEvents = data.events || [];
+                renderEvents();
+                renderSummary();
+            }).catch(function(err) {
+                console.error('Load events failed:', err);
+                document.getElementById('events-tbody').innerHTML =
+                    '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);">加载失败</td></tr>';
+            });
+        }
+
+        function renderEvents() {
+            var riskLevel = document.getElementById('filter-risk-level').value;
+            var status = document.getElementById('filter-status').value;
+            var filtered = allEvents.filter(function(ev) {
+                if (riskLevel && ev.risk_level !== riskLevel) return false;
+                if (status && ev.status !== status) return false;
+                return true;
+            });
+
+            var tbody = document.getElementById('events-tbody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);">暂无风控事件</td></tr>';
+                return;
+            }
+
+            var html = '';
+            filtered.forEach(function(ev) {
+                var topicName = ev.topic_id || '-';
+                var created = ev.created_at ? ev.created_at.substring(0, 16).replace('T', ' ') : '-';
+                html += '<tr>';
+                html += '<td><code>' + escapeHtml(ev.id) + '</code></td>';
+                html += '<td><a href="#" onclick="RiskEventsPage.showDetail(\'' + ev.id + '\');return false;">' + escapeHtml(ev.title) + '</a></td>';
+                html += '<td>' + escapeHtml(topicName) + '</td>';
+                html += '<td>' + riskBadge(ev.risk_level) + '</td>';
+                html += '<td>' + (ev.content_count || 0) + '</td>';
+                html += '<td>' + statusBadge(ev.status) + '</td>';
+                html += '<td>' + created + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm btn-secondary" onclick="RiskEventsPage.showAdvice(\'' + ev.id + '\')">建议</button> ';
+                if (ev.status === 'open') {
+                    html += '<button class="btn btn-sm" onclick="RiskEventsPage.closeEvent(\'' + ev.id + '\')">关闭</button>';
+                }
+                html += '</td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderSummary() {
+            var total = allEvents.length;
+            var open = allEvents.filter(function(e) { return e.status === 'open'; }).length;
+            var high = allEvents.filter(function(e) { return e.risk_level === 'high' || e.risk_level === 'critical'; }).length;
+            var withAdvice = allEvents.filter(function(e) { return e.advice; }).length;
+
+            var cards = [
+                { label: '总事件', value: total, cls: '' },
+                { label: '待处理', value: open, cls: open > 0 ? 'stat-warning' : '' },
+                { label: '高风险', value: high, cls: high > 0 ? 'stat-danger' : '' },
+                { label: '已有建议', value: withAdvice, cls: '' }
+            ];
+
+            var html = '';
+            cards.forEach(function(c) {
+                html += '<div class="stat-card ' + c.cls + '">';
+                html += '<div class="stat-value">' + c.value + '</div>';
+                html += '<div class="stat-label">' + c.label + '</div>';
+                html += '</div>';
+            });
+            document.getElementById('event-summary-cards').innerHTML = html;
+        }
+
+        function showDetail(eventId) {
+            var ev = allEvents.find(function(e) { return e.id === eventId; });
+            if (!ev) return;
+
+            document.getElementById('modal-title').textContent = '事件详情 — ' + ev.id;
+            var html = '<h4>' + escapeHtml(ev.title) + '</h4>';
+            html += '<div style="margin:1rem 0;">';
+            html += '<p><strong>风险主题:</strong> ' + escapeHtml(ev.topic_id || '-') + '</p>';
+            html += '<p><strong>风险等级:</strong> ' + riskBadge(ev.risk_level) + '</p>';
+            html += '<p><strong>关联内容:</strong> ' + (ev.content_count || 0) + ' 条</p>';
+            html += '<p><strong>状态:</strong> ' + statusBadge(ev.status) + '</p>';
+            if (ev.description) {
+                html += '<p><strong>描述:</strong> ' + escapeHtml(ev.description) + '</p>';
+            }
+            if (ev.advice) {
+                html += '<div style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.03);border-radius:6px;">';
+                html += '<strong>风控建议:</strong><br><pre style="white-space:pre-wrap;margin:0.5rem 0 0;font-family:inherit;">' + escapeHtml(ev.advice) + '</pre>';
+                html += '</div>';
+            }
+            html += '</div>';
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('event-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('event-modal').style.display = 'none';
+        }
+
+        function showAdvice(eventId) {
+            fetchApi('/api/risk/events/' + eventId + '/generate_advice', { method: 'POST' }).then(function(data) {
+                var section = document.getElementById('advice-section');
+                section.style.display = 'block';
+                document.getElementById('advice-content').textContent = data.advice;
+                loadEvents();
+            }).catch(function(err) {
+                alert('生成建议失败: ' + err.message);
+            });
+        }
+
+        function closeEvent(eventId) {
+            fetchApi('/api/risk/events/' + eventId + '/status?status=closed', { method: 'POST' }).then(function() {
+                loadEvents();
+            }).catch(function(err) {
+                alert('关闭失败: ' + err.message);
+            });
+        }
+
+        function autoGenerate() {
+            var btn = document.getElementById('btn-auto-generate');
+            btn.disabled = true;
+            btn.textContent = '生成中...';
+            fetchApi('/api/risk/auto_generate', { method: 'POST' }).then(function(data) {
+                btn.disabled = false;
+                btn.textContent = '自动生成事件';
+                if (data.created > 0) {
+                    alert('成功生成 ' + data.created + ' 个风控事件');
+                } else {
+                    alert('没有新的风控事件需要生成');
+                }
+                loadEvents();
+            }).catch(function(err) {
+                btn.disabled = false;
+                btn.textContent = '自动生成事件';
+                alert('生成失败: ' + err.message);
+            });
+        }
+
+        function fetchApi(url, options) {
+            return ApiService._fetch ? ApiService._fetch(url, options) : fetch(url, options).then(function(r) { return r.json(); });
+        }
+
+        document.getElementById('filter-risk-level').addEventListener('change', renderEvents);
+        document.getElementById('filter-status').addEventListener('change', renderEvents);
+        document.getElementById('btn-auto-generate').addEventListener('click', autoGenerate);
+
+        CompanySelector.init();
+        Interactions.initNavbar();
+        Interactions.initPageTransition();
+        loadEvents();
+
+        window.RiskEventsPage = {
+            showDetail: showDetail,
+            closeModal: closeModal,
+            showAdvice: showAdvice,
+            closeEvent: closeEvent
+        };
+    })();
+    </script>
+</body>
+</html>

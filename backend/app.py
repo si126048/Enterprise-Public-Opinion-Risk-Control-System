@@ -8,21 +8,23 @@ from backend.config import load_config
 from backend.api.health import router as health_router
 from backend.api.ingest import router as ingest_router
 from backend.api.content import router as content_router
+from backend.api.companies import router as companies_router
 from backend.api.embedding import router as embedding_router
 from backend.api.routing import router as routing_router
 from backend.api.discovery import router as discovery_router
-from backend.api.sources import router as sources_router
 from backend.api.validation import router as validation_router
 from backend.api.crawler import router as crawler_router
+from backend.api.risk_events import router as risk_events_router
+from backend.api.analysis import router as analysis_router
 from backend.db.database import init_db
 from backend.services import embedding_service
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="五华区民意诉求语义分析系统",
-    version="0.1.0",
-    description="Public Opinion Semantic Analysis System for Kunming Wuhua District",
+    title="企业舆情风控管理系统",
+    version="1.0.0",
+    description="Enterprise Public Opinion Risk Control Monitoring System",
 )
 
 app.add_middleware(
@@ -35,12 +37,14 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(ingest_router)
 app.include_router(content_router)
+app.include_router(companies_router)
 app.include_router(embedding_router)
 app.include_router(routing_router)
 app.include_router(discovery_router)
-app.include_router(sources_router)
 app.include_router(validation_router)
 app.include_router(crawler_router)
+app.include_router(risk_events_router)
+app.include_router(analysis_router)
 
 
 @app.on_event("startup")
@@ -52,6 +56,7 @@ async def startup():
     )
     logger.info("Starting %s v%s", config["app"]["display_name"], config["app"]["version"])
     logger.info("Demo mode: %s", config["app"]["demo_mode"])
+    logger.info("Default company: %s", config["app"].get("default_company", "mihoyo"))
     logger.info("LLM provider: %s", config["llm"]["provider"])
     logger.info("Embedding model: %s", config["embedding"]["model_name"])
 

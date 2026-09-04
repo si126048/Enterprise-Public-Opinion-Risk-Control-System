@@ -22,7 +22,7 @@ class CrawlerManager:
 
     def list_crawlers(self) -> List[Dict]:
         result = []
-        sites = self.config.get("sites", {})
+        sites = self.config.get("platforms", {})
         for name, site_cfg in sites.items():
             result.append({
                 "name": name,
@@ -43,7 +43,7 @@ class CrawlerManager:
         if not crawler_cls:
             raise ValueError(f"Unknown crawler: {crawler_name}")
 
-        site_cfg = self.config.get("sites", {}).get(crawler_name, {})
+        site_cfg = self.config.get("platforms", {}).get(crawler_name, {})
         self._create_run_log(run_id, crawler_name, started_at, triggered_by)
 
         crawler = crawler_cls(name=crawler_name, site_config=site_cfg, global_config=self.config)
@@ -82,7 +82,7 @@ class CrawlerManager:
 
     def run_all(self, triggered_by: str = "manual") -> Dict:
         results = {}
-        sites = self.config.get("sites", {})
+        sites = self.config.get("platforms", {})
         for name, site_cfg in sites.items():
             if not site_cfg.get("enabled", False):
                 continue
@@ -116,7 +116,7 @@ class CrawlerManager:
             conn.close()
 
     def get_status(self) -> Dict:
-        sites = self.config.get("sites", {})
+        sites = self.config.get("platforms", {})
         enabled = sum(1 for s in sites.values() if s.get("enabled", False))
         history = self.get_run_history(limit=1)
         last_run = history[0] if history else None
@@ -135,7 +135,7 @@ class CrawlerManager:
     def _create_run_log(self, run_id, crawler_name, started_at, triggered_by):
         conn = get_connection()
         try:
-            snapshot = {k: v for k, v in self.config.items() if k != "sites"}
+            snapshot = {k: v for k, v in self.config.items() if k != "platforms"}
             conn.execute(
                 """INSERT INTO crawl_run_log
                    (id, started_at, status, triggered_by, crawler_name, config_snapshot)

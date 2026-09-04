@@ -5,21 +5,50 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DB_PATH = PROJECT_ROOT / "data" / "app.db"
 
 SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS company_config (
+    id TEXT PRIMARY KEY,
+    company_id TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    display_name TEXT,
+    keywords_json TEXT,
+    products_json TEXT,
+    platforms_json TEXT,
+    is_active BOOLEAN DEFAULT 1,
+    config_version TEXT,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
 CREATE TABLE IF NOT EXISTS raw_content (
     id TEXT PRIMARY KEY,
-    source TEXT NOT NULL,
-    url TEXT,
-    publish_time DATETIME,
-    crawl_time DATETIME NOT NULL,
-    title TEXT,
-    raw_text TEXT NOT NULL,
+    company_id TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    product_name TEXT,
+    platform TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    author TEXT,
+    author_id TEXT,
+    followers INTEGER DEFAULT 0,
+    content TEXT NOT NULL,
     clean_text TEXT,
     clean_text_hash TEXT,
     content_hash TEXT UNIQUE,
-    language TEXT DEFAULT 'zh',
+    publish_time DATETIME,
+    crawl_time DATETIME NOT NULL,
+    url TEXT NOT NULL,
+    likes INTEGER DEFAULT 0,
+    comments INTEGER DEFAULT 0,
+    shares INTEGER DEFAULT 0,
+    title TEXT,
+    tags TEXT,
     metadata_json TEXT,
     created_at DATETIME NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_content_company ON raw_content(company_id);
+CREATE INDEX IF NOT EXISTS idx_content_product ON raw_content(product_name);
+CREATE INDEX IF NOT EXISTS idx_content_platform ON raw_content(platform);
+CREATE INDEX IF NOT EXISTS idx_content_publish ON raw_content(publish_time);
 
 CREATE TABLE IF NOT EXISTS content_analysis (
     content_id TEXT PRIMARY KEY,
@@ -29,8 +58,12 @@ CREATE TABLE IF NOT EXISTS content_analysis (
     sentiment_confidence REAL,
     risk_level TEXT CHECK(risk_level IN ('low','medium','high','uncertain')),
     risk_confidence REAL,
+    credibility_score REAL,
+    credibility_factors TEXT,
     summary TEXT,
     theory_perspective TEXT,
+    risk_advice TEXT,
+    community_heat_score REAL,
     llm_model TEXT,
     analysis_version TEXT,
     review_status TEXT DEFAULT 'pending',
@@ -43,6 +76,8 @@ CREATE TABLE IF NOT EXISTS topics (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
+    risk_weight TEXT DEFAULT '中',
+    company_id TEXT,
     status TEXT DEFAULT 'active',
     version INTEGER DEFAULT 1,
     created_at DATETIME,
@@ -97,17 +132,6 @@ CREATE TABLE IF NOT EXISTS ai_run_log (
     error_message TEXT
 );
 
-CREATE TABLE IF NOT EXISTS source_ledger (
-    id TEXT PRIMARY KEY,
-    source_name TEXT NOT NULL,
-    source_url TEXT,
-    data_type TEXT,
-    access_date DATE,
-    description TEXT,
-    record_count INTEGER,
-    verified BOOLEAN DEFAULT 0
-);
-
 CREATE TABLE IF NOT EXISTS cross_validation_results (
     id TEXT PRIMARY KEY,
     content_id TEXT NOT NULL,
@@ -118,7 +142,6 @@ CREATE TABLE IF NOT EXISTS cross_validation_results (
     risk_level TEXT,
     risk_confidence REAL,
     summary TEXT,
-    theory_perspective TEXT,
     created_at DATETIME,
     FOREIGN KEY (content_id) REFERENCES raw_content(id)
 );
@@ -130,6 +153,8 @@ CREATE TABLE IF NOT EXISTS crawl_run_log (
     status TEXT CHECK(status IN ('running','completed','failed','partial')),
     triggered_by TEXT DEFAULT 'manual',
     crawler_name TEXT,
+    platform TEXT,
+    company_id TEXT,
     total_fetched INTEGER DEFAULT 0,
     total_imported INTEGER DEFAULT 0,
     total_skipped_dup INTEGER DEFAULT 0,
@@ -137,7 +162,37 @@ CREATE TABLE IF NOT EXISTS crawl_run_log (
     error_details TEXT,
     config_snapshot TEXT
 );
+
+CREATE TABLE IF NOT EXISTS risk_events (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    topic_id TEXT,
+    title TEXT NOT NULL,
+    description TEXT,
+    risk_level TEXT CHECK(risk_level IN ('low','medium','high','critical')),
+    content_count INTEGER DEFAULT 0,
+    sample_content_ids TEXT,
+    advice TEXT,
+    status TEXT DEFAULT 'open',
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (company_id) REFERENCES company_config(company_id)
+);
 """
+
+COMPANY_SEED = [
+    (
+        "cfg_mihoyo",
+        "mihoyo",
+        "米哈游",
+        "miHoYo",
+        '["米哈游","原神","崩坏星穹铁道","绝区零","未定事件簿","Hoyoverse","大伟哥"]',
+        '[{"name":"原神","aliases":["原神","Genshin","Genshin Impact","提瓦特","旅行者"]},{"name":"崩坏：星穹铁道","aliases":["崩铁","星穹铁道","HSR","Honkai Star Rail","开拓者","星核"]},{"name":"绝区零","aliases":["绝区零","ZZZ","Zenless Zone Zero","新艾利都","代理人"]},{"name":"未定事件簿","aliases":["未定","未定事件簿","Tears of Themis","律师","左然"]}]',
+        '["weibo","xiaohongshu","zhihu","bilibili","taptap"]',
+        1,
+        "1.0",
+    ),
+]
 
 
 def get_connection() -> sqlite3.Connection:
@@ -150,9 +205,23 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_db():
+    import datetime
     conn = get_connection()
     try:
         conn.executescript(SCHEMA_SQL)
+        conn.commit()
+
+        now = datetime.datetime.now().isoformat()
+        for seed in COMPANY_SEED:
+            try:
+                conn.execute(
+                    """INSERT OR IGNORE INTO company_config
+                       (id, company_id, name, display_name, keywords_json, products_json, platforms_json, is_active, config_version, created_at, updated_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (*seed, now, now),
+                )
+            except Exception:
+                pass
         conn.commit()
     finally:
         conn.close()

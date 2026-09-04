@@ -656,3 +656,63 @@
 .discovery-status.status-err {
   color: var(--color-danger);
 }
+
+/* ---- Dark Mode Component Overrides ---- */
+[data-theme="dark"] .card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .content-card,
+[data-theme="dark"] .candidate-card,
+[data-theme="dark"] .source-detail {
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .card-hover:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  border-color: var(--color-accent-cyan);
+}
+
+[data-theme="dark"] .data-table th {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .data-table tr:hover td {
+  background: rgba(255, 215, 0, 0.03);
+}
+
+[data-theme="dark"] .modal-box {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .pagination button {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .pagination button.active {
+  background: var(--color-accent-cyan);
+  color: #000;
+  border-color: var(--color-accent-cyan);
+}
+
+[data-theme="dark"] .topic-rank-bar {
+  background: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] .input,
+[data-theme="dark"] .select,
+[data-theme="dark"] .textarea {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .candidate-preview,
+[data-theme="dark"] .anchor-preview {
+  background: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+}

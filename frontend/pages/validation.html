@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>交叉验证 - 五华民意·态势感知</title>
+    <title>交叉验证 - 企业舆情风控·态势感知</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/components.css">
@@ -14,19 +14,19 @@
     <nav class="navbar">
         <div class="nav-brand">
             <span class="brand-icon">◆</span>
-            <span class="brand-text">五华民意·态势感知</span>
+            <span class="brand-text">企业舆情风控</span>
         </div>
         <ul class="nav-links">
             <li><a href="../index.html">总览</a></li>
-            <li><a href="content.html">诉求列表</a></li>
+            <li><a href="content.html">舆情列表</a></li>
             <li><a href="search.html">语义搜索</a></li>
-            <li><a href="topics.html">主题库</a></li>
+            <li><a href="topics.html">风险主题</a></li>
             <li><a href="review.html">审核</a></li>
-            <li><a href="sources.html">来源</a></li>
             <li><a href="validation.html" class="active">验证</a></li>
         </ul>
         <div class="nav-actions">
             <span class="data-badge">数据更新: 今日</span>
+            <button class="theme-toggle" title="切换到夜间模式">☾</button>
             <button class="nav-toggle" aria-label="菜单">≡</button>
         </div>
     </nav>
@@ -88,7 +88,7 @@
                         <thead>
                             <tr>
                                 <th>内容ID</th>
-                                <th>来源</th>
+                                <th>平台</th>
                                 <th>原文摘要</th>
                                 <th>Mock</th>
                                 <th>DeepSeek</th>
@@ -116,7 +116,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <span>五华区民意诉求语义分析系统 v0.7.0</span>
+        <span>企业舆情风控管理系统 v1.0.0</span>
         <span class="demo-tag">演示数据</span>
     </footer>
 
@@ -250,7 +250,7 @@
 
                 var html = '<tr>';
                 html += '<td>' + escapeHtml(singleId.substring(0, 8)) + '...</td>';
-                html += '<td>' + escapeHtml(results[0].source || '-') + '</td>';
+                html += '<td>' + escapeHtml(results[0].platform || results[0].source || '-') + '</td>';
                 html += '<td>' + escapeHtml((results[0].clean_text || '').substring(0, 40)) + '</td>';
                 html += '<td>' + sentimentBadge(byProvider.mock ? byProvider.mock.sentiment : '-') + ' ' + riskBadge(byProvider.mock ? byProvider.mock.risk_level : '-') + '</td>';
                 html += '<td>' + sentimentBadge(byProvider.deepseek ? byProvider.deepseek.sentiment : '-') + ' ' + riskBadge(byProvider.deepseek ? byProvider.deepseek.risk_level : '-') + '</td>';
@@ -290,7 +290,7 @@
 
                 rows += '<tr style="cursor:pointer;" onclick="ValidationPage.showDetail(\'' + cid + '\')">';
                 rows += '<td>' + escapeHtml(cid.substring(0, 8)) + '...</td>';
-                rows += '<td>' + escapeHtml(items[0].source || '-') + '</td>';
+                rows += '<td>' + escapeHtml(items[0].platform || items[0].source || '-') + '</td>';
                 rows += '<td>' + escapeHtml((items[0].clean_text || '').substring(0, 30)) + '</td>';
                 rows += '<td>' + sentimentBadge(byP.mock ? byP.mock.sentiment : '-') + '</td>';
                 rows += '<td>' + sentimentBadge(byP.deepseek ? byP.deepseek.sentiment : '-') + '</td>';

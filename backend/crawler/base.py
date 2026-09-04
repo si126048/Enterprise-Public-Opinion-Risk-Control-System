@@ -39,7 +39,7 @@ class BaseCrawler(ABC):
             self._session.mount("http://", adapter)
             self._session.mount("https://", adapter)
             self._session.headers.update({
-                "User-Agent": self.global_config.get("user_agent", "WuhuaOpinionMonitor/0.7"),
+                "User-Agent": self.global_config.get("user_agent", "EnterpriseRiskMonitor/1.0"),
                 **self.global_config.get("default_headers", {}),
             })
         return self._session
@@ -61,9 +61,16 @@ class BaseCrawler(ABC):
             try:
                 rp.read()
             except Exception:
-                rp.allow_all = True
+                self._robots_cache[domain] = None
+                return True
+            if getattr(rp, "disallow_all", False) and not rp.entries:
+                self._robots_cache[domain] = None
+                return True
             self._robots_cache[domain] = rp
-        return self._robots_cache[domain].can_fetch(
+        rp = self._robots_cache[domain]
+        if rp is None:
+            return True
+        return rp.can_fetch(
             self._get_session().headers.get("User-Agent", "*"), url
         )
 

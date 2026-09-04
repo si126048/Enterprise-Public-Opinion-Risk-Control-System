@@ -115,11 +115,56 @@ var Charts = (function() {
         if (!chart) return;
 
         var dates = data.map(function(d) { return d.date; });
-        var counts = data.map(function(d) { return d.count; });
+        var hasNegative = data.some(function(d) { return d.negative !== undefined; });
+
+        var series = [{
+            name: '舆情量',
+            type: 'line',
+            data: data.map(function(d) { return d.total !== undefined ? d.total : d.count; }),
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: { color: '#14D0D0', width: 2 },
+            itemStyle: { color: '#14D0D0' },
+            areaStyle: {
+                color: {
+                    type: 'linear',
+                    x: 0, y: 0, x2: 0, y2: 1,
+                    colorStops: [
+                        { offset: 0, color: 'rgba(20, 208, 208, 0.25)' },
+                        { offset: 1, color: 'rgba(20, 208, 208, 0.02)' }
+                    ]
+                }
+            }
+        }];
+
+        if (hasNegative) {
+            series.push({
+                name: '负面量',
+                type: 'line',
+                data: data.map(function(d) { return d.negative || 0; }),
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 6,
+                lineStyle: { color: '#F65413', width: 2 },
+                itemStyle: { color: '#F65413' },
+                areaStyle: {
+                    color: {
+                        type: 'linear',
+                        x: 0, y: 0, x2: 0, y2: 1,
+                        colorStops: [
+                            { offset: 0, color: 'rgba(246, 84, 19, 0.15)' },
+                            { offset: 1, color: 'rgba(246, 84, 19, 0.02)' }
+                        ]
+                    }
+                }
+            });
+        }
 
         chart.setOption({
             tooltip: { trigger: 'axis' },
-            grid: { left: 40, right: 16, top: 16, bottom: 32 },
+            legend: { data: series.map(function(s) { return s.name; }), bottom: 0, textStyle: { color: '#8A8A8A', fontSize: 11 } },
+            grid: { left: 40, right: 16, top: 16, bottom: 40 },
             xAxis: {
                 type: 'category',
                 data: dates,
@@ -132,25 +177,7 @@ var Charts = (function() {
                 axisLabel: { color: '#8A8A8A', fontSize: 11 },
                 splitLine: { lineStyle: { color: '#EDE8DF' } }
             },
-            series: [{
-                type: 'line',
-                data: counts,
-                smooth: true,
-                symbol: 'circle',
-                symbolSize: 6,
-                lineStyle: { color: '#14D0D0', width: 2 },
-                itemStyle: { color: '#14D0D0' },
-                areaStyle: {
-                    color: {
-                        type: 'linear',
-                        x: 0, y: 0, x2: 0, y2: 1,
-                        colorStops: [
-                            { offset: 0, color: 'rgba(20, 208, 208, 0.25)' },
-                            { offset: 1, color: 'rgba(20, 208, 208, 0.02)' }
-                        ]
-                    }
-                }
-            }]
+            series: series
         });
     }
 
@@ -212,8 +239,8 @@ var Charts = (function() {
         });
     }
 
-    function updateForDistrict(districtName) {
-        var stats = AppStore.getDistrictStats(districtName);
+    function updateForProduct(productName) {
+        var stats = AppStore.getProductStats(productName);
         if (!stats) return;
 
         if (stats.topic_distribution) {
@@ -258,7 +285,7 @@ var Charts = (function() {
         initTrend: initTrend,
         initRiskDistribution: initRiskDistribution,
         initBarChart: initBarChart,
-        updateForDistrict: updateForDistrict,
+        updateForProduct: updateForProduct,
         reset: reset,
         resize: resize,
         dispose: dispose

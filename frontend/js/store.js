@@ -5,11 +5,14 @@
 
 var AppStore = (function() {
     var state = {
-        currentDistrict: null,
+        currentCompany: 'mihoyo',
+        currentProduct: null,
         filters: {
             sentiment: null,
             topic: null,
             risk_level: null,
+            platform: null,
+            product_name: null,
             date_from: null,
             date_to: null,
             search: null
@@ -18,8 +21,8 @@ var AppStore = (function() {
             stats: null,
             topics: [],
             contents: [],
-            sources: [],
-            districtStats: {}
+            companies: [],
+            productStats: {}
         },
         pagination: {
             page: 1,
@@ -61,13 +64,22 @@ var AppStore = (function() {
         notify('filters_cleared');
     }
 
-    function setDistrict(name) {
-        state.currentDistrict = name;
-        notify('district_changed', name);
+    function setCompany(companyId) {
+        state.currentCompany = companyId;
+        notify('company_changed', companyId);
     }
 
-    function getDistrict() {
-        return state.currentDistrict;
+    function getCompany() {
+        return state.currentCompany;
+    }
+
+    function setProduct(productName) {
+        state.currentProduct = productName;
+        notify('product_changed', productName);
+    }
+
+    function getProduct() {
+        return state.currentProduct;
     }
 
     function setData(key, value) {
@@ -87,9 +99,9 @@ var AppStore = (function() {
         return Object.assign({}, state.pagination);
     }
 
-    function getDistrictStats(name) {
-        if (state.data.districtStats && state.data.districtStats[name]) {
-            return state.data.districtStats[name];
+    function getProductStats(productName) {
+        if (state.data.productStats && state.data.productStats[productName]) {
+            return state.data.productStats[productName];
         }
         return null;
     }
@@ -99,8 +111,11 @@ var AppStore = (function() {
         Object.keys(state.filters).forEach(function(k) {
             if (state.filters[k]) active[k] = state.filters[k];
         });
-        if (state.currentDistrict) {
-            active.district = state.currentDistrict;
+        if (state.currentCompany) {
+            active.company_id = state.currentCompany;
+        }
+        if (state.currentProduct) {
+            active.product_name = state.currentProduct;
         }
         return active;
     }
@@ -112,13 +127,15 @@ var AppStore = (function() {
         setFilter: setFilter,
         getFilter: getFilter,
         clearFilters: clearFilters,
-        setDistrict: setDistrict,
-        getDistrict: getDistrict,
+        setCompany: setCompany,
+        getCompany: getCompany,
+        setProduct: setProduct,
+        getProduct: getProduct,
         setData: setData,
         getData: getData,
         setPagination: setPagination,
         getPagination: getPagination,
-        getDistrictStats: getDistrictStats,
+        getProductStats: getProductStats,
         getActiveFilters: getActiveFilters
     };
 })();

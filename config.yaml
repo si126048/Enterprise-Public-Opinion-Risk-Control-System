@@ -1,20 +1,105 @@
 app:
-  name: semantic-opinion-monitor
-  display_name: "五华区民意诉求语义分析系统"
+  name: enterprise-risk-monitor
+  display_name: "企业舆情风控管理系统"
   demo_mode: true
-  version: "0.7.0"
+  version: "1.0.0"
   host: "0.0.0.0"
   port: 8000
+  default_company: "mihoyo"
+
+companies:
+  - id: "mihoyo"
+    name: "米哈游"
+    display_name: "miHoYo"
+    is_active: true
+    keywords:
+      - "米哈游"
+      - "原神"
+      - "崩坏星穹铁道"
+      - "绝区零"
+      - "未定事件簿"
+      - "Hoyoverse"
+      - "大伟哥"
+    products:
+      - name: "原神"
+        aliases: ["原神", "Genshin", "Genshin Impact", "提瓦特", "旅行者"]
+      - name: "崩坏：星穹铁道"
+        aliases: ["崩铁", "星穹铁道", "HSR", "Honkai Star Rail", "开拓者", "星核"]
+      - name: "绝区零"
+        aliases: ["绝区零", "ZZZ", "Zenless Zone Zero", "新艾利都", "代理人"]
+      - name: "未定事件簿"
+        aliases: ["未定", "未定事件簿", "Tears of Themis", "律师", "左然"]
+    platforms:
+      - name: "weibo"
+        enabled: true
+        search_type: "super_topic"
+      - name: "xiaohongshu"
+        enabled: true
+        search_type: "note_search"
+      - name: "zhihu"
+        enabled: true
+        search_type: "question_search"
+      - name: "bilibili"
+        enabled: true
+        search_type: "video_search"
+      - name: "taptap"
+        enabled: true
+        search_type: "review_search"
+
+topics:
+  company_specific: true
+  game_industry:
+    - id: "G001"
+      name: "版本节奏与内容"
+      description: "版本延期、内容量不足、长草期过长、活动设计不佳"
+      risk_weight: "高"
+    - id: "G002"
+      name: "抽卡与付费机制"
+      description: "抽卡概率争议、保底机制、氪金体验、价格歧视"
+      risk_weight: "高"
+    - id: "G003"
+      name: "角色设计与平衡"
+      description: "角色强度失衡、美术翻车、剧情争议、人设崩塌"
+      risk_weight: "中高"
+    - id: "G004"
+      name: "技术性能与优化"
+      description: "游戏卡顿、闪退、优化差、设备适配问题"
+      risk_weight: "中"
+    - id: "G005"
+      name: "社区运营与公关"
+      description: "官方回应不当、冷处理、社区管理、玩家对立"
+      risk_weight: "高"
+    - id: "G006"
+      name: "竞品与市场压力"
+      description: "竞品对比、市场份额下滑、用户流失"
+      risk_weight: "中"
+    - id: "G007"
+      name: "公司治理与舆情"
+      description: "高管言论、员工动态、薪酬争议、资本动作"
+      risk_weight: "高"
+    - id: "G008"
+      name: "合规与监管"
+      description: "版号、防沉迷、数据合规、政策风险"
+      risk_weight: "高"
 
 embedding:
-  provider: "local"
-  model_name: "Qwen/Qwen3-Embedding-4B"
-  model_revision: "main"
-  vector_dimension: 2560
+  provider: "bge-m3"
+  model_name: "BAAI/bge-m3"
+  vector_dimension: 1024
   normalize: true
   batch_size: 32
   preprocess_version: "v1"
   cache_enabled: true
+
+credibility:
+  weights:
+    followers: 0.10
+    account_activity: 0.15
+    engagement_authenticity: 0.20
+    content_consistency: 0.15
+    sentiment_intensity: 0.15
+    platform_credibility: 0.15
+    game_level: 0.10
 
 routing:
   top_k_anchors: 5
@@ -56,46 +141,49 @@ crawler:
   request_timeout: 30
   max_retries: 3
   retry_backoff: 5.0
-  user_agent: "WuhuaOpinionMonitor/0.7"
+  user_agent: "EnterpriseRiskMonitor/1.0"
   respect_robots_txt: true
   max_pages_per_crawl: 200
+  days_back: 30
+  max_requests_per_minute: 60
   default_headers:
     Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     Accept-Language: "zh-CN,zh;q=0.9,en;q=0.8"
     Accept-Encoding: "gzip, deflate"
-  sites:
-    gov_portal:
+  platforms:
+    weibo:
       enabled: true
-      urls:
-        - "http://www.kmwh.gov.cn"
-      category: government
+      base_url: "https://m.weibo.cn/api"
       delay: 3.0
       max_pages: 50
-    gov_hotline:
+      description: "微博超话/热搜/品牌官微评论"
+    xiaohongshu:
       enabled: true
-      urls:
-        - "http://ldkm.km.gov.cn"
-      category: government
+      base_url: "https://www.xiaohongshu.com"
       delay: 5.0
       max_pages: 30
-    news_forum:
+      description: "小红书玩家笔记/避雷帖/测评"
+    zhihu:
       enabled: true
-      urls:
-        - "https://tieba.baidu.com/f?kw=昆明"
-      category: forum
+      base_url: "https://www.zhihu.com/api/v4"
+      delay: 3.0
+      max_pages: 50
+      description: "知乎专业问答/节奏讨论"
+    bilibili:
+      enabled: true
+      base_url: "https://api.bilibili.com"
       delay: 2.0
       max_pages: 100
-    social_weibo:
-      enabled: false
-      urls:
-        - "https://s.weibo.com/weibo?q=五华区"
-      category: social
-      delay: 5.0
-      max_pages: 20
-    social_zhihu:
-      enabled: false
-      urls:
-        - "https://www.zhihu.com/search?q=五华区&type=content"
-      category: social
-      delay: 5.0
-      max_pages: 20
+      description: "B站视频评论/动态"
+    taptap:
+      enabled: true
+      base_url: "https://www.taptap.cn"
+      delay: 3.0
+      max_pages: 30
+      description: "TapTap游戏评分/玩家评价"
+    xiaoheihe:
+      enabled: true
+      base_url: "https://api.xiaoheihe.cn"
+      delay: 3.0
+      max_pages: 30
+      description: "小黑盒游戏社区帖子/评论"

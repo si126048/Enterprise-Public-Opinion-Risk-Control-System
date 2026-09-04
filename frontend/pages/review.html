@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新主题审核 - 五华民意·态势感知</title>
+    <title>新主题审核 - 企业舆情风控·态势感知</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/mobile.css">
@@ -13,19 +13,20 @@
     <nav class="navbar">
         <div class="nav-brand">
             <span class="brand-icon">◆</span>
-            <span class="brand-text">五华民意·态势感知</span>
+            <span class="brand-text">企业舆情风控</span>
         </div>
         <ul class="nav-links">
             <li><a href="../index.html">总览</a></li>
-            <li><a href="content.html">诉求列表</a></li>
+            <li><a href="content.html">舆情列表</a></li>
             <li><a href="search.html">语义搜索</a></li>
-            <li><a href="topics.html">主题库</a></li>
+            <li><a href="topics.html">风险主题</a></li>
             <li><a href="review.html" class="active">审核</a></li>
-            <li><a href="sources.html">来源</a></li>
-            <li><a href="validation.html">验证</a></li>
+            <li><a href="risk_events.html">风控事件</a></li>
         </ul>
         <div class="nav-actions">
+            <select id="company-selector" class="company-selector" title="选择公司"></select>
             <span class="data-badge">数据更新: 今日</span>
+            <button class="theme-toggle" title="切换到夜间模式">☾</button>
             <button class="nav-toggle" aria-label="菜单">≡</button>
         </div>
     </nav>
@@ -112,7 +113,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <span>五华区民意诉求语义分析系统 v0.7.0</span>
+        <span>企业舆情风控管理系统 v1.0.0</span>
         <span class="demo-tag">演示数据</span>
     </footer>
 
@@ -120,6 +121,7 @@
     <script src="../js/store.js"></script>
     <script src="../js/components.js"></script>
     <script src="../js/interactions.js"></script>
+    <script src="../js/company_selector.js"></script>
     <script>
     (function() {
         'use strict';
@@ -279,11 +281,11 @@
 
                 if (content.length > 0) {
                     html += '<h3 class="modal-subtitle" style="margin-top:1rem">代表性内容</h3>'
-                        + '<table class="data-table"><thead><tr><th>标题</th><th>来源</th><th>情感</th><th>风险</th></tr></thead><tbody>';
+                        + '<table class="data-table"><thead><tr><th>标题</th><th>平台</th><th>情感</th><th>风险</th></tr></thead><tbody>';
                     for (var j = 0; j < content.length; j++) {
                         var r = content[j];
                         html += '<tr><td>' + escapeHtml(r.title || r.id) + '</td>'
-                            + '<td>' + escapeHtml(r.source || '-') + '</td>'
+                            + '<td>' + escapeHtml(r.platform || r.source || '-') + '</td>'
                             + '<td>' + sentimentBadge(r.sentiment) + '</td>'
                             + '<td>' + riskBadge(r.risk_level) + '</td></tr>';
                     }
@@ -434,6 +436,7 @@
         });
 
         // Init
+        CompanySelector.init();
         Interactions.initNavbar();
         Interactions.initPageTransition();
         loadCandidates();

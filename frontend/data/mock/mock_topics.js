@@ -1,82 +1,130 @@
 var MOCK_TOPICS = [
     {
-        id: 'topic_001',
-        name: '物业管理',
-        definition: '物业不作为、设施维修拖延、业主与物业纠纷',
-        count: 342,
-        negative_rate: 0.674,
-        anchors: ['楼道灯坏了几个月没人修', '电梯经常出故障', '物业收费不透明'],
-        sentiment_distribution: { positive: 12, neutral: 88, negative: 242 },
-        risk_distribution: { low: 180, medium: 100, high: 62 }
+        topic_id: 'G001',
+        name: '版本节奏与内容',
+        definition: '玩家对版本更新频率、内容量、活动设计的不满，包括长草期过长、版本内容空洞、活动重复等',
+        anchors: [
+            '已经长草两个月了，每天上线就是日常五分钟下线，这版本到底在更新什么？',
+            '活动又是换皮签到，奖励还缩水了，策划是不是觉得玩家没脾气？',
+            '新版本就出了两个角色一个副本，内容量也太少了吧，隔壁游戏都出大版本了',
+            '每次版本都是这些破活动，毫无新意，退坑算了'
+        ],
+        content_count: 3842,
+        negative_rate: 0.72,
+        risk_distribution: { high: 680, medium: 1520, low: 1642 },
+        sentiment_distribution: { positive: 380, neutral: 920, negative: 2542 },
+        platform_distribution: { weibo: 1200, xiaohongshu: 860, zhihu: 520, bilibili: 980, taptap: 282 }
     },
     {
-        id: 'topic_002',
-        name: '市容环境',
-        definition: '垃圾清运不及时、道路破损、绿化缺失、违建问题',
-        count: 418,
-        negative_rate: 0.583,
-        anchors: ['垃圾桶满了三天没人清', '路面坑坑洼洼下雨积水', '行道树被砍没人补种'],
-        sentiment_distribution: { positive: 45, neutral: 118, negative: 255 },
-        risk_distribution: { low: 235, medium: 128, high: 55 }
+        topic_id: 'G002',
+        name: '抽卡与付费机制',
+        definition: '关于抽卡概率、保底机制、付费性价比的争议，包括氪金体验差、概率不透明、保底过高等',
+        anchors: [
+            '大保底才出，这概率真的合理吗？隔壁游戏都是小保底必出UP',
+            '一个版本氪了三千多，结果啥都没拿到，这付费体验太差了',
+            '月卡涨价？你凭什么涨价？福利有增加吗？',
+            '抽卡动画看了八百遍了，能不能换个新的，反正都是骗氪'
+        ],
+        content_count: 4215,
+        negative_rate: 0.81,
+        risk_distribution: { high: 1120, medium: 1850, low: 1245 },
+        sentiment_distribution: { positive: 210, neutral: 640, negative: 3365 },
+        platform_distribution: { weibo: 1450, xiaohongshu: 920, zhihu: 680, bilibili: 780, taptap: 385 }
     },
     {
-        id: 'topic_003',
-        name: '交通出行',
-        definition: '公交线路不合理、道路拥堵、停车困难、交通设施缺失',
-        count: 289,
-        negative_rate: 0.512,
-        anchors: ['公交站离小区太远走路要二十分钟', '高峰期堵一个多小时过不了路口', '小区周围找不到停车位'],
-        sentiment_distribution: { positive: 18, neutral: 106, negative: 165 },
-        risk_distribution: { low: 162, medium: 89, high: 38 }
+        topic_id: 'G003',
+        name: '角色设计与平衡',
+        definition: '角色强度平衡、外观设计、人设争议，包括角色削弱、设计同质化、CP争议等',
+        anchors: [
+            '新角色又削弱了，抽了还没捂热就砍，以后谁还敢抽新角色？',
+            '这角色设计跟上一个有什么区别？换个颜色就拿出来卖？',
+            '剧情里这个角色的人设崩了，跟之前完全不一样，编剧换人了？',
+            '为什么每次出新角色都要踩老角色，非得搞对立？'
+        ],
+        content_count: 2960,
+        negative_rate: 0.58,
+        risk_distribution: { high: 320, medium: 1180, low: 1460 },
+        sentiment_distribution: { positive: 820, neutral: 600, negative: 1540 },
+        platform_distribution: { weibo: 980, xiaohongshu: 720, zhihu: 380, bilibili: 640, taptap: 240 }
     },
     {
-        id: 'topic_004',
-        name: '教育入学',
-        definition: '学区划分争议、学位紧张、培训机构乱象、校园安全',
-        count: 198,
-        negative_rate: 0.424,
-        anchors: ['对口学校太远接送困难', '幼儿园学位不够摇号落选', '学校门口交通混乱不安全'],
-        sentiment_distribution: { positive: 22, neutral: 76, negative: 100 },
-        risk_distribution: { low: 118, medium: 56, high: 24 }
+        topic_id: 'G004',
+        name: '技术性能与优化',
+        definition: '游戏性能优化、BUG问题、适配兼容性等技术层面投诉',
+        anchors: [
+            '更新后手机烫得能煎蛋，帧率掉到20，这优化水平真的无语',
+            'PC端又崩了，进游戏就闪退，什么时候能修好？',
+            'BUG越来越多了，穿模、卡任务、贴图错误，测试团队是摆设吗？',
+            'iPad pro都跑不动最高画质，你们的游戏优化能不能上点心？'
+        ],
+        content_count: 1850,
+        negative_rate: 0.85,
+        risk_distribution: { high: 280, medium: 740, low: 830 },
+        sentiment_distribution: { positive: 90, neutral: 310, negative: 1450 },
+        platform_distribution: { weibo: 420, xiaohongshu: 310, zhihu: 280, bilibili: 380, taptap: 460 }
     },
     {
-        id: 'topic_005',
-        name: '医疗卫生',
-        definition: '基层医疗资源不足、药品短缺、就医体验差、公共卫生隐患',
-        count: 256,
-        negative_rate: 0.547,
-        anchors: ['社区医院常用药经常断货', '排队两小时看病五分钟', '偏远社区老人看病跑很远'],
-        sentiment_distribution: { positive: 15, neutral: 85, negative: 156 },
-        risk_distribution: { low: 135, medium: 78, high: 43 }
+        topic_id: 'G005',
+        name: '社区运营与公关',
+        definition: '官方社区管理、公关回应、玩家沟通等方面的争议，包括冷处理、删帖、不当言论等',
+        anchors: [
+            '官方又在装死了，这么大的节奏就是不出公告，冷处理有意思吗？',
+            '论坛里提个意见就被删帖封号，这就是你们的社区运营？',
+            '策划直播说了一堆废话，玩家关心的问题一个没回应',
+            '官方群管随便踢人，提BUG的踢，反馈问题的踢，只会捂嘴'
+        ],
+        content_count: 3120,
+        negative_rate: 0.78,
+        risk_distribution: { high: 780, medium: 1240, low: 1100 },
+        sentiment_distribution: { positive: 180, neutral: 580, negative: 2360 },
+        platform_distribution: { weibo: 1100, xiaohongshu: 520, zhihu: 480, bilibili: 720, taptap: 300 }
     },
     {
-        id: 'topic_006',
-        name: '社会保障',
-        definition: '低保审批慢、社保办理繁琐、养老服务不足、就业帮扶不到位',
-        count: 312,
-        negative_rate: 0.491,
-        anchors: ['低保申请交了半年没结果', '社保窗口排队排到门外', '社区养老床位一位难求'],
-        sentiment_distribution: { positive: 28, neutral: 108, negative: 176 },
-        risk_distribution: { low: 178, medium: 92, high: 42 }
+        topic_id: 'G006',
+        name: '竞品与市场压力',
+        definition: '与竞品对比产生的流失风险、市场份额变化、玩家迁移等',
+        anchors: [
+            '隔壁新游画质碾压，这边还在吃老本，再不改进真没人玩了',
+            '朋友都跑去玩新游戏了，就剩我一个人在这单机',
+            '这个月流水跌了多少？看看人家新游戏首月多少亿',
+            '说实话这游戏已经过时了，该退就退吧'
+        ],
+        content_count: 1680,
+        negative_rate: 0.65,
+        risk_distribution: { high: 180, medium: 680, low: 820 },
+        sentiment_distribution: { positive: 240, neutral: 510, negative: 930 },
+        platform_distribution: { weibo: 520, xiaohongshu: 380, zhihu: 320, bilibili: 340, taptap: 120 }
     },
     {
-        id: 'topic_007',
-        name: '公共安全',
-        definition: '消防安全隐患、治安问题、噪音扰民、食品安全',
-        count: 367,
-        negative_rate: 0.613,
-        anchors: ['消防通道被车堵死了进不去', '晚上噪音太大根本睡不着', '学校门口卖三无食品给孩子吃'],
-        sentiment_distribution: { positive: 10, neutral: 98, negative: 259 },
-        risk_distribution: { low: 168, medium: 112, high: 87 }
+        topic_id: 'G007',
+        name: '公司治理与舆情',
+        definition: '公司层面争议，包括管理层言论、企业文化、员工事件、股价影响等',
+        anchors: [
+            'CEO又在社交媒体乱说话了，每次上热搜都是负面，能不能消停点？',
+            '股价又跌了，投资者都在问公司到底怎么了',
+            '内部员工爆料加班文化太严重，这公司把人当耗材',
+            '公司高管套现减持，对自家游戏都没信心了？'
+        ],
+        content_count: 2450,
+        negative_rate: 0.74,
+        risk_distribution: { high: 620, medium: 980, low: 850 },
+        sentiment_distribution: { positive: 160, neutral: 540, negative: 1750 },
+        platform_distribution: { weibo: 980, xiaohongshu: 320, zhihu: 520, bilibili: 380, taptap: 250 }
     },
     {
-        id: 'topic_008',
-        name: '文化服务',
-        definition: '公共文化设施不足、活动场地缺乏、文化遗产保护不力',
-        count: 156,
-        negative_rate: 0.312,
-        anchors: ['社区图书馆开门时间短周末还关门', '文化广场健身器材坏了没人修', '农村书屋书籍太少种类单一'],
-        sentiment_distribution: { positive: 32, neutral: 68, negative: 56 },
-        risk_distribution: { low: 102, medium: 42, high: 12 }
+        topic_id: 'G008',
+        name: '合规与监管',
+        definition: '版号政策、未成年人保护、数据安全、跨境合规等监管风险',
+        anchors: [
+            '听说又要加强未成年限制了，这下真的完了',
+            '海外版本数据合规问题被调查了？这影响可不小',
+            '版号又没拿到，下个版本能不能按时上？',
+            '游戏内充值限额了，这对营收影响太大了'
+        ],
+        content_count: 1240,
+        negative_rate: 0.68,
+        risk_distribution: { high: 340, medium: 520, low: 380 },
+        sentiment_distribution: { positive: 120, neutral: 340, negative: 780 },
+        platform_distribution: { weibo: 420, xiaohongshu: 180, zhihu: 280, bilibili: 220, taptap: 140 }
     }
 ];

@@ -1,67 +1,80 @@
 var MOCK_STATS = {
-    total_count: 2847,
-    analyzed_count: 2847,
-    negative_rate: 0.236,
-    high_risk_count: 42,
-    topic_count: 8,
-    source_count: 5,
-    daily_trend: [
-        { date: '2026-08-28', count: 156 },
-        { date: '2026-08-29', count: 189 },
-        { date: '2026-08-30', count: 142 },
-        { date: '2026-08-31', count: 203 },
-        { date: '2026-09-01', count: 178 },
-        { date: '2026-09-02', count: 215 },
-        { date: '2026-09-03', count: 164 }
-    ],
-    risk_distribution: { high: 42, medium: 312, low: 2493 },
-    recent_high_risk: [
+    total_count: 21357,
+    negative_count: 14280,
+    negative_rate: 0.669,
+    high_risk_count: 4320,
+    medium_risk_count: 8650,
+    low_risk_count: 8387,
+    community_heat_score: 78.5,
+    product_distribution: {
+        '原神': 8420,
+        '崩坏：星穹铁道': 6180,
+        '绝区零': 4250,
+        '未定事件簿': 1380,
+        '公司层面': 1127
+    },
+    platform_distribution: {
+        '微博': 7250,
+        '小红书': 3890,
+        '知乎': 3460,
+        'B站': 4700,
+        'TapTap': 2057
+    },
+    trend_data: {
+        dates: ['08-29', '08-30', '08-31', '09-01', '09-02', '09-03', '09-04'],
+        total: [1820, 2150, 1960, 2340, 2580, 2210, 2097],
+        negative: [1180, 1450, 1320, 1580, 1720, 1490, 1390]
+    },
+    sentiment_overall: {
+        positive: 3420,
+        neutral: 3657,
+        negative: 14280
+    },
+    high_risk_samples: [
         {
-            id: 'hr_001',
-            title: '翠湖小区电梯频繁故障困人',
-            source: 'grid_hotline',
-            publish_time: '2026-09-02',
-            clean_text: '翠湖小区3栋电梯近一个月内已发生故障4次，老人小孩被困多次，物业迟迟不予彻底维修，居民出行安全受到严重威胁。'
+            id: 'evt_001',
+            title: '原神5.0版本更新后玩家大规模吐槽内容量不足',
+            platform: '微博',
+            sentiment: 'negative',
+            risk_level: 'high',
+            publish_time: '2026-09-03 14:22:00',
+            heat_score: 92
         },
         {
-            id: 'hr_002',
-            title: '黑林铺社区消防设施全面缺失',
-            source: 'community_report',
-            publish_time: '2026-09-01',
-            clean_text: '黑林铺社区老旧住宅楼道内灭火器全部过期，消防栓无水，部分安全出口被杂物堵塞，一旦发生火灾后果不堪设想。'
+            id: 'evt_002',
+            title: '崩铁抽卡概率争议登上热搜榜',
+            platform: '微博',
+            sentiment: 'negative',
+            risk_level: 'high',
+            publish_time: '2026-09-02 09:15:00',
+            heat_score: 88
         },
         {
-            id: 'hr_003',
-            title: '龙翔街道群租房安全隐患极大',
-            source: 'community_report',
-            publish_time: '2026-09-01',
-            clean_text: '龙翔街道麻园片区群租房现象严重，一套三居室被隔成八间出租，电线私拉乱接，燃气使用不规范，安全隐患极大。'
+            id: 'evt_003',
+            title: '绝区零PC端严重BUG导致大面积闪退',
+            platform: 'B站',
+            sentiment: 'negative',
+            risk_level: 'high',
+            publish_time: '2026-09-01 20:30:00',
+            heat_score: 85
         },
         {
-            id: 'hr_004',
-            title: '普吉街道渣土车夜间超速酿事故',
-            source: 'grid_hotline',
-            publish_time: '2026-08-30',
-            clean_text: '普吉街道滇缅大道夜间渣土车超速行驶、闯红灯现象严重，已发生两起交通事故，周边居民出行安全受到严重威胁。'
+            id: 'evt_004',
+            title: '米哈游CEO社交媒体发言引发股价波动',
+            platform: '知乎',
+            sentiment: 'negative',
+            risk_level: 'high',
+            publish_time: '2026-08-31 16:45:00',
+            heat_score: 95
         },
         {
-            id: 'hr_005',
-            title: '西翥街道山体滑坡威胁居民安全',
-            source: 'community_report',
-            publish_time: '2026-08-29',
-            clean_text: '西翥街道某山坡在连续降雨后出现裂缝和局部滑坡迹象，下方十余户居民安全受到威胁，请紧急组织勘查和转移。'
+            id: 'evt_005',
+            title: '未定事件簿玩家联名投诉角色削弱',
+            platform: 'TapTap',
+            sentiment: 'negative',
+            risk_level: 'high',
+            publish_time: '2026-08-30 11:20:00',
+            heat_score: 76
         }
-    ],
-    district_stats: {
-        '华山街道': { total: 342, negative: 89, high_risk: 5, top_issue: '物业管理' },
-        '大观街道': { total: 287, negative: 72, high_risk: 4, top_issue: '市容环境' },
-        '普吉街道': { total: 215, negative: 58, high_risk: 3, top_issue: '交通出行' },
-        '莲华街道': { total: 198, negative: 45, high_risk: 2, top_issue: '教育入学' },
-        '龙翔街道': { total: 312, negative: 82, high_risk: 6, top_issue: '物业管理' },
-        '丰宁街道': { total: 256, negative: 67, high_risk: 4, top_issue: '市容环境' },
-        '红云街道': { total: 278, negative: 71, high_risk: 5, top_issue: '社会保障' },
-        '黑林铺街道': { total: 234, negative: 55, high_risk: 3, top_issue: '公共安全' },
-        '西翥街道': { total: 189, negative: 48, high_risk: 2, top_issue: '医疗卫生' },
-        '沙朗街道': { total: 156, negative: 39, high_risk: 1, top_issue: '文化服务' }
-    }
+    ]
 };

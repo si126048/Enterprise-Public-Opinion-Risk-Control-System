@@ -1,17 +1,19 @@
 from typing import Dict, Type
 
-from backend.crawler.parsers.gov_portal import GovPortalCrawler
-from backend.crawler.parsers.gov_hotline import GovHotlineCrawler
-from backend.crawler.parsers.news_forum import NewsForumCrawler
-from backend.crawler.parsers.social_weibo import SocialWeiboCrawler
-from backend.crawler.parsers.social_zhihu import SocialZhihuCrawler
+from backend.crawler.parsers.weibo import WeiboCrawler
+from backend.crawler.parsers.xiaohongshu import XiaohongshuCrawler
+from backend.crawler.parsers.zhihu import ZhihuCrawler
+from backend.crawler.parsers.bilibili import BilibiliCrawler
+from backend.crawler.parsers.taptap import TaptapCrawler
+from backend.crawler.parsers.xiaoheihe import XiaoheiheCrawler
 
 _REGISTRY: Dict[str, Type] = {
-    "gov_portal": GovPortalCrawler,
-    "gov_hotline": GovHotlineCrawler,
-    "news_forum": NewsForumCrawler,
-    "social_weibo": SocialWeiboCrawler,
-    "social_zhihu": SocialZhihuCrawler,
+    "weibo": WeiboCrawler,
+    "xiaohongshu": XiaohongshuCrawler,
+    "zhihu": ZhihuCrawler,
+    "bilibili": BilibiliCrawler,
+    "taptap": TaptapCrawler,
+    "xiaoheihe": XiaoheiheCrawler,
 }
 
 

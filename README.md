@@ -1,8 +1,17 @@
-# 五华区民意诉求语义分析系统
+# 企业舆情风控管理系统
 
-> Public Opinion Semantic Analysis System for Kunming Wuhua District
+> Enterprise Public Opinion Risk Control System
 
-基于 FastAPI + SQLite + Qwen3-Embedding-4B + Chroma 的民意诉求语义分析原型，绑定昆明市五华区基层治理场景。
+基于 FastAPI + SQLite + BAAI/bge-m3 + Chroma 的企业舆情风控系统，绑定米哈游（miHoYo）游戏舆情监控场景。
+
+## 功能概览
+
+- 多平台舆情采集（微博、小红书、知乎、B站、TapTap）
+- 语义分析 + 主题路由（8大风控主题、32+锚点）
+- 风险分级（高/中/低）+ 风控事件管理
+- 公司维度隔离（支持多公司切换）
+- Dashboard 可视化（ECharts 图表）
+- 语义搜索 + 交叉验证
 
 ## 技术栈
 
@@ -12,7 +21,7 @@
 | 事实数据库 | SQLite |
 | 向量索引 | Chroma（优先）/ FAISS（降级） |
 | 前端 | 原生 HTML/CSS/JavaScript + ECharts |
-| Embedding | Qwen3-Embedding-4B（本地运行） |
+| Embedding | BAAI/bge-m3（本地运行） |
 | LLM | Mock（可配置为 DeepSeek / 通义千问 / Kimi） |
 
 ## 快速启动
@@ -25,16 +34,16 @@ pip install -r requirements.txt
 cp .env.example .env
 # 编辑 .env 填入 LLM API Key（Mock 模式可跳过）
 
-# 3. 初始化数据库（Phase 1）
+# 3. 初始化数据库
 python scripts/init_db.py
 
-# 4. 导入样例数据（Phase 1）
+# 4. 导入样例数据
 python scripts/import_sample.py
 
 # 5. 启动服务
 uvicorn backend.app:app --host 0.0.0.0 --port 8000 --workers 1
 
-# 6. 访问 H5
+# 6. 访问
 # http://localhost:8000
 ```
 
@@ -43,11 +52,16 @@ uvicorn backend.app:app --host 0.0.0.0 --port 8000 --workers 1
 ```
 wuhua-opinion-monitor/
 ├── backend/          # Python FastAPI 后端
+│   ├── api/          # API 端点
+│   ├── services/     # 业务服务
+│   ├── crawler/      # 爬虫系统
+│   └── db/           # 数据库
 ├── frontend/         # H5 前端页面
+│   ├── pages/        # 子页面
+│   ├── js/           # JavaScript 模块
+│   ├── css/          # 样式
+│   └── data/mock/    # Mock 数据
 ├── data/             # 数据库 + 样例数据
-├── evidence/         # 课程证据
-├── cross_validation/ # 三模型交叉验证
-├── tests/            # 测试
 ├── scripts/          # 工具脚本
 ├── config.yaml       # 全局配置
 └── requirements.txt
@@ -62,5 +76,8 @@ wuhua-opinion-monitor/
 - [x] Phase 4: Dashboard + 语义搜索
 - [x] Phase 5: Unknown Negative 发现
 - [x] Phase 6: 课程化收尾
+- [x] Phase 7: 企业舆情转型
+- [x] Phase 8: 风控事件 + 公司选择器
+- [x] Phase 9: 验收收尾
 
 详见 [PROJECT_LOG.md](PROJECT_LOG.md)

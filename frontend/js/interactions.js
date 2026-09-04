@@ -39,35 +39,12 @@ var Interactions = (function() {
         main.classList.add('page-transition');
     }
 
-    function initMapReset() {
-        var resetBtn = document.querySelector('.map-reset-btn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function() {
-                WuhuaMap.resetView();
-            });
-        }
-
-        var mapContainer = document.getElementById('map-container');
-        if (mapContainer) {
-            mapContainer.addEventListener('click', function(e) {
-                if (e.target === mapContainer || e.target.classList.contains('leaflet-container')) {
-                    // Click on empty map area - handled by Leaflet
-                }
-            });
-        }
-    }
-
     function initDashboard() {
-        if (typeof WuhuaMap !== 'undefined') {
-            WuhuaMap.init('map-container');
-        }
-
         loadDashboardData();
 
         AppStore.subscribe(function(changeType, payload) {
-            if (changeType === 'district_changed' && payload) {
-                var resetBtn = document.querySelector('.map-reset-btn');
-                if (resetBtn) resetBtn.classList.add('visible');
+            if (changeType === 'product_changed' && payload) {
+                // Product filter changed — charts already updated by caller
             }
         });
     }
@@ -76,6 +53,7 @@ var Interactions = (function() {
         ApiService.getStatsOverview().then(function(stats) {
             AppStore.setData('stats', stats);
             renderDashboardStats(stats);
+            renderDashboardDistributions(stats);
         }).catch(function(err) {
             console.error('Stats load failed:', err);
         });
@@ -91,12 +69,12 @@ var Interactions = (function() {
 
     function renderDashboardStats(stats) {
         var cards = [
-            { label: '总样本', value: stats.total_count || stats.total || 0 },
-            { label: '已分析', value: stats.analyzed_count || 0 },
-            { label: '负面率', value: Math.round((stats.negative_rate || 0) * 100) },
-            { label: '高风险', value: stats.high_risk_count || (stats.risk_distribution ? stats.risk_distribution.high || 0 : 0) },
-            { label: '主题数', value: stats.topic_count || 0 },
-            { label: '来源数', value: stats.source_count || 0 }
+            { label: '总舆情', value: stats.total_count || stats.total || 0 },
+            { label: '负面比例', value: Math.round((stats.negative_rate || 0) * 100) + '%' },
+            { label: '高风险事件', value: stats.high_risk_count || (stats.risk_distribution ? stats.risk_distribution.high || 0 : 0) },
+            { label: '社区热度', value: Math.round(stats.community_heat_score || 0) },
+            { label: '产品数', value: stats.product_distribution ? Object.keys(stats.product_distribution).length : 0 },
+            { label: '平台数', value: stats.platform_distribution ? Object.keys(stats.platform_distribution).length : 0 }
         ];
         Components.renderStatCards('stats-cards', cards);
 
@@ -104,8 +82,31 @@ var Interactions = (function() {
             Components.renderHighRiskTable('high-risk-table', stats.recent_high_risk);
         }
 
-        if (stats.daily_trend) {
-            Charts.initTrend('chart-trend', stats.daily_trend);
+        if (stats.trend_data) {
+            var trendData = stats.trend_data.dates.map(function(date, i) {
+                return { date: date, total: stats.trend_data.total[i], negative: stats.trend_data.negative[i] };
+            });
+            Charts.initTrend('chart-trend', trendData);
+        }
+    }
+
+    function renderDashboardDistributions(stats) {
+        if (stats.platform_distribution) {
+            var platformData = Object.keys(stats.platform_distribution).map(function(k) {
+                return { name: k, value: stats.platform_distribution[k] };
+            });
+            if (typeof PlatformDistribution !== 'undefined') {
+                PlatformDistribution.updatePlatform('chart-platform-dist', platformData);
+            }
+        }
+
+        if (stats.product_distribution) {
+            var productData = Object.keys(stats.product_distribution).map(function(k) {
+                return { name: k, value: stats.product_distribution[k] };
+            });
+            if (typeof PlatformDistribution !== 'undefined') {
+                PlatformDistribution.updateProduct('chart-product-dist', productData);
+            }
         }
     }
 
@@ -150,16 +151,15 @@ var Interactions = (function() {
         }
     }
 
-    // StatsPanel for map drill-down
     var StatsPanel = {
-        updateForDistrict: function(name) {
-            var stats = AppStore.getDistrictStats(name);
+        updateForProduct: function(productName) {
+            var stats = AppStore.getProductStats(productName);
             if (!stats) return;
 
             var cards = [
-                { label: name + ' · 总量', value: stats.total || 0 },
+                { label: productName + ' · 总量', value: stats.total || 0 },
                 { label: '负面数量', value: stats.negative || 0 },
-                { label: '负面率', value: stats.total > 0 ? Math.round(stats.negative / stats.total * 100) : 0 },
+                { label: '负面率', value: stats.total > 0 ? Math.round(stats.negative / stats.total * 100) + '%' : '0%' },
                 { label: '高风险', value: stats.high_risk || 0 }
             ];
             Components.renderStatCards('stats-cards', cards);
@@ -169,25 +169,63 @@ var Interactions = (function() {
         }
     };
 
-    // ContentList for map drill-down
     var ContentList = {
-        refreshForDistrict: function(name) {
-            AppStore.setFilter('district', name);
-            ApiService.getContent({ district: name, page: 1, page_size: 10 }).then(function(data) {
+        refreshForProduct: function(productName) {
+            AppStore.setFilter('product_name', productName);
+            ApiService.getContent({ product_name: productName, page: 1, page_size: 10 }).then(function(data) {
+                Components.renderContentList('dashboard-content-list', data.items || []);
+            }).catch(function(err) {
+                console.error('Content load failed:', err);
+            });
+        },
+        refreshForPlatform: function(platformName) {
+            AppStore.setFilter('platform', platformName);
+            ApiService.getContent({ platform: platformName, page: 1, page_size: 10 }).then(function(data) {
                 Components.renderContentList('dashboard-content-list', data.items || []);
             }).catch(function(err) {
                 console.error('Content load failed:', err);
             });
         },
         reset: function() {
-            AppStore.setFilter('district', null);
+            AppStore.setFilter('product_name', null);
+            AppStore.setFilter('platform', null);
         }
     };
+
+    function initThemeToggle() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+        }
+
+        document.querySelectorAll('.theme-toggle').forEach(function(btn) {
+            updateToggleLabel(btn);
+            btn.addEventListener('click', function() {
+                var isDark = document.body.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.body.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.body.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+                document.querySelectorAll('.theme-toggle').forEach(function(b) {
+                    updateToggleLabel(b);
+                });
+            });
+        });
+    }
+
+    function updateToggleLabel(btn) {
+        var isDark = document.body.getAttribute('data-theme') === 'dark';
+        btn.textContent = isDark ? '☀' : '☾';
+        btn.title = isDark ? '切换到日间模式' : '切换到夜间模式';
+    }
 
     function init() {
         initNavbar();
         initPageTransition();
-        initMapReset();
+        initThemeToggle();
         Components.initModal();
     }
 
@@ -202,7 +240,6 @@ var Interactions = (function() {
     };
 })();
 
-// Expose for map.js compatibility
 var StatsPanel = Interactions.StatsPanel;
 var ContentList = Interactions.ContentList;
 var Dashboard = { loadAll: Interactions.loadDashboardData };

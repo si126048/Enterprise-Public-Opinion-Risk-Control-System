@@ -182,3 +182,55 @@
   - [x] pytest tests/ → 测试通过
   - [x] scripts/export_evidence.py → 生成证据文件
 - **Version**: 0.7.0
+
+## Phase 7: 企业舆情转型
+- **Date**: 2026-09-04
+- **What**: 从昆明市五华区政务舆情转型为米哈游企业游戏舆情风控系统。基础设施升级、爬虫系统重建、游戏行业主题重构、地图系统替换为平台分布图。
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `config.yaml` — 企业舆情配置（米哈游、4款产品、5平台）
+  - `backend/db/database.py` — companies 表 + company_id 字段
+  - `scripts/seed_topics.py` — 8 个游戏行业风控主题
+  - `backend/crawler/parsers/` — 5 个平台解析器
+  - `frontend/js/map.js` — 平台/产品分布饼图（替代地图）
+  - `data/sample/mihoyo_sample.csv` — 米哈游样本数据
+- **Verification**:
+  - [x] 8 个游戏行业主题入库
+  - [x] 32+ 锚点嵌入
+  - [x] 5 个平台解析器注册
+  - [x] 平台分布图渲染正常
+
+## Phase 8: 风控事件 + 公司选择器
+- **Date**: 2026-09-04
+- **What**: 样本数据扩充到 220 条、API 字段对齐、公司选择器、风控事件页面 + API、分析 API 路径对齐
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `scripts/generate_samples.py` — 样本生成器（220 条）
+  - `backend/api/content.py` — stats_overview 字段对齐（total_count, trend_data, recent_high_risk）
+  - `frontend/js/map.js` — 双调用约定支持
+  - `frontend/js/company_selector.js` — 公司选择器模块
+  - `frontend/pages/risk_events.html` — 风控事件页面
+  - `backend/api/risk_events.py` — 6 个风控事件端点
+  - `backend/services/risk_advisor.py` — 风控建议生成器
+  - `backend/api/analysis.py` — POST /api/analyze/{content_id}, POST /api/analyze/batch
+  - `frontend/js/api.js` — getRiskEvents 方法
+- **Verification**:
+  - [x] 220 条样本入库（207 低/13 中/0 高）
+  - [x] 公司选择器可用（米哈游激活）
+  - [x] 风控事件自动生成
+  - [x] 平台/产品分布图渲染正常
+
+## Phase 9: 验收收尾
+- **Date**: 2026-09-04
+- **What**: README 重写、遗留页面删除、PROJECT_LOG 更新
+- **AI/Tools**: Qoder (implementation)
+- **Files created/modified**:
+  - `README.md` — 企业舆情风控身份
+  - `PROJECT_LOG.md` — 本文件
+- **Deleted**:
+  - `frontend/pages/dashboard.html` — 旧版 dashboard
+  - `frontend/pages/timeline.html` — 项目时间线
+  - `frontend/pages/cross_validation_report.html` — 静态报告
+- **Verification**:
+  - [x] 无政务残留（grep 验证）
+  - [x] 导航结构正确：总览 | 舆情列表 | 语义搜索 | 风险主题 | 审核 | 风控事件
