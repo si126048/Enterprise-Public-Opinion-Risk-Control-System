@@ -1,193 +1,33 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>语义搜索 - 企业舆情风控·态势感知</title>
-    <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="../css/components.css">
-    <link rel="stylesheet" href="../css/mobile.css">
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="nav-brand">
-            <span class="brand-icon">◆</span>
-            <span class="brand-text">企业舆情风控</span>
-        </div>
-        <ul class="nav-links">
-            <li><a href="../index.html">总览</a></li>
-            <li><a href="content.html">舆情列表</a></li>
-            <li><a href="search.html" class="active">语义搜索</a></li>
-            <li><a href="topics.html">风险主题</a></li>
-            <li><a href="risk_events.html">风控事件</a></li>
-        </ul>
-        <div class="nav-actions">
-            <select id="company-selector" class="company-selector" title="选择公司"></select>
-            <span class="data-badge">数据更新: 今日</span>
-            <button class="theme-toggle" title="切换到夜间模式">☾</button>
-            <button class="nav-toggle" aria-label="菜单">≡</button>
-        </div>
-    </nav>
+<!-- Search page -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">语义搜索</h1>
+    <div class="page-subtitle">AI 驱动的智能搜索</div>
+  </div>
+</div>
 
-    <div class="main-content">
-        <div class="page-body">
-            <!-- Search Bar -->
-            <div class="section">
-                <div class="section-title">语义搜索</div>
-                <div class="search-bar">
-                    <input type="text" id="search-query" class="input" placeholder="输入自然语言查询，如：抽卡体验差、游戏卡顿、角色平衡性问题...">
-                    <button id="btn-search" class="btn btn-primary">搜索</button>
-                </div>
-                <div class="filter-bar">
-                    <select id="filter-topic" class="select" style="min-width:140px">
-                        <option value="">全部主题</option>
-                        <option value="G001">版本节奏与内容</option>
-                        <option value="G002">抽卡与付费机制</option>
-                        <option value="G003">角色设计与平衡</option>
-                        <option value="G004">技术性能与优化</option>
-                        <option value="G005">社区运营与公关</option>
-                        <option value="G006">竞品与市场压力</option>
-                        <option value="G007">公司治理与舆情</option>
-                        <option value="G008">合规与监管</option>
-                    </select>
-                    <select id="filter-credibility" class="select" style="min-width:120px">
-                        <option value="">全部信度</option>
-                        <option value="high">高可信</option>
-                        <option value="medium">中可信</option>
-                        <option value="low">低可信</option>
-                    </select>
-                    <select id="filter-risk" class="select" style="min-width:120px">
-                        <option value="">全部风险</option>
-                        <option value="high">高风险</option>
-                        <option value="medium">中风险</option>
-                        <option value="low">低风险</option>
-                    </select>
-                </div>
-            </div>
+<!-- Search box -->
+<div style="max-width: 600px; margin: 0 auto 32px;">
+  <div style="position: relative;">
+    <input type="text" id="search-input" class="input" style="width: 100%; height: 48px; font-size: 15px; padding: 0 20px 0 44px; border-radius: 24px;" placeholder="输入关键词或自然语言查询..." />
+    <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--color-text-muted);">🔍</span>
+  </div>
+  <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+    <span style="font-size: 12px; color: var(--color-text-muted);">热门搜索：</span>
+    <span class="badge badge-outline" style="cursor: pointer;">抽卡机制</span>
+    <span class="badge badge-outline" style="cursor: pointer;">版本更新</span>
+    <span class="badge badge-outline" style="cursor: pointer;">角色平衡</span>
+    <span class="badge badge-outline" style="cursor: pointer;">社区运营</span>
+  </div>
+</div>
 
-            <!-- AI Summary -->
-            <div id="ai-summary" class="section" style="display:none">
-                <div class="card" style="border-left:3px solid var(--color-accent-cyan)">
-                    <div style="font-size:0.8rem;color:var(--color-accent-cyan);font-weight:700;margin-bottom:0.5rem">AI 总结</div>
-                    <div id="ai-summary-text" style="font-size:0.9rem;line-height:1.7"></div>
-                </div>
-            </div>
+<!-- Results info -->
+<div id="results-info" style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 12px;"></div>
 
-            <!-- Results Info -->
-            <div id="results-info" class="text-muted mb-1" style="font-size:0.85rem"></div>
-
-            <!-- Results List -->
-            <div id="search-results"></div>
-
-            <!-- Pagination -->
-            <div id="search-pagination"></div>
-        </div>
-    </div>
-
-    <!-- Detail Modal -->
-    <div id="detail-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3>舆情详情</h3>
-                <button class="modal-close">×</button>
-            </div>
-            <div id="detail-modal-body"></div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <span>企业舆情风控管理系统 v1.0.0</span>
-        <span class="demo-tag">演示数据</span>
-    </footer>
-
-    <script src="../data/mock/mock_data.js"></script>
-    <script src="../js/api.js"></script>
-    <script src="../js/store.js"></script>
-    <script src="../js/components.js"></script>
-    <script src="../js/interactions.js"></script>
-    <script src="../js/company_selector.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            CompanySelector.init();
-            Interactions.init();
-            SearchPage.init();
-        });
-
-        var SearchPage = {
-            currentPage: 1,
-            pageSize: 20,
-
-            init: function() {
-                var self = this;
-
-                document.getElementById('btn-search').addEventListener('click', function() { self.doSearch(); });
-                document.getElementById('search-query').addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') self.doSearch();
-                });
-
-                ['filter-topic', 'filter-credibility', 'filter-risk'].forEach(function(id) {
-                    document.getElementById(id).addEventListener('change', function() {
-                        if (document.getElementById('search-query').value.trim()) {
-                            self.currentPage = 1;
-                            self.doSearch();
-                        }
-                    });
-                });
-            },
-
-            doSearch: function() {
-                var self = this;
-                var query = document.getElementById('search-query').value.trim();
-                if (!query) return;
-
-                var filters = {
-                    topic_id: document.getElementById('filter-topic').value || undefined,
-                    credibility_level: document.getElementById('filter-credibility').value || undefined,
-                    risk_level: document.getElementById('filter-risk').value || undefined,
-                    page: this.currentPage,
-                    page_size: this.pageSize
-                };
-
-                document.getElementById('search-results').innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>搜索中...</div>';
-
-                var startTime = Date.now();
-
-                ApiService.semanticSearch(query, filters).then(function(data) {
-                    var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                    var items = data.results || data.items || [];
-                    var total = data.total || items.length;
-
-                    document.getElementById('results-info').textContent =
-                        '搜索结果 (' + total + '条)  用时 ' + elapsed + 's';
-
-                    var enriched = items.map(function(item) {
-                        return Object.assign({}, item, {
-                            platform: item.platform || '-',
-                            publish_time: item.publish_time || item.created_at || '',
-                            clean_text: item.clean_text || item.text_preview || item.title || '',
-                            similarity: item.similarity || (item.distance != null ? (1 - item.distance) : 0.5)
-                        });
-                    });
-
-                    Components.renderContentList('search-results', enriched);
-
-                    Components.renderPagination('search-pagination', {
-                        page: self.currentPage,
-                        page_size: self.pageSize,
-                        total: total,
-                        total_pages: Math.ceil(total / self.pageSize)
-                    }, function(page) {
-                        self.currentPage = page;
-                        self.doSearch();
-                        window.scrollTo(0, 0);
-                    });
-                }).catch(function(err) {
-                    document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>搜索失败: ' + err.message + '</p></div>';
-                });
-            }
-        };
-    </script>
-</body>
-</html>
+<!-- Search results -->
+<div id="search-results">
+  <div class="empty-state">
+    <div class="empty-state-icon">🔍</div>
+    <div class="empty-state-text">输入关键词开始搜索</div>
+  </div>
+</div>
