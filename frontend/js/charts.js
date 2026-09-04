@@ -116,8 +116,8 @@ var Charts = (function() {
 
         chart.setOption({
             tooltip: { trigger: 'axis' },
-            legend: { data: series.map(function(s) { return s.name; }), bottom: 0, textStyle: { color: '#8A8A8A', fontSize: 11 } },
-            grid: { left: 40, right: 16, top: 16, bottom: 40 },
+            legend: { data: series.map(function(s) { return s.name; }), bottom: 8, textStyle: { color: '#8A8A8A', fontSize: 11 } },
+            grid: { left: 40, right: 16, top: 16, bottom: 50 },
             xAxis: {
                 type: 'category',
                 data: dates,
