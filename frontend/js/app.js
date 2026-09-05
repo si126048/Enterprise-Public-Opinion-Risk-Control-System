@@ -180,6 +180,7 @@ function initScrollReveal() {
     contentArea.classList.add('page-exit');
 
     setTimeout(function() {
+      if (typeof LieflatCharts !== 'undefined') LieflatCharts.disposeAll();
       contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
       contentArea.classList.remove('page-exit');
 
@@ -207,7 +208,8 @@ function initScrollReveal() {
       'risk-events': loadRiskEvents,
       'search': initSearchPage,
       'review': loadReviewCandidates,
-      'source-ledger': loadSourceLedger
+      'source-ledger': loadSourceLedger,
+      'credibility': loadCredibilityPage
     };
     if (inits[page]) inits[page]();
   }
@@ -373,6 +375,7 @@ function initScrollReveal() {
       var pdTotal = pdArr.reduce(function (s, d) { return s + d.value; }, 0);
       LieflatCharts.tickDonut(platformEl, pdArr, {
         centerLabel: { value: formatNumber(pdTotal), unit: '总计' },
+        labelPosition: 'top',
       });
     }
 
@@ -383,6 +386,7 @@ function initScrollReveal() {
       var prTotal = prArr.reduce(function (s, d) { return s + d.value; }, 0);
       LieflatCharts.tickDonut(productEl, prArr, {
         centerLabel: { value: formatNumber(prTotal), unit: '总计' },
+        labelPosition: 'top',
       });
     }
 
@@ -390,7 +394,7 @@ function initScrollReveal() {
     if (heatEl && stats && stats.trend_data && stats.trend_data.dates) {
       var heatDates = stats.trend_data.dates;
       var heatValues = heatDates.map(function(d, i) {
-        return (stats.trend_data.total[i] || 0) + (stats.trend_data.low_credibility[i] || 0);
+        return stats.trend_data.total[i] || 0;
       });
       LieflatCharts.heatCalendar(heatEl, {
         dates: heatDates,
@@ -401,11 +405,12 @@ function initScrollReveal() {
 
     var funnelEl = document.getElementById('chart-credibility-funnel');
     if (funnelEl && stats) {
+      var cd = stats.credibility_distribution || {};
       var credData = [
-        { name: '高可信', value: stats.credibility_high || 0 },
-        { name: '中可信', value: stats.credibility_medium || 0 },
-        { name: '不确定', value: stats.credibility_uncertain || 0 },
-        { name: '低可信', value: stats.credibility_low || 0 },
+        { name: '高可信', value: cd.high || 0 },
+        { name: '中可信', value: cd.medium || 0 },
+        { name: '不确定', value: cd.uncertain || 0 },
+        { name: '低可信', value: cd.low || 0 },
       ].filter(function(d) { return d.value > 0; });
       if (credData.length) LieflatCharts.funnelChart(funnelEl, credData);
     }
@@ -441,7 +446,7 @@ function initScrollReveal() {
     var container = document.getElementById('recent-events');
     if (!container) return;
     if (!events.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">当前无活跃风险事件</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="2" y="2" width="14" height="14"/><path d="M5 9l3 3 5-6"/></svg></div><div class="empty-state-text">当前无活跃风险事件</div></div>';
       return;
     }
     container.innerHTML = '<div class="timeline">' + events.slice(0, 5).map(function(ev) {
@@ -494,7 +499,7 @@ function initScrollReveal() {
       var x = credScores[op.credibility] || 0.5;
       var y = (op.likes || 0) + (op.comments || 0) * 2;
       var size = Math.max(6, Math.min(40, Math.sqrt(y) * 3));
-      return [x, y, size, (op.content || '').substring(0, 20)];
+      return { x: x, y: y, size: size, label: (op.content || '').substring(0, 20) };
     });
     whenLieflatReady(function() {
       LieflatCharts.scatterPlot(scatterEl, data, {
@@ -590,7 +595,7 @@ function initScrollReveal() {
     var container = document.getElementById('risk-events-list');
     if (!container) return;
     if (!events.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">当前无活跃风险事件</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="2" y="2" width="14" height="14"/><path d="M5 9l3 3 5-6"/></svg></div><div class="empty-state-text">当前无活跃风险事件</div></div>';
       return;
     }
     container.innerHTML = '<div class="timeline">' + events.map(function(ev, i) {
@@ -633,6 +638,7 @@ function initScrollReveal() {
     ].filter(function (d) { return d.value > 0; }), {
       centerLabel: { value: events.length, unit: '事件' },
       colors: ['#F87171', '#34D399'],
+      labelPosition: 'top',
     });
   }
 
@@ -663,14 +669,14 @@ function initScrollReveal() {
     var container = document.getElementById('search-results');
     if (!container) return;
     if (!query.trim()) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">输入关键词开始搜索</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><circle cx="20" cy="20" r="14"/><path d="M30 30l12 12"/></svg></div><div class="empty-state-text">输入关键词开始搜索</div></div>';
       return;
     }
     container.innerHTML = '<div class="skeleton" style="height:100px"></div>';
     fetchApi('/api/search?company_id=mihoyo&q=' + encodeURIComponent(query))
       .then(function(data) { renderSearchResults(data.results || []); })
       .catch(function() {
-        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">搜索失败</div></div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><circle cx="24" cy="24" r="18"/><path d="M16 16l16 16M32 16L16 32"/></svg></div><div class="empty-state-text">搜索失败</div></div>';
       });
   }
 
@@ -678,7 +684,7 @@ function initScrollReveal() {
     var container = document.getElementById('search-results');
     if (!container) return;
     if (!results.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">未找到相关内容</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><circle cx="20" cy="20" r="14"/><path d="M30 30l12 12"/></svg></div><div class="empty-state-text">未找到相关内容</div></div>';
       return;
     }
     container.innerHTML = results.map(function(r, i) {
@@ -690,37 +696,121 @@ function initScrollReveal() {
 
   // ========== Review ==========
   function loadReviewCandidates() {
-    fetchApi('/api/review/candidates?company_id=mihoyo')
-      .then(function(data) { renderReviewCandidates(data.candidates || []); })
+    fetchApi('/api/discovery/candidates')
+      .then(function(data) {
+        renderReviewStats(data.stats || {});
+        renderReviewCandidates(data.candidates || []);
+      })
       .catch(function(err) { console.error('Review error:', err); });
+    loadReviewLog();
+  }
+
+  function renderReviewStats(stats) {
+    var container = document.getElementById('review-stats');
+    if (!container) return;
+    var items = [
+      { label: '待审核', value: stats.pending || 0, color: 'var(--color-warning)' },
+      { label: '已通过', value: stats.approved || 0, color: 'var(--color-success)' },
+      { label: '已合并', value: stats.merged || 0, color: 'var(--color-info)' },
+      { label: '已忽略', value: stats.ignored || 0, color: 'var(--color-text-muted)' },
+    ];
+    container.innerHTML = items.map(function(item) {
+      return '<div class="stat-card">' +
+        '<div class="stat-value" style="color:' + item.color + '">' + item.value + '</div>' +
+        '<div class="stat-label">' + item.label + '</div>' +
+      '</div>';
+    }).join('');
   }
 
   function renderReviewCandidates(candidates) {
     var container = document.getElementById('review-list');
     if (!container) return;
-    if (!candidates.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">暂无待审核内容</div></div>';
+    var pending = candidates.filter(function(c) { return c.status === 'pending'; });
+    if (!pending.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="2" y="2" width="14" height="14"/><path d="M5 9l3 3 5-6"/></svg></div><div class="empty-state-text">暂无待审核内容</div></div>';
       return;
     }
-    container.innerHTML = candidates.map(function(c, i) {
+    container.innerHTML = pending.map(function(c, i) {
+      var name = c.name || c.topic_name || '未命名主题';
+      var desc = c.description || '';
+      var sampleCount = c.sample_count || 0;
       return '<div class="content-card card-stagger" style="animation-delay:' + (i * 0.03) + 's">' +
-        '<div class="content-card-header"><span class="badge badge-warning">待审核</span></div>' +
-        '<div class="content-card-body">' + escapeHtml(c.content || '') + '</div>' +
+        '<div class="content-card-header">' +
+          '<span class="badge badge-warning">待审核</span>' +
+          '<span style="font-size:12px;color:var(--color-text-muted)">' + sampleCount + ' 条样本</span>' +
+        '</div>' +
+        '<div class="content-card-body">' +
+          '<div style="font-size:14px;font-weight:500;margin-bottom:4px">' + escapeHtml(name) + '</div>' +
+          (desc ? '<div style="font-size:12px;color:var(--color-text-secondary)">' + escapeHtml(desc) + '</div>' : '') +
+        '</div>' +
         '<div class="content-card-footer">' +
-          '<button class="btn btn-sm btn-primary" onclick="approveCandidate(' + c.id + ')">通过</button>' +
-          '<button class="btn btn-sm btn-secondary" onclick="rejectCandidate(' + c.id + ')">拒绝</button>' +
+          '<button class="btn btn-sm btn-primary" onclick="approveCandidate(\'' + c.id + '\')">通过</button>' +
+          '<button class="btn btn-sm btn-secondary" onclick="rejectCandidate(\'' + c.id + '\')">忽略</button>' +
         '</div></div>';
     }).join('');
   }
 
+  function loadReviewLog() {
+    fetchApi('/api/review-agent/log?limit=20')
+      .then(function(data) { renderReviewLog(data.log || []); })
+      .catch(function() {
+        var el = document.getElementById('review-log');
+        if (el) el.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--color-text-muted)">暂无审核日志</div>';
+      });
+  }
+
+  function renderReviewLog(logs) {
+    var container = document.getElementById('review-log');
+    if (!container) return;
+    if (!logs.length) {
+      container.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--color-text-muted)">暂无审核日志，点击"AI 审核"触发模型代理审核</div>';
+      return;
+    }
+    var decisionBadge = function(d) {
+      if (d === 'approve') return '<span class="badge badge-success">通过</span>';
+      if (d === 'merge') return '<span class="badge badge-info">合并</span>';
+      return '<span class="badge badge-outline">忽略</span>';
+    };
+    container.innerHTML = '<table class="data-table"><thead><tr><th>候选主题</th><th>决策</th><th>理由</th><th>时间</th></tr></thead><tbody>' +
+      logs.map(function(l) {
+        var raw = {}, parsed = {};
+        try { raw = JSON.parse(l.raw_output || '{}'); } catch(e) {}
+        try { parsed = JSON.parse(l.parsed_output || '{}'); } catch(e) {}
+        var time = l.timestamp ? l.timestamp.replace('T', ' ').substring(0, 16) : '-';
+        var name = raw.candidate_name || l.candidate_name || '-';
+        var decision = parsed.decision || l.decision || '-';
+        var reason = parsed.reason || l.reason || '-';
+        return '<tr><td>' + escapeHtml(name) + '</td>' +
+          '<td>' + decisionBadge(decision) + '</td>' +
+          '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(reason) + '">' + escapeHtml(reason.substring(0, 60)) + '</td>' +
+          '<td>' + time + '</td></tr>';
+      }).join('') +
+    '</tbody></table>';
+  }
+
   window.approveCandidate = function(id) {
-    fetch('/api/review/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: id }) })
+    fetch('/api/discovery/candidates/' + id + '/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       .then(function() { loadReviewCandidates(); });
   };
 
   window.rejectCandidate = function(id) {
-    fetch('/api/review/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: id }) })
+    fetch('/api/discovery/candidates/' + id + '/ignore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: 'manually ignored' }) })
       .then(function() { loadReviewCandidates(); });
+  };
+
+  window.triggerAgentReview = function() {
+    var btn = document.getElementById('btn-run-agent');
+    if (btn) { btn.disabled = true; btn.textContent = '审核中...'; }
+    fetch('/api/review-agent/run', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function() { loadReviewCandidates(); })
+      .catch(function(err) { console.error('Agent review error:', err); })
+      .finally(function() {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:14px;height:14px;vertical-align:-2px;margin-right:2px"><path d="M9 2l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z"/></svg> AI 审核';
+        }
+      });
   };
 
   // ========== Source Ledger ==========
@@ -734,7 +824,7 @@ function initScrollReveal() {
     var container = document.getElementById('source-table');
     if (!container) return;
     if (!sources.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">暂无数据来源</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="2" y="3" width="14" height="12"/><path d="M5 7h8M5 10h8M5 13h5"/></svg></div><div class="empty-state-text">暂无数据来源</div></div>';
       return;
     }
     var html = '<table class="data-table"><thead><tr><th>来源名称</th><th>类型</th><th>状态</th><th>更新时间</th></tr></thead><tbody>';
@@ -744,6 +834,107 @@ function initScrollReveal() {
     });
     html += '</tbody></table>';
     container.innerHTML = html;
+  }
+
+  // ========== Credibility ==========
+  function loadCredibilityPage() {
+    fetchApi('/api/credibility/overview?company_id=mihoyo')
+      .then(function(data) { renderCredibilityPage(data); })
+      .catch(function(err) { console.error('Credibility error:', err); });
+  }
+
+  function renderCredibilityPage(data) {
+    var dist = data.distribution || {};
+    var totalItems = (dist.high || 0) + (dist.medium || 0) + (dist.low || 0) + (dist.uncertain || 0);
+    var avgScore = data.avg_score || 0;
+
+    var cardsContainer = document.getElementById('cred-stats-cards');
+    if (cardsContainer) {
+      var cards = [
+        { label: '平均信度分', value: (avgScore * 100).toFixed(1), accent: true },
+        { label: '高可信', value: dist.high || 0 },
+        { label: '中可信', value: dist.medium || 0 },
+        { label: '低可信', value: dist.low || 0 },
+      ];
+      cardsContainer.innerHTML = cards.map(function(c, i) {
+        var valCls = c.accent ? 'stat-value' : 'stat-value';
+        return '<div class="stat-card card-stagger" style="animation-delay:' + (i * 0.04) + 's">' +
+          '<div class="stat-label">' + c.label + '</div>' +
+          '<div class="' + valCls + '">' + c.value + '</div></div>';
+      }).join('');
+    }
+
+    whenLieflatReady(function() {
+      var factorEl = document.getElementById('chart-cred-factors');
+      if (factorEl && data.factor_averages) {
+        var factorLabels = {
+          follower_score: '粉丝量',
+          activity_score: '活跃度',
+          interaction_authenticity: '互动真实性',
+          content_consistency: '内容一致性',
+          credibility_intensity: '信度强度',
+          platform_trust: '平台信任',
+          engagement_depth: '参与深度',
+        };
+        var factorData = Object.keys(data.factor_averages).map(function(k) {
+          return { name: factorLabels[k] || k, value: Math.round(data.factor_averages[k] * 100) };
+        }).sort(function(a, b) { return b.value - a.value; });
+        LieflatCharts.tickRows(factorEl, factorData, { labelWidth: 100 });
+      }
+
+      var platformEl = document.getElementById('chart-cred-platform');
+      if (platformEl && data.platform_trust) {
+        var platformLabels = {
+          bilibili: 'B站', xiaoheihe: '小黑盒', taptap: 'TapTap',
+          weibo: '微博', zhihu: '知乎', xiaohongshu: '小红书', miyoushe: '米游社',
+        };
+        var platformData = Object.keys(data.platform_trust).map(function(k) {
+          return { name: platformLabels[k] || k, value: Math.round(data.platform_trust[k] * 100) };
+        }).sort(function(a, b) { return b.value - a.value; });
+        LieflatCharts.rungBars(platformEl, platformData);
+      }
+
+      var gaugeEl = document.getElementById('chart-cred-gauge');
+      if (gaugeEl) {
+        LieflatCharts.tickGauge(gaugeEl, Math.round(avgScore * 100), {
+          label: '平均信度',
+          color: avgScore >= 0.7 ? '#34D399' : (avgScore >= 0.4 ? '#F5D000' : '#FF3B3B'),
+        });
+      }
+
+      var distEl = document.getElementById('chart-cred-dist');
+      if (distEl) {
+        var distData = [
+          { name: '高可信', value: dist.high || 0 },
+          { name: '中可信', value: dist.medium || 0 },
+          { name: '不确定', value: dist.uncertain || 0 },
+          { name: '低可信', value: dist.low || 0 },
+        ].filter(function(d) { return d.value > 0; });
+        if (distData.length) {
+          LieflatCharts.funnelChart(distEl, distData);
+        }
+      }
+    });
+
+    var lowContainer = document.getElementById('cred-low-list');
+    if (lowContainer) {
+      var lowItems = data.top_low_credibility || [];
+      if (!lowItems.length) {
+        lowContainer.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="2" y="2" width="14" height="14"/><path d="M5 9l3 3 5-6"/></svg></div><div class="empty-state-text">暂无低信度内容</div></div>';
+      } else {
+        lowContainer.innerHTML = lowItems.map(function(item, i) {
+          var scorePercent = (item.credibility_score * 100).toFixed(1);
+          var scoreColor = item.credibility_score >= 0.5 ? 'var(--color-success)' : 'var(--color-danger)';
+          return '<div class="content-card card-stagger" style="animation-delay:' + (i * 0.03) + 's">' +
+            '<div class="content-card-header">' +
+              '<span class="badge badge-danger">' + scorePercent + '%</span>' +
+              '<span class="badge badge-outline">' + escapeHtml(item.platform || '-') + '</span>' +
+            '</div>' +
+            '<div class="content-card-body">' + escapeHtml(item.content || item.title || '-') + '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
   }
 
   // ========== Init ==========

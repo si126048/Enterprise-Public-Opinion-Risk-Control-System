@@ -1,0 +1,55 @@
+<!-- Credibility Analysis page - loaded dynamically -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">信度分析</h1>
+    <div class="page-subtitle">内容可信度多维评估与因子拆解</div>
+  </div>
+</div>
+
+<!-- Stats cards -->
+<div id="cred-stats-cards" class="grid grid-4" style="margin-bottom: 24px;"></div>
+
+<!-- Charts row 1: Factor ranking + Platform trust -->
+<div class="grid grid-2" style="margin-bottom: 24px;">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">因子贡献排名</h3>
+      <span class="card-subtitle">7 维信度因子平均得分</span>
+    </div>
+    <div id="chart-cred-factors" style="height: 300px;"></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">平台信度对比</h3>
+      <span class="card-subtitle">各平台平均信度分</span>
+    </div>
+    <div id="chart-cred-platform" style="height: 300px;"></div>
+  </div>
+</div>
+
+<!-- Charts row 2: Gauge + Funnel -->
+<div class="grid grid-2" style="margin-bottom: 24px;">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">整体信度仪表</h3>
+      <span class="card-subtitle">全局平均信度分</span>
+    </div>
+    <div id="chart-cred-gauge" style="height: 260px;"></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">信度分布</h3>
+      <span class="card-subtitle">各等级数量分布</span>
+    </div>
+    <div id="chart-cred-dist" style="height: 260px;"></div>
+  </div>
+</div>
+
+<!-- Low credibility content list -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">低信度内容</h3>
+    <span class="card-subtitle">信度分最低的 10 条舆情</span>
+  </div>
+  <div id="cred-low-list"></div>
+</div>

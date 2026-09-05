@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 
@@ -8,6 +9,7 @@ from typing import List, Optional
 from backend.config import get_config
 from backend.db.database import get_connection
 from backend.services import embedding_service, routing_service, llm_service
+from backend.services.credibility import compute_credibility
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +45,20 @@ async def analyze_single(content_id: str):
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT id, clean_text FROM raw_content WHERE id = ?", (content_id,)
+            "SELECT id, clean_text, content, followers, likes, comments, shares, platform "
+            "FROM raw_content WHERE id = ?", (content_id,)
         ).fetchone()
         if not row:
             raise HTTPException(404, "Content not found")
         text = row["clean_text"]
         if not text:
             raise HTTPException(400, "Content has no clean_text")
+        content_followers = row["followers"] or 0
+        content_likes = row["likes"] or 0
+        content_comments = row["comments"] or 0
+        content_shares = row["shares"] or 0
+        content_platform = row["platform"] or "weibo"
+        content_length = len(row["content"] or "")
     finally:
         conn.close()
 
@@ -68,6 +77,16 @@ async def analyze_single(content_id: str):
             text=text, topic_name=topic_name, content_id=content_id
         )
 
+        cred = compute_credibility(
+            followers=content_followers,
+            likes=content_likes,
+            comments=content_comments,
+            shares=content_shares,
+            credibility_level=result.credibility_level,
+            platform=content_platform,
+            content_length=content_length,
+        )
+
         now = datetime.now().isoformat()
         wconn = get_connection()
         try:
@@ -77,14 +96,16 @@ async def analyze_single(content_id: str):
                  credibility_level, credibility_confidence,
                  risk_level, risk_confidence,
                  summary, theory_perspective,
+                 credibility_score, credibility_factors,
                  llm_model, analysis_version,
                  review_status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
             """, (
                 content_id, topic_id, topic_similarity,
                 result.credibility_level, result.credibility_confidence,
                 result.risk_level, result.risk_confidence,
                 result.summary, result.theory_perspective,
+                cred.overall, json.dumps(cred.factors),
                 config["llm"]["model"], "v1",
                 now, now,
             ))
@@ -96,6 +117,7 @@ async def analyze_single(content_id: str):
             "status": "ok",
             "content_id": content_id,
             "credibility_level": result.credibility_level,
+            "credibility_score": cred.overall,
             "risk_level": result.risk_level,
             "topic_id": topic_id,
             "topic_name": topic_name,

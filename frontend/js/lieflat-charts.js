@@ -1,6 +1,7 @@
 /* lieflat-charts.js — 基于 lieflat-charts 品味的 ECharts 图表模块
-   适配 RhineAI 暗色主题，porcelain 色系（蓝阶 = 有序数据）
-   图型选型遵循 catalog.md：F2 Hairline Area / F5 Tick Rows / F4 Tick Donut / F1 Rung Bars */
+   适配暗色主题，porcelain 色系
+   图型选型遵循 catalog.md：F2 Hairline Area / F5 Tick Rows / F4 Tick Donut / F1 Rung Bars / F8 Plumb Scatter
+   动画语法：quarticOut 快进快停 + stagger 逐项延迟 + animateCounter 数字递增 */
 (function (global) {
   'use strict';
 
@@ -12,6 +13,7 @@
     mut:      'rgba(255,255,255,0.5)',
     faint:    'rgba(255,255,255,0.25)',
     grid:     'rgba(255,255,255,0.06)',
+    guide:    'rgba(255,255,255,0.03)',
     data:     '#F5D000',
     data2:    '#FFE44D',
     hero:     '#F5D000',
@@ -34,11 +36,33 @@
   };
 
   var MOTION = {
-    enter: 600,
-    easing: 'cubicOut',
-    staggerBar: 80,
+    enter: 900,
+    easing: 'quarticOut',
+    staggerBar: 100,
+    staggerDot: 40,
   };
 
+  /* ── 确定性伪随机 — hash-based jitter ──────────── */
+  function rnd(i, k) {
+    var n = ((i * 73856093) ^ ((k || 0) * 19349663)) >>> 0;
+    return (n % 1000) / 1000;
+  }
+
+  /* ── 数字递增动画 ─────────────────────────────── */
+  function animateCounter(el, target, duration, formatter) {
+    if (!el || typeof target !== 'number') return;
+    var start = performance.now();
+    var fmt = formatter || function (v) { return Math.round(v); };
+    function tick(now) {
+      var p = Math.min(1, (now - start) / (duration || 800));
+      var eased = 1 - Math.pow(1 - p, 4);
+      el.textContent = fmt(target * eased);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* ── 基础选项 ─────────────────────────────────── */
   function baseOpt() {
     return {
       backgroundColor: DK.bg,
@@ -49,7 +73,7 @@
         borderColor: 'rgba(255,255,255,0.08)',
         padding: [10, 14],
         textStyle: { color: '#E5E5E5', fontFamily: FONT.family, fontSize: 12 },
-        extraCssText: 'border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);',
+        extraCssText: 'border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);backdrop-filter:blur(8px);',
       },
       animationDuration: MOTION.enter,
       animationEasing: MOTION.easing,
@@ -61,6 +85,12 @@
 
   function initChart(el, opt) {
     if (!el) return null;
+    var existing = echarts.getInstanceByDom(el);
+    if (existing) {
+      existing.dispose();
+      var idx = charts.indexOf(existing);
+      if (idx >= 0) charts.splice(idx, 1);
+    }
     var c = echarts.init(el, null, { renderer: 'canvas' });
     c.setOption(opt);
     charts.push(c);
@@ -73,8 +103,7 @@
   window.addEventListener('resize', resizeAll);
 
   /* ═══ F3 · Hairline Area — 日序列趋势（双系列）═══════
-     数据形状：≤30 天逐日读数，两条线（总量 + 低信度）
-     来自 templates/basics-gallery.html B3 hairline area */
+     增强：渐变面积 + 峰值标注 + 平滑入场 + 十字准线 */
   function hairlineArea(el, data) {
     if (!el || !data) return;
     var dates = data.dates || [];
@@ -85,7 +114,12 @@
       return d.length > 5 ? d.slice(5) : d;
     });
 
+    var peakIdx = 0;
+    total.forEach(function (v, i) { if (v > total[peakIdx]) peakIdx = i; });
+
     var opt = baseOpt();
+    opt.animationDuration = 1200;
+    opt.animationEasing = 'quarticOut';
     opt.legend = {
       data: ['总舆情', '低信度'],
       top: 4, right: 8,
@@ -101,7 +135,7 @@
       axisTick: { show: false },
       axisLabel: {
         color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight,
-        fontFamily: FONT.family, letterSpacing: '0.05em',
+        fontFamily: FONT.family,
         rotate: dates.length > 10 ? 30 : 0,
       },
     };
@@ -112,59 +146,84 @@
       axisLabel: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
       splitLine: { lineStyle: { color: DK.grid, type: 'dashed' } },
     };
+    opt.tooltip = Object.assign({}, opt.tooltip, {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross',
+        lineStyle: { color: DK.faint, width: 1 },
+        crossStyle: { color: DK.faint },
+        label: { backgroundColor: 'rgba(24,24,24,0.9)', color: DK.txt, fontSize: 10 },
+      },
+    });
     opt.series = [
       {
         name: '总舆情',
         type: 'line',
-        smooth: 0.3,
+        smooth: 0.4,
         symbol: 'circle',
-        symbolSize: 4,
+        symbolSize: 5,
         showSymbol: false,
-        lineStyle: { color: DK.hero, width: 1.5 },
+        lineStyle: { color: DK.hero, width: 2, shadowColor: 'rgba(245,208,0,0.2)', shadowBlur: 8 },
         areaStyle: {
           color: {
             type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(59,130,246,0.25)' },
-              { offset: 1, color: 'rgba(59,130,246,0.01)' },
+              { offset: 0, color: 'rgba(245,208,0,0.2)' },
+              { offset: 0.6, color: 'rgba(245,208,0,0.05)' },
+              { offset: 1, color: 'rgba(245,208,0,0)' },
             ],
           },
         },
         itemStyle: { color: DK.hero },
-        emphasis: { focus: 'series', itemStyle: { borderWidth: 2 } },
+        emphasis: { focus: 'series', itemStyle: { borderWidth: 3, borderColor: '#fff' } },
+        markPoint: peakIdx >= 0 ? {
+          symbol: 'circle',
+          symbolSize: 8,
+          data: [{ coord: [shortDates[peakIdx], total[peakIdx]], value: total[peakIdx] }],
+          itemStyle: { color: DK.hero, borderColor: '#fff', borderWidth: 2 },
+          label: {
+            show: true,
+            formatter: '{c}',
+            fontSize: 11,
+            fontWeight: FONT.valueWeight,
+            fontFamily: FONT.family,
+            color: DK.txt,
+            position: 'top',
+            distance: 8,
+          },
+          animationDelay: 1000,
+        } : undefined,
         data: total,
-        animationDelay: function (idx) { return idx * 30; },
+        animationDelay: function (idx) { return idx * 40; },
       },
       {
         name: '低信度',
         type: 'line',
-        smooth: 0.3,
+        smooth: 0.4,
         symbol: 'diamond',
         symbolSize: 4,
         showSymbol: false,
-        lineStyle: { color: DK.danger, width: 1.2, type: [4, 3] },
+        lineStyle: { color: DK.danger, width: 1.5, type: [6, 4], shadowColor: 'rgba(255,59,59,0.15)', shadowBlur: 6 },
         areaStyle: {
           color: {
             type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(248,113,113,0.12)' },
-              { offset: 1, color: 'rgba(248,113,113,0.01)' },
+              { offset: 0, color: 'rgba(255,59,59,0.1)' },
+              { offset: 1, color: 'rgba(255,59,59,0)' },
             ],
           },
         },
         itemStyle: { color: DK.danger },
         emphasis: { focus: 'series' },
         data: low,
-        animationDelay: function (idx) { return idx * 30 + 150; },
+        animationDelay: function (idx) { return idx * 40 + 200; },
       },
     ];
     return initChart(el, opt);
   }
 
   /* ═══ F5 · Tick Rows — 横向排名比较 ═══════════════════
-     数据形状：≤8 类目的排名比较
-     来自 templates/basics-gallery.html C1 tick rows
-     用 ECharts 横向柱状图实现，保持发丝风格 */
+     增强：导轨线 + stagger 逐行入场 + 渐变条 + 圆角 */
   function tickRows(el, data, options) {
     if (!el || !data || !data.length) return;
     var opts = options || {};
@@ -174,7 +233,8 @@
     var maxVal = Math.max.apply(null, values);
 
     var opt = baseOpt();
-    opt.grid = { left: opts.labelWidth || 90, right: 48, top: 8, bottom: 8 };
+    opt.animationDuration = 800;
+    opt.grid = { left: opts.labelWidth || 90, right: 56, top: 8, bottom: 8 };
     opt.xAxis = {
       type: 'value',
       show: false,
@@ -190,13 +250,13 @@
         fontSize: FONT.axisSize,
         fontWeight: FONT.axisWeight,
         fontFamily: FONT.family,
-        letterSpacing: '0.06em',
       },
       inverse: false,
     };
     opt.series = [{
       type: 'bar',
-      barWidth: 6,
+      barWidth: 8,
+      z: 2,
       data: values.map(function (v, i) {
         var ratio = i / (values.length - 1 || 1);
         return {
@@ -205,11 +265,13 @@
             color: {
               type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
               colorStops: [
-                { offset: 0, color: lerpColor(DK.hero, DK.data, ratio) },
-                { offset: 1, color: lerpColor(DK.accent, DK.data2, ratio) },
+                { offset: 0, color: lerpColor(DK.hero, DK.data, ratio * 0.5) },
+                { offset: 1, color: lerpColor(DK.hero, DK.accent, ratio) },
               ],
             },
-            borderRadius: [0, 3, 3, 0],
+            borderRadius: [0, 4, 4, 0],
+            shadowColor: 'rgba(245,208,0,0.08)',
+            shadowBlur: 4,
           },
         };
       }),
@@ -220,24 +282,45 @@
         fontSize: 11,
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
+        formatter: function (p) { return p.value; },
       },
       animationDelay: function (idx) { return idx * MOTION.staggerBar; },
+      animationEasing: 'quarticOut',
+    },
+    {
+      type: 'bar',
+      barWidth: 8,
+      barGap: '-100%',
+      z: 1,
+      silent: true,
+      data: values.map(function () { return maxVal * 1.1; }),
+      itemStyle: { color: DK.guide, borderRadius: [0, 4, 4, 0] },
+      animation: false,
     }];
     return initChart(el, opt);
   }
 
   /* ═══ F4 · Tick Donut — 100% 构成 ═══════════════════
-     数据形状：≤6 段的占比构成
-     来自 templates/basics-gallery.html B4 tick donut */
+     增强：hover 弹出 + 弹性动画 + 中心标签动画 */
   function tickDonut(el, data, options) {
     if (!el || !data || !data.length) return;
     var opts = options || {};
     var total = data.reduce(function (s, d) { return s + d.value; }, 0);
     var colors = opts.colors || DK.cat4;
 
-    var donutCenter = opts.donutCenter || ['38%', '50%'];
+    var donutCenter;
+    var labelPos = opts.labelPosition || null;
+    if (labelPos === 'top') {
+      donutCenter = opts.donutCenter || ['50%', '60%'];
+    } else if (labelPos === 'bottom') {
+      donutCenter = opts.donutCenter || ['50%', '42%'];
+    } else {
+      donutCenter = opts.donutCenter || ['38%', '50%'];
+    }
 
     var opt = baseOpt();
+    opt.animationDuration = 1000;
+    opt.animationEasing = 'cubicOut';
     opt.tooltip = Object.assign({}, opt.tooltip, {
       trigger: 'item',
       formatter: function (p) {
@@ -254,20 +337,22 @@
     };
     opt.series = [{
       type: 'pie',
-      radius: ['52%', '74%'],
+      radius: ['50%', '72%'],
       center: donutCenter,
       avoidLabelOverlap: false,
       itemStyle: {
-        borderColor: 'rgba(15,23,42,0.8)',
+        borderColor: 'rgba(30,30,30,0.9)',
         borderWidth: 2,
-        borderRadius: 4,
+        borderRadius: 6,
       },
       label: { show: false },
       emphasis: {
+        scale: true,
+        scaleSize: 8,
         label: { show: false },
         itemStyle: {
-          shadowBlur: 20,
-          shadowColor: 'rgba(59,130,246,0.3)',
+          shadowBlur: 24,
+          shadowColor: 'rgba(0,0,0,0.4)',
         },
       },
       data: data.map(function (d, i) {
@@ -277,54 +362,57 @@
           itemStyle: { color: colors[i % colors.length] },
         };
       }),
-      animationType: 'scale',
-      animationEasing: 'elasticOut',
-      animationDelay: function (idx) { return idx * 80; },
+      animationType: 'expansion',
+      animationEasing: 'quarticOut',
+      animationDelay: function (idx) { return idx * 120; },
     }];
 
     if (opts.centerLabel) {
-      opt.graphic = [{
-        type: 'group',
-        left: donutCenter[0],
-        top: donutCenter[1],
-        children: [
-          {
-            type: 'text',
-            style: {
-              text: opts.centerLabel.value || total,
-              fontSize: 22,
-              fontWeight: FONT.valueWeight,
-              fontFamily: FONT.family,
-              fill: DK.txt,
-              textAlign: 'center',
-              textVerticalAlign: 'middle',
-            },
-            y: -8,
-          },
-          {
-            type: 'text',
-            style: {
-              text: opts.centerLabel.unit || '总计',
-              fontSize: 9,
-              fontWeight: FONT.axisWeight,
-              fontFamily: FONT.family,
-              fill: DK.mut,
-              textAlign: 'center',
-              textVerticalAlign: 'middle',
-              letterSpacing: 2,
-            },
-            y: 14,
-          },
-        ],
-      }];
+      var titleTop, titleAlign, titleVAlign;
+      if (labelPos === 'top') {
+        titleTop = '4%';
+        titleAlign = 'center';
+        titleVAlign = 'top';
+      } else if (labelPos === 'bottom') {
+        titleTop = '90%';
+        titleAlign = 'center';
+        titleVAlign = 'bottom';
+      } else {
+        titleTop = donutCenter[1];
+        titleAlign = 'center';
+        titleVAlign = 'middle';
+      }
+      opt.title = {
+        text: String(opts.centerLabel.value != null ? opts.centerLabel.value : total),
+        subtext: opts.centerLabel.unit || '总计',
+        left: labelPos ? 'center' : donutCenter[0],
+        top: titleTop,
+        textAlign: titleAlign,
+        textVerticalAlign: titleVAlign,
+        textStyle: {
+          fontSize: 24,
+          fontWeight: FONT.valueWeight,
+          fontFamily: FONT.family,
+          color: DK.txt,
+        },
+        subtextStyle: {
+          fontSize: 9,
+          fontWeight: FONT.axisWeight,
+          fontFamily: FONT.family,
+          color: DK.mut,
+        },
+        itemGap: 6,
+        animation: true,
+        animationDuration: 1000,
+        animationDelay: 600,
+      };
     }
 
     return initChart(el, opt);
   }
 
   /* ═══ F1 · Rung Bars — 少类目比较 ═══════════════════
-     数据形状：≤8 类目的数值比较
-     来自 templates/basics-gallery.html B1 rung bars */
+     增强：胶囊柱 + 渐变 + 虚线网格 + 逐柱弹入 */
   function rungBars(el, data, options) {
     if (!el || !data || !data.length) return;
     var opts = options || {};
@@ -333,7 +421,8 @@
     var maxVal = Math.max.apply(null, values);
 
     var opt = baseOpt();
-    opt.grid = { left: 48, right: 16, top: 12, bottom: 36 };
+    opt.animationDuration = 800;
+    opt.grid = { left: 48, right: 16, top: 16, bottom: 36 };
     opt.xAxis = {
       type: 'category',
       data: names,
@@ -344,7 +433,6 @@
         fontSize: FONT.axisSize,
         fontWeight: FONT.axisWeight,
         fontFamily: FONT.family,
-        letterSpacing: '0.06em',
         rotate: opts.rotate || 0,
       },
     };
@@ -353,11 +441,11 @@
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
-      splitLine: { lineStyle: { color: DK.grid, type: 'dashed' } },
+      splitLine: { lineStyle: { color: DK.grid, type: [3, 4] } },
     };
     opt.series = [{
       type: 'bar',
-      barWidth: opts.barWidth || 24,
+      barWidth: opts.barWidth || 28,
       data: values.map(function (v, i) {
         var ratio = i / (values.length - 1 || 1);
         return {
@@ -366,11 +454,14 @@
             color: {
               type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: lerpColor(DK.hero, DK.data, ratio) },
-                { offset: 1, color: 'rgba(59,130,246,0.15)' },
+                { offset: 0, color: lerpColor(DK.hero, DK.accent, ratio * 0.6) },
+                { offset: 1, color: lerpColor('rgba(245,208,0,0.3)', 'rgba(0,212,255,0.15)', ratio) },
               ],
             },
-            borderRadius: [4, 4, 0, 0],
+            borderRadius: [6, 6, 0, 0],
+            shadowColor: 'rgba(245,208,0,0.1)',
+            shadowBlur: 6,
+            shadowOffsetY: 2,
           },
         };
       }),
@@ -381,56 +472,85 @@
         fontSize: 11,
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
+        distance: 6,
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 16,
+          shadowColor: 'rgba(245,208,0,0.25)',
+        },
       },
       animationDelay: function (idx) { return idx * MOTION.staggerBar; },
+      animationEasing: 'quarticOut',
     }];
     return initChart(el, opt);
   }
 
   /* ═══ F11 · Tick Gauge — 单值进度 ═══════════════════
-     数据形状：0-100% 的单值进度 */
+     增强：扫入动画 + 渐变色带 + 里程碑标记 */
   function tickGauge(el, value, options) {
     if (!el) return;
     var opts = options || {};
     var color = opts.color || DK.hero;
 
     var opt = baseOpt();
+    opt.animationDuration = 1500;
+    opt.animationEasing = 'cubicOut';
     opt.series = [{
       type: 'gauge',
       startAngle: 200,
       endAngle: -20,
       min: 0,
       max: 100,
-      radius: '90%',
+      radius: '88%',
       center: ['50%', '55%'],
       progress: {
         show: true,
-        width: 10,
+        width: 12,
         roundCap: true,
         itemStyle: {
           color: {
             type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
             colorStops: [
               { offset: 0, color: color },
+              { offset: 0.5, color: lerpColor(color, DK.accent, 0.5) },
               { offset: 1, color: DK.accent },
             ],
           },
+          shadowColor: 'rgba(245,208,0,0.2)',
+          shadowBlur: 10,
         },
       },
       pointer: { show: false },
       axisLine: {
         lineStyle: {
-          width: 10,
+          width: 12,
           color: [[1, DK.grid]],
           roundCap: true,
         },
       },
       axisTick: { show: false },
-      splitLine: { show: false },
-      axisLabel: { show: false },
+      splitLine: {
+        show: true,
+        distance: -14,
+        length: 4,
+        lineStyle: { color: DK.faint, width: 1 },
+      },
+      axisLabel: {
+        show: true,
+        distance: -22,
+        fontSize: 8,
+        fontWeight: FONT.axisWeight,
+        fontFamily: FONT.family,
+        color: DK.faint,
+        formatter: function (v) {
+          if (v === 0 || v === 25 || v === 50 || v === 75 || v === 100) return v;
+          return '';
+        },
+      },
       title: {
         show: true,
-        offsetCenter: [0, '30%'],
+        offsetCenter: [0, '32%'],
         fontSize: FONT.subSize,
         fontWeight: FONT.axisWeight,
         fontFamily: FONT.family,
@@ -439,7 +559,7 @@
       detail: {
         valueAnimation: true,
         offsetCenter: [0, '-5%'],
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
         color: DK.txt,
@@ -449,13 +569,12 @@
         value: value,
         name: opts.label || '',
       }],
-      animationDuration: 1200,
-      animationEasing: 'cubicOut',
     }];
     return initChart(el, opt);
   }
 
-  /* ═══ 风控事件等级分布 — 横向分段条 ═══════════════ */
+  /* ═══ 风控事件等级分布 — 横向分段条 ═══════════════
+     增强：等级色编码 + 圆角 + stagger */
   function riskLevelBar(el, data) {
     if (!el || !data) return;
 
@@ -478,7 +597,12 @@
         items.push({
           name: levelNames[lvl] || lvl,
           value: data[lvl],
-          itemStyle: { color: levelColors[lvl] || DK.data },
+          itemStyle: {
+            color: levelColors[lvl] || DK.data,
+            borderRadius: [0, 4, 4, 0],
+            shadowColor: levelColors[lvl] ? levelColors[lvl] + '33' : 'transparent',
+            shadowBlur: 6,
+          },
         });
       }
     });
@@ -486,6 +610,7 @@
     if (!items.length) return;
 
     var opt = baseOpt();
+    opt.animationDuration = 800;
     opt.grid = { left: 56, right: 48, top: 8, bottom: 8 };
     opt.xAxis = { type: 'value', show: false };
     opt.yAxis = {
@@ -502,7 +627,7 @@
     };
     opt.series = [{
       type: 'bar',
-      barWidth: 8,
+      barWidth: 10,
       data: items.map(function (d) { return d; }),
       label: {
         show: true,
@@ -512,19 +637,25 @@
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
       },
-      itemStyle: { borderRadius: [0, 4, 4, 0] },
+      emphasis: {
+        itemStyle: { shadowBlur: 12 },
+      },
       animationDelay: function (idx) { return idx * MOTION.staggerBar; },
+      animationEasing: 'quarticOut',
     }];
     return initChart(el, opt);
   }
 
-  /* ═══ 雷达图 — 多维风险画像 ═══════════════════════════ */
+  /* ═══ 雷达图 — 多维风险画像 ═══════════════════════
+     增强：渐变填充 + 顶点高亮 + 扫入动画 */
   function sentimentRadar(el, data) {
     if (!el || !data) return;
     var indicators = data.indicators || [];
     var series = data.series || [];
 
     var opt = baseOpt();
+    opt.animationDuration = 1200;
+    opt.animationEasing = 'cubicOut';
     opt.tooltip = Object.assign({}, opt.tooltip, { trigger: 'item' });
     opt.legend = {
       data: series.map(function (s) { return s.name; }),
@@ -534,7 +665,7 @@
     };
     opt.radar = {
       indicator: indicators,
-      radius: '65%',
+      radius: '62%',
       center: ['50%', '46%'],
       axisName: {
         color: DK.mut,
@@ -543,7 +674,14 @@
         fontFamily: FONT.family,
       },
       splitArea: {
-        areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.01)'] },
+        areaStyle: {
+          color: [
+            'rgba(255,255,255,0.02)',
+            'rgba(255,255,255,0.01)',
+            'rgba(255,255,255,0.02)',
+            'rgba(255,255,255,0.01)',
+          ],
+        },
       },
       splitLine: { lineStyle: { color: DK.grid } },
       axisLine: { lineStyle: { color: DK.grid } },
@@ -551,21 +689,36 @@
     opt.series = [{
       type: 'radar',
       data: series.map(function (s, i) {
+        var c = DK.ser[i % DK.ser.length];
         return {
           name: s.name,
           value: s.values,
           symbol: 'circle',
-          symbolSize: 4,
-          lineStyle: { width: 1.5, color: DK.ser[i % DK.ser.length] },
-          areaStyle: { color: DK.ser[i % DK.ser.length], opacity: 0.12 },
-          itemStyle: { color: DK.ser[i % DK.ser.length] },
+          symbolSize: 5,
+          lineStyle: { width: 2, color: c, shadowColor: c + '44', shadowBlur: 6 },
+          areaStyle: {
+            color: {
+              type: 'radial', x: 0.5, y: 0.5, r: 0.5,
+              colorStops: [
+                { offset: 0, color: c + '30' },
+                { offset: 1, color: c + '08' },
+              ],
+            },
+          },
+          itemStyle: { color: c, borderColor: '#fff', borderWidth: 1 },
+          emphasis: {
+            lineStyle: { width: 3 },
+            areaStyle: { opacity: 0.25 },
+          },
         };
       }),
+      animationDelay: function (idx) { return idx * 200; },
     }];
     return initChart(el, opt);
   }
 
-  /* ═══ 日历热力图 — 舆情发布时间分布 ═══════════════════ */
+  /* ═══ 日历热力图 — 舆情发布时间分布 ═══════════════
+     增强：三级色阶 + hover 放大 + 渐变视觉映射 */
   function heatCalendar(el, data) {
     if (!el || !data) return;
     var dates = data.dates || [];
@@ -575,22 +728,25 @@
       return [d, values[i] || 0];
     });
 
+    var maxVal = Math.max.apply(null, values) || 10;
+
     var opt = baseOpt();
+    opt.animationDuration = 600;
     opt.tooltip = Object.assign({}, opt.tooltip, {
       position: 'top',
       formatter: function (p) {
-        return p.data[0] + '<br/>' + p.data[1] + ' 条舆情';
+        return p.data[0] + '<br/><b>' + p.data[1] + '</b> 条舆情';
       },
     });
     opt.visualMap = {
       min: 0,
-      max: Math.max.apply(null, values) || 10,
+      max: maxVal,
       calculable: false,
       orient: 'horizontal',
       left: 'center',
       bottom: 4,
       inRange: {
-        color: ['rgba(59,130,246,0.1)', 'rgba(59,130,246,0.35)', '#3B82F6'],
+        color: ['rgba(245,208,0,0.08)', 'rgba(245,208,0,0.3)', 'rgba(245,208,0,0.6)', DK.hero],
       },
       textStyle: { color: DK.mut, fontSize: FONT.axisSize, fontFamily: FONT.family },
       itemWidth: 10, itemHeight: 80,
@@ -620,7 +776,7 @@
         color: 'rgba(255,255,255,0.02)',
         borderColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderRadius: 2,
+        borderRadius: 3,
       },
     };
     opt.series = [{
@@ -628,23 +784,34 @@
       coordinateSystem: 'calendar',
       data: calData,
       emphasis: {
-        itemStyle: { borderColor: '#fff', borderWidth: 1 },
+        itemStyle: {
+          borderColor: '#fff',
+          borderWidth: 1.5,
+          shadowBlur: 8,
+          shadowColor: 'rgba(245,208,0,0.3)',
+        },
       },
+      itemStyle: {
+        borderRadius: 2,
+      },
+      animationDelay: function (idx) { return idx * 3; },
     }];
     return initChart(el, opt);
   }
 
-  /* ═══ 漏斗图 — 信度分布 ═══════════════════════════════ */
+  /* ═══ 漏斗图 — 信度分布 ═══════════════════════════
+     增强：逐层落入 + 渐变填充 + hover 高亮 */
   function funnelChart(el, data) {
     if (!el || !data || !data.length) return;
 
     var sorted = data.slice().sort(function (a, b) { return b.value - a.value; });
 
     var opt = baseOpt();
+    opt.animationDuration = 800;
     opt.tooltip = Object.assign({}, opt.tooltip, {
       trigger: 'item',
       formatter: function (p) {
-        return '<b>' + p.name + '</b><br/>' + p.value;
+        return '<b>' + p.name + '</b><br/>' + p.value + ' (' + p.percent.toFixed(1) + '%)';
       },
     });
     opt.legend = {
@@ -663,7 +830,7 @@
       min: 0,
       max: sorted[0] ? sorted[0].value : 100,
       sort: 'descending',
-      gap: 4,
+      gap: 5,
       label: {
         show: true,
         position: 'inside',
@@ -672,50 +839,80 @@
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
         formatter: '{b}\n{c}',
+        textShadowColor: 'rgba(0,0,0,0.3)',
+        textShadowBlur: 4,
       },
       itemStyle: {
         borderColor: DK.cardBg,
         borderWidth: 2,
-        borderRadius: 4,
+        borderRadius: 6,
       },
       emphasis: {
-        label: { fontSize: 13 },
+        label: { fontSize: 13, fontWeight: FONT.valueWeight },
+        itemStyle: {
+          shadowBlur: 20,
+          shadowColor: 'rgba(0,0,0,0.3)',
+        },
       },
       data: sorted.map(function (d, i) {
+        var c = DK.ser[i % DK.ser.length];
         return {
           name: d.name,
           value: d.value,
-          itemStyle: { color: DK.ser[i % DK.ser.length] },
+          itemStyle: {
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
+              colorStops: [
+                { offset: 0, color: c },
+                { offset: 1, color: lerpColor(c, '#fff', 0.15) },
+              ],
+            },
+          },
         };
       }),
+      animationDelay: function (idx) { return idx * 150; },
+      animationEasing: 'quarticOut',
     }];
     return initChart(el, opt);
   }
 
-  /* ═══ 散点图 — 信度 vs 热度 ═══════════════════════════ */
+  /* ═══ F8 · Plumb Scatter — 信度 vs 热度 ═══════════
+     增强：垂线（plumb lines）+ 逐点 pop 入场 + hero 标注 + barcode 刻度 */
   function scatterPlot(el, data, options) {
     if (!el || !data || !data.length) return;
     var opts = options || {};
 
+    var pts = data.map(function (d) {
+      return [d.x, d.y, d.size || 8, d.label || ''];
+    });
+
+    var maxY = Math.max.apply(null, pts.map(function (p) { return p[1]; })) || 1;
+    var minY = Math.min.apply(null, pts.map(function (p) { return p[1]; }));
+    var heroIdx = 0;
+    pts.forEach(function (p, i) { if (p[1] > pts[heroIdx][1]) heroIdx = i; });
+
     var opt = baseOpt();
-    opt.grid = { left: 48, right: 24, top: 24, bottom: 40 };
+    opt.animationDuration = 600;
+    opt.grid = { left: 52, right: 24, top: 24, bottom: 44 };
     opt.xAxis = {
       type: 'value',
       name: opts.xName || '信度',
-      nameTextStyle: { color: DK.mut, fontSize: FONT.axisSize, fontFamily: FONT.family },
+      nameLocation: 'end',
+      nameGap: 28,
+      nameTextStyle: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
       axisLine: { lineStyle: { color: DK.grid } },
       axisTick: { show: false },
       axisLabel: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
-      splitLine: { lineStyle: { color: DK.grid, type: 'dashed' } },
+      splitLine: { lineStyle: { color: DK.grid, type: [3, 4] } },
     };
     opt.yAxis = {
       type: 'value',
       name: opts.yName || '热度',
-      nameTextStyle: { color: DK.mut, fontSize: FONT.axisSize, fontFamily: FONT.family },
+      nameTextStyle: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
-      splitLine: { lineStyle: { color: DK.grid, type: 'dashed' } },
+      splitLine: { lineStyle: { color: DK.grid, type: [3, 4] } },
     };
     opt.tooltip = Object.assign({}, opt.tooltip, {
       formatter: function (p) {
@@ -725,30 +922,85 @@
           (opts.yName || '热度') + ': ' + d[1];
       },
     });
-    opt.series = [{
-      type: 'scatter',
-      data: data.map(function (d) {
-        return [d.x, d.y, d.size || 8, d.label || ''];
-      }),
-      symbolSize: function (d) { return Math.sqrt(d[2]) * 3; },
-      itemStyle: {
-        color: DK.hero,
-        opacity: 0.7,
-        borderColor: 'rgba(255,255,255,0.15)',
-        borderWidth: 1,
+
+    var plumbLines = pts.map(function (p) {
+      return {
+        type: 'line',
+        shape: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        style: { stroke: 'rgba(255,255,255,0.06)', lineWidth: 0.5 },
+        silent: true,
+        z: 1,
+      };
+    });
+
+    opt.series = [
+      {
+        type: 'scatter',
+        data: pts,
+        symbolSize: function (d) { return Math.max(6, Math.min(36, Math.sqrt(d[2]) * 2.5)); },
+        itemStyle: {
+          color: function (params) {
+            var ratio = params.dataIndex / (pts.length - 1 || 1);
+            return lerpColor(DK.hero, DK.accent, ratio * 0.6);
+          },
+          opacity: 0.75,
+          borderColor: 'rgba(255,255,255,0.12)',
+          borderWidth: 1,
+          shadowColor: 'rgba(245,208,0,0.12)',
+          shadowBlur: 6,
+        },
+        emphasis: {
+          itemStyle: {
+            opacity: 1,
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowBlur: 16,
+            shadowColor: 'rgba(245,208,0,0.3)',
+          },
+        },
+        markPoint: {
+          symbol: 'pin',
+          symbolSize: 36,
+          data: pts.length > 0 ? [{
+            coord: [pts[heroIdx][0], pts[heroIdx][1]],
+            value: pts[heroIdx][1],
+            itemStyle: { color: DK.hero },
+            label: { color: '#000', fontSize: 9, fontWeight: FONT.valueWeight },
+          }] : [],
+          animationDelay: 800,
+        },
+        animationDelay: function (idx) { return idx * MOTION.staggerDot + 100; },
+        animationEasing: 'backOut',
       },
-      emphasis: {
-        itemStyle: { opacity: 1, borderColor: '#fff', borderWidth: 2 },
+      {
+        type: 'scatter',
+        data: pts.map(function (p) { return [p[0], 0]; }),
+        symbolSize: 0,
+        markLine: {
+          silent: true,
+          symbol: ['none', 'none'],
+          lineStyle: { color: 'rgba(255,255,255,0.04)', width: 0.5, type: 'solid' },
+          data: pts.map(function (p) {
+            return [
+              { coord: [p[0], 0] },
+              { coord: [p[0], p[1]] },
+            ];
+          }),
+          animation: false,
+        },
       },
-    }];
+    ];
     return initChart(el, opt);
   }
 
-  /* ═══ 矩形树图 — 主题层级结构 ═════════════════════════ */
+  /* ═══ 矩形树图 — 主题层级结构 ═════════════════════
+     增强：渐进缩放 + hover 边框高亮 */
   function treemapChart(el, data) {
     if (!el || !data || !data.length) return;
 
     var opt = baseOpt();
+    opt.animationDuration = 800;
+    opt.animationEasing = 'quarticOut';
     opt.tooltip = Object.assign({}, opt.tooltip, {
       formatter: function (p) {
         return '<b>' + p.name + '</b><br/>数量: ' + p.value;
@@ -772,6 +1024,8 @@
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
         formatter: '{b}',
+        textShadowColor: 'rgba(0,0,0,0.4)',
+        textShadowBlur: 4,
       },
       itemStyle: {
         borderColor: DK.cardBg,
@@ -780,7 +1034,7 @@
         borderRadius: 4,
       },
       emphasis: {
-        itemStyle: { borderColor: '#fff', borderWidth: 1 },
+        itemStyle: { borderColor: DK.hero, borderWidth: 2 },
         label: { fontSize: 14 },
       },
       levels: [
@@ -790,20 +1044,23 @@
         },
         {
           itemStyle: { borderColor: 'rgba(255,255,255,0.06)', borderWidth: 1, gapWidth: 1 },
-          colorSaturation: [0.35, 0.5],
+          colorSaturation: [0.35, 0.55],
         },
       ],
       data: data,
       color: DK.ser,
+      animationDelay: function (idx) { return idx * 60; },
     }];
     return initChart(el, opt);
   }
 
-  /* ═══ 旭日图 — 主题×平台构成 ═════════════════════════ */
+  /* ═══ 旭日图 — 主题×平台构成 ═════════════════════ */
   function sunburstChart(el, data) {
     if (!el || !data || !data.length) return;
 
     var opt = baseOpt();
+    opt.animationDuration = 1000;
+    opt.animationEasing = 'quarticOut';
     opt.tooltip = Object.assign({}, opt.tooltip, {
       trigger: 'item',
       formatter: function (p) {
@@ -846,12 +1103,21 @@
       ],
       data: data,
       color: DK.ser,
+      animationDelay: function (idx) { return idx * 80; },
     }];
     return initChart(el, opt);
   }
 
   /* ═══ 工具函数 ═══════════════════════════════════════ */
   function lerpColor(a, b, t) {
+    if (a.startsWith('rgba') || b.startsWith('rgba')) {
+      var ac = parseColor(a), bc = parseColor(b);
+      var rr = Math.round(ac.r + (bc.r - ac.r) * t);
+      var rg = Math.round(ac.g + (bc.g - ac.g) * t);
+      var rb = Math.round(ac.b + (bc.b - ac.b) * t);
+      var ra = ac.a + (bc.a - ac.a) * t;
+      return 'rgba(' + rr + ',' + rg + ',' + rb + ',' + ra.toFixed(2) + ')';
+    }
     var ah = parseInt(a.replace('#', ''), 16);
     var bh = parseInt(b.replace('#', ''), 16);
     var ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
@@ -860,6 +1126,15 @@
     var rg = Math.round(ag + (bg - ag) * t);
     var rb = Math.round(ab + (bb - ab) * t);
     return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb).toString(16).slice(1);
+  }
+
+  function parseColor(c) {
+    if (c.startsWith('#')) {
+      var h = parseInt(c.replace('#', ''), 16);
+      return { r: (h >> 16) & 0xff, g: (h >> 8) & 0xff, b: h & 0xff, a: 1 };
+    }
+    var m = c.match(/[\d.]+/g);
+    return { r: +m[0], g: +m[1], b: +m[2], a: m[3] != null ? +m[3] : 1 };
   }
 
   function disposeAll() {
@@ -879,6 +1154,8 @@
 
   global.LieflatCharts = {
     DK: DK,
+    rnd: rnd,
+    animateCounter: animateCounter,
     hairlineArea: hairlineArea,
     tickRows: tickRows,
     tickDonut: tickDonut,

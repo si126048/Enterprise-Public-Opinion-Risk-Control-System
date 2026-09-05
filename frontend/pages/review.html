@@ -4,7 +4,31 @@
     <h1 class="page-title">新风险审核</h1>
     <div class="page-subtitle">审核和确认新发现的风险主题</div>
   </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" id="btn-run-agent" onclick="triggerAgentReview()">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:14px;height:14px;vertical-align:-2px;margin-right:2px"><path d="M9 2l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z"/></svg>
+      AI 审核
+    </button>
+  </div>
 </div>
 
-<!-- Review list -->
-<div id="review-list" class="grid" style="grid-template-columns: 1fr; gap: 12px;"></div>
+<!-- Stats cards -->
+<div id="review-stats" class="grid grid-4" style="margin-bottom: 24px;"></div>
+
+<!-- Candidate list -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3 class="card-title">候选主题</h3>
+    <span class="card-subtitle">待审核的新发现主题</span>
+  </div>
+  <div id="review-list" class="grid" style="grid-template-columns: 1fr; gap: 12px;"></div>
+</div>
+
+<!-- AI Review Log -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">AI 审核日志</h3>
+    <span class="card-subtitle">模型代理的审核决策记录</span>
+  </div>
+  <div id="review-log"></div>
+</div>

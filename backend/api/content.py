@@ -17,7 +17,7 @@ async def list_content(
     topic_id: Optional[str] = None,
     search: Optional[str] = None,
     risk_level: Optional[str] = None,
-    sort_by: str = Query("publish_time", pattern="^(publish_time|likes|created_at)$"),
+    sort_by: str = Query("publish_time", pattern="^(publish_time|likes|created_at|credibility_score)$"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
@@ -59,7 +59,7 @@ async def list_content(
         if conditions:
             where_clause = "WHERE " + " AND ".join(conditions)
 
-        order_col = f"rc.{sort_by}"
+        order_col = f"ca.{sort_by}" if sort_by == "credibility_score" else f"rc.{sort_by}"
         order_dir = sort_order.upper()
 
         count_sql = f"""
@@ -232,12 +232,21 @@ async def stats_overview(company_id: Optional[str] = None):
         """, company_params).fetchone()
         avg_heat = round(heat_row["avg_heat"] or 0, 1)
 
+        risk_rows = conn.execute(f"""
+            SELECT COUNT(*) as c FROM content_analysis ca
+            JOIN raw_content rc ON ca.content_id = rc.id
+            {company_filter}{" AND " if company_filter else " WHERE "}ca.risk_level = 'high'
+        """, company_params).fetchone()
+        high_risk = risk_rows["c"] if risk_rows else 0
+
         return {
             "total_count": total,
             "total_analyzed": analyzed,
             "low_credibility_count": low_cred,
             "low_credibility_rate": low_cred_rate,
+            "high_risk_count": high_risk,
             "community_heat_score": avg_heat,
+            "credibility_distribution": credibility_dist,
             "topic_distribution": topic_dist,
             "platform_distribution": platform_dist,
             "product_distribution": product_dist,
