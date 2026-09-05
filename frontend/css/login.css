@@ -1,4 +1,4 @@
-/* ========== Login Page — Endfield Style ========== */
+/* ========== Login Page ========== */
 
 * {
   margin: 0;
@@ -171,11 +171,12 @@ html, body {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.4);
   letter-spacing: 0.05em;
+  margin-bottom: 24px;
 }
 
 .left-footer {
   position: absolute;
-  bottom: 32px;
+  bottom: 40px;
   left: 0;
   right: 0;
   text-align: center;

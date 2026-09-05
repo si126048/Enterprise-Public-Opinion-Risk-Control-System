@@ -17,6 +17,7 @@ from backend.api.crawler import router as crawler_router
 from backend.api.risk_events import router as risk_events_router
 from backend.api.analysis import router as analysis_router
 from backend.api.review_agent import router as review_agent_router
+from backend.api.auth import router as auth_router
 from backend.db.database import init_db
 from backend.services import embedding_service
 
@@ -47,6 +48,7 @@ app.include_router(crawler_router)
 app.include_router(risk_events_router)
 app.include_router(analysis_router)
 app.include_router(review_agent_router)
+app.include_router(auth_router)
 
 
 @app.on_event("startup")

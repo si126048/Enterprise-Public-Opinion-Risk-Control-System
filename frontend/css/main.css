@@ -1,5 +1,5 @@
 :root {
-  /* Background layers - Endfield deep black */
+  /* Background layers - deep black */
   --color-bg-deep: #0A0A0A;
   --color-bg-primary: #111111;
   --color-bg-secondary: #1A1A1A;
@@ -9,13 +9,13 @@
   --color-glass-border: rgba(255, 255, 255, 0.08);
   --color-glass-shadow: rgba(0, 0, 0, 0.5);
 
-  /* Brand - Endfield yellow */
+  /* Brand - primary yellow */
   --color-primary: #F5D000;
   --color-primary-light: #FFE44D;
   --color-primary-dark: #C4A800;
   --color-primary-glow: transparent;
 
-  /* Accent colors - Endfield palette */
+  /* Accent colors */
   --color-accent-cyan: #00D4FF;
   --color-accent-purple: #8B5CF6;
 

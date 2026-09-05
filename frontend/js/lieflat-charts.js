@@ -4,7 +4,7 @@
 (function (global) {
   'use strict';
 
-  /* ── Endfield Dark 色板 ────────────────────────────────── */
+  /* ── Dark 色板 ────────────────────────────────── */
   var DK = {
     bg:       'transparent',
     cardBg:   '#1E1E1E',
