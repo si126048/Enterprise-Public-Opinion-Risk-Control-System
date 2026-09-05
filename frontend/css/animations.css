@@ -1,8 +1,8 @@
-/* ========== Animations ========== */
+/* ========== Animations — Endfield Style ========== */
 
 /* Page entrance */
 @keyframes pageFadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -16,15 +16,15 @@
   transition: opacity 0.15s ease;
 }
 
-/* Card stagger entrance */
+/* Card stagger entrance — sharp slide-in */
 @keyframes cardStaggerIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .card-stagger {
   opacity: 0;
-  animation: cardStaggerIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: cardStaggerIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .card-stagger:nth-child(1) { animation-delay: 0.04s; }
@@ -46,6 +46,46 @@
   animation: countUp 0.6s ease-out forwards;
 }
 
+/* Data stream scan line */
+@keyframes dataStream {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+.data-stream::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  animation: dataStream 1.5s ease-in-out;
+  pointer-events: none;
+}
+
+/* Border glow pulse for active elements */
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(245, 208, 0, 0.15); }
+  50% { border-color: rgba(245, 208, 0, 0.4); }
+}
+
+.border-glow {
+  animation: borderGlow 2s ease-in-out infinite;
+}
+
+/* Slide in from left (nav items) */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
 /* Skeleton loading pulse */
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 0.4; }
@@ -54,13 +94,12 @@
 
 .skeleton {
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 75%
+    rgba(245, 208, 0, 0.03) 25%,
+    rgba(245, 208, 0, 0.06) 50%,
+    rgba(245, 208, 0, 0.03) 75%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
-  border-radius: var(--radius-md);
 }
 
 @keyframes skeleton-shimmer {
@@ -110,8 +149,8 @@
 /* Scroll reveal */
 .reveal-item {
   opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .reveal-item.revealed {

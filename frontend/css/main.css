@@ -1,49 +1,53 @@
 :root {
-  /* Background layers - Neutral dark */
-  --color-bg-deep: #0E0E0E;
-  --color-bg-primary: #141414;
+  /* Background layers - Endfield deep black */
+  --color-bg-deep: #0A0A0A;
+  --color-bg-primary: #111111;
   --color-bg-secondary: #1A1A1A;
 
-  /* Solid surfaces (replaces glass layers) */
+  /* Solid surfaces */
   --color-glass-bg: #1A1A1A;
-  --color-glass-border: rgba(255, 255, 255, 0.06);
-  --color-glass-shadow: rgba(0, 0, 0, 0.3);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-shadow: rgba(0, 0, 0, 0.5);
 
-  /* Brand primary - Single accent blue */
-  --color-primary: #3B82F6;
-  --color-primary-light: #60A5FA;
-  --color-primary-dark: #2563EB;
+  /* Brand - Endfield yellow */
+  --color-primary: #F5D000;
+  --color-primary-light: #FFE44D;
+  --color-primary-dark: #C4A800;
   --color-primary-glow: transparent;
 
-  /* Accent colors - Unified blue family */
-  --color-accent-cyan: #60A5FA;
-  --color-accent-purple: #60A5FA;
+  /* Accent colors - Endfield palette */
+  --color-accent-cyan: #00D4FF;
+  --color-accent-purple: #8B5CF6;
 
   /* Text */
-  --color-text-primary: #E5E5E5;
-  --color-text-secondary: #999999;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
   --color-text-muted: #666666;
 
   /* Status colors */
   --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #3B82F6;
+  --color-warning: #F5D000;
+  --color-danger: #FF3B3B;
+  --color-info: #00D4FF;
 
-  /* Cards/Controls - Solid surfaces */
-  --color-card-bg: #181818;
-  --color-card-border: rgba(255, 255, 255, 0.06);
-  --color-card-hover: rgba(255, 255, 255, 0.03);
+  /* Cards/Controls */
+  --color-card-bg: #1E1E1E;
+  --color-card-border: rgba(255, 255, 255, 0.08);
+  --color-card-hover: rgba(245, 208, 0, 0.04);
 
-  /* Sidebar - Solid */
+  /* Sidebar */
   --color-sidebar-bg: #111111;
   --color-sidebar-border: rgba(255, 255, 255, 0.06);
-  --color-nav-hover: rgba(255, 255, 255, 0.04);
-  --color-nav-active: rgba(59, 130, 246, 0.12);
+  --color-nav-hover: rgba(255, 255, 255, 0.06);
+  --color-nav-active: rgba(245, 208, 0, 0.10);
 
-  /* Topbar - Solid */
+  /* Topbar */
   --color-topbar-bg: #111111;
-  --color-topbar-border: rgba(255, 255, 255, 0.06);
+  --color-topbar-border: rgba(245, 208, 0, 0.20);
+
+  /* Inputs */
+  --color-input-bg: #2A2A2A;
+  --color-input-border: #333333;
 
   /* Fonts */
   --font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -56,21 +60,21 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
 
-  /* Border radius - Tightened */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
+  /* Border radius - Tightened for angular look */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
 
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
   --transition-slow: 400ms ease;
 
-  /* Shadows - Pure black, no glow */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  /* Shadows - Pure black, minimal */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.7);
   --shadow-glow: none;
 }
 
@@ -96,8 +100,9 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
+  letter-spacing: 0.02em;
 }
 
 h1 { font-size: 28px; }
@@ -105,13 +110,13 @@ h2 { font-size: 20px; }
 h3 { font-size: 16px; }
 
 a {
-  color: var(--color-primary-light);
+  color: var(--color-primary);
   text-decoration: none;
   transition: color var(--transition-fast);
 }
 
 a:hover {
-  color: var(--color-primary);
+  color: var(--color-primary-light);
 }
 
 button {
@@ -131,7 +136,7 @@ input, select, textarea {
 
 ::selection {
   background: var(--color-primary);
-  color: white;
+  color: #000000;
 }
 
 ::-webkit-scrollbar {
@@ -149,5 +154,5 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(245, 208, 0, 0.3);
 }

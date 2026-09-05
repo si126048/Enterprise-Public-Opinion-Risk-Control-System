@@ -142,6 +142,10 @@ function initScrollReveal() {
   var globalSearch = document.getElementById('global-search');
 
   function init() {
+    if (!localStorage.getItem('auth_token')) {
+      window.location.href = 'login.html';
+      return;
+    }
     setupNavigation();
     setupSidebar();
     setupCompanySelector();
@@ -179,7 +183,7 @@ function initScrollReveal() {
       contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
       contentArea.classList.remove('page-exit');
 
-      fetch('pages/' + page + '.html?v=5')
+      fetch('pages/' + page + '.html?v=6')
         .then(function(r) {
           if (!r.ok) throw new Error('Page not found');
           return r.text();

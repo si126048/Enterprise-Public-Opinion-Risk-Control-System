@@ -4,24 +4,24 @@
 (function (global) {
   'use strict';
 
-  /* ── Dark Porcelain 色板 ────────────────────────────────── */
+  /* ── Endfield Dark 色板 ────────────────────────────────── */
   var DK = {
     bg:       'transparent',
-    cardBg:   '#181818',
-    txt:      '#E5E5E5',
-    mut:      'rgba(153,153,153,0.7)',
-    faint:    'rgba(153,153,153,0.35)',
+    cardBg:   '#1E1E1E',
+    txt:      '#FFFFFF',
+    mut:      'rgba(255,255,255,0.5)',
+    faint:    'rgba(255,255,255,0.25)',
     grid:     'rgba(255,255,255,0.06)',
-    data:     '#7096D1',
-    data2:    '#9EB3CD',
-    hero:     '#3B82F6',
-    accent:   '#60A5FA',
-    danger:   '#F87171',
-    warn:     '#FBBF24',
+    data:     '#F5D000',
+    data2:    '#FFE44D',
+    hero:     '#F5D000',
+    accent:   '#00D4FF',
+    danger:   '#FF3B3B',
+    warn:     '#F5D000',
     success:  '#34D399',
-    ladder:   ['#E5E5E5', '#BCC7D7', '#9EB3CD', '#809EC6', '#6C93C7', '#4D82C6', '#3472C2'],
-    cat4:     ['#3B82F6', '#7096D1', '#60A5FA', '#9EB3CD'],
-    ser:      ['#3B82F6', '#7096D1', '#60A5FA', '#9EB3CD', '#4D82C6', '#BCC7D7'],
+    ladder:   ['#FFFFFF', '#D4D4D4', '#B0B0B0', '#8C8C8C', '#F5D000', '#C4A800', '#997E00'],
+    cat4:     ['#F5D000', '#00D4FF', '#FF3B3B', '#34D399'],
+    ser:      ['#F5D000', '#00D4FF', '#FF3B3B', '#34D399', '#FFE44D', '#66E0FF'],
   };
 
   var FONT = {

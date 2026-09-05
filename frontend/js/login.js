@@ -1,41 +1,63 @@
-// login.js - Login page logic
+// login.js - Login page logic with tab switching
 
 (function() {
   'use strict';
 
-  var form = document.getElementById('login-form');
+  var tabs = document.querySelectorAll('.login-tab');
+  var formAccount = document.getElementById('login-form-account');
+  var formCode = document.getElementById('login-form-code');
   var emailInput = document.getElementById('email');
   var passwordInput = document.getElementById('password');
   var btnLogin = document.getElementById('btn-login');
   var loginError = document.getElementById('login-error');
-  var particlesContainer = document.getElementById('particles');
+  var btnSendCode = document.getElementById('btn-send-code');
 
-  // Generate particles
-  function initParticles() {
-    if (!particlesContainer) return;
-    for (var i = 0; i < 30; i++) {
-      var dot = document.createElement('div');
-      dot.className = 'particle-dot';
-      dot.style.left = Math.random() * 100 + '%';
-      dot.style.top = Math.random() * 100 + '%';
-      dot.style.animationDelay = (Math.random() * 8) + 's';
-      dot.style.animationDuration = (6 + Math.random() * 6) + 's';
-      particlesContainer.appendChild(dot);
-    }
+  // Tab switching
+  function initTabs() {
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var target = this.getAttribute('data-tab');
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        this.classList.add('active');
+
+        if (target === 'account') {
+          formAccount.style.display = 'flex';
+          formCode.style.display = 'none';
+        } else {
+          formAccount.style.display = 'none';
+          formCode.style.display = 'flex';
+        }
+
+        if (loginError) loginError.classList.remove('visible');
+      });
+    });
   }
 
-  // Ripple effect on button
-  function createRipple(e) {
-    var btn = e.currentTarget;
-    var rect = btn.getBoundingClientRect();
-    var ripple = document.createElement('span');
-    ripple.className = 'ripple';
-    var size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-    btn.appendChild(ripple);
-    setTimeout(function() { ripple.remove(); }, 600);
+  // Send verification code (simulated)
+  function initSendCode() {
+    if (!btnSendCode) return;
+    btnSendCode.addEventListener('click', function() {
+      var phoneInput = document.getElementById('phone');
+      if (!phoneInput || !phoneInput.value.trim()) {
+        phoneInput.focus();
+        return;
+      }
+
+      var btn = this;
+      var countdown = 60;
+      btn.disabled = true;
+      btn.textContent = countdown + 's';
+
+      var timer = setInterval(function() {
+        countdown--;
+        btn.textContent = countdown + 's';
+        if (countdown <= 0) {
+          clearInterval(timer);
+          btn.disabled = false;
+          btn.textContent = '获取验证码';
+        }
+      }, 1000);
+    });
   }
 
   // Form submit
@@ -45,43 +67,45 @@
     var email = emailInput.value.trim();
     var password = passwordInput.value.trim();
 
-    // Clear previous errors
-    emailInput.classList.remove('error');
-    passwordInput.classList.remove('error');
-    loginError.classList.remove('visible');
+    if (loginError) loginError.classList.remove('visible');
 
-    // Validate
     if (!email) {
-      emailInput.classList.add('error');
       emailInput.focus();
       return;
     }
     if (!password) {
-      passwordInput.classList.add('error');
       passwordInput.focus();
       return;
     }
 
-    // Show loading
-    btnLogin.classList.add('loading');
+    if (btnLogin) btnLogin.classList.add('loading');
 
-    // Simulate login (replace with real API call)
     setTimeout(function() {
-      // For demo: any email + password "admin123" succeeds
       if (password === 'admin123' || (email && password)) {
-        btnLogin.classList.remove('loading');
-        btnLogin.classList.add('success');
+        if (btnLogin) {
+          btnLogin.classList.remove('loading');
+          btnLogin.classList.add('success');
+        }
+
+        localStorage.setItem('auth_token', 'demo_token_' + Date.now());
+        localStorage.setItem('auth_user', email);
 
         setTimeout(function() {
           window.location.href = 'index.html';
         }, 800);
       } else {
-        btnLogin.classList.remove('loading');
-        emailInput.classList.add('error');
-        passwordInput.classList.add('error');
-        loginError.classList.add('visible');
+        if (btnLogin) btnLogin.classList.remove('loading');
+        if (loginError) loginError.classList.add('visible');
       }
     }, 1200);
+  }
+
+  // Code form submit
+  function handleCodeSubmit(e) {
+    e.preventDefault();
+    localStorage.setItem('auth_token', 'demo_token_' + Date.now());
+    localStorage.setItem('auth_user', document.getElementById('phone').value);
+    window.location.href = 'index.html';
   }
 
   // Input focus effects
@@ -89,23 +113,22 @@
     var inputs = document.querySelectorAll('.form-input');
     inputs.forEach(function(input) {
       input.addEventListener('focus', function() {
-        this.classList.remove('error');
-        loginError.classList.remove('visible');
+        if (loginError) loginError.classList.remove('visible');
       });
     });
   }
 
   // Init
   function init() {
-    initParticles();
+    initTabs();
+    initSendCode();
     setupInputEffects();
 
-    if (form) {
-      form.addEventListener('submit', handleSubmit);
+    if (formAccount) {
+      formAccount.addEventListener('submit', handleSubmit);
     }
-
-    if (btnLogin) {
-      btnLogin.addEventListener('click', createRipple);
+    if (formCode) {
+      formCode.addEventListener('submit', handleCodeSubmit);
     }
   }
 
