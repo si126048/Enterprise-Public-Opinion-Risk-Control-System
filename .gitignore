@@ -2,12 +2,13 @@
 __pycache__/
 *.pyc
 *.pyo
-data/app.db
-data/app.db-journal
-data/app.db-wal
+data/*.db
+data/*.db-journal
+data/*.db-wal
 data/chroma_db/
 data/faiss_index/
 *.egg-info/
+.pytest_cache/
 .venv/
 venv/
 evidence/screenshots/*.png

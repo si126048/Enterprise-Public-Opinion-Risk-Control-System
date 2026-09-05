@@ -9,7 +9,6 @@ from fastapi import APIRouter, HTTPException, Request
 from backend.config import get_config
 from backend.db.database import get_connection
 from backend.discovery import clusterer
-from backend.services import embedding_service, vector_store
 from backend.services.review_agent import _do_approve, _do_ignore, _do_merge, review_all_pending
 
 logger = logging.getLogger(__name__)
