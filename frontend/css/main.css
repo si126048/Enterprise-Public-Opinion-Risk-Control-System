@@ -1,28 +1,28 @@
 :root {
-  /* Background layers - Deep tech blue-black */
-  --color-bg-deep: #0A0E1A;
-  --color-bg-primary: #0F1629;
-  --color-bg-secondary: #151E35;
+  /* Background layers - Neutral dark */
+  --color-bg-deep: #0E0E0E;
+  --color-bg-primary: #141414;
+  --color-bg-secondary: #1A1A1A;
 
-  /* Glass layers */
-  --color-glass-bg: rgba(21, 30, 53, 0.60);
-  --color-glass-border: rgba(98, 168, 255, 0.12);
-  --color-glass-shadow: rgba(0, 40, 120, 0.25);
+  /* Solid surfaces (replaces glass layers) */
+  --color-glass-bg: #1A1A1A;
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+  --color-glass-shadow: rgba(0, 0, 0, 0.3);
 
-  /* Brand primary - Tech ice blue */
+  /* Brand primary - Single accent blue */
   --color-primary: #3B82F6;
   --color-primary-light: #60A5FA;
   --color-primary-dark: #2563EB;
-  --color-primary-glow: rgba(59, 130, 246, 0.35);
+  --color-primary-glow: transparent;
 
-  /* Accent colors - Cyan/Purple */
-  --color-accent-cyan: #22D3EE;
-  --color-accent-purple: #8B5CF6;
+  /* Accent colors - Unified blue family */
+  --color-accent-cyan: #60A5FA;
+  --color-accent-purple: #60A5FA;
 
   /* Text */
-  --color-text-primary: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #475569;
+  --color-text-primary: #E5E5E5;
+  --color-text-secondary: #999999;
+  --color-text-muted: #666666;
 
   /* Status colors */
   --color-success: #22C55E;
@@ -30,20 +30,20 @@
   --color-danger: #EF4444;
   --color-info: #3B82F6;
 
-  /* Cards/Controls */
-  --color-card-bg: rgba(21, 30, 53, 0.70);
-  --color-card-border: rgba(98, 168, 255, 0.08);
-  --color-card-hover: rgba(59, 130, 246, 0.06);
+  /* Cards/Controls - Solid surfaces */
+  --color-card-bg: #181818;
+  --color-card-border: rgba(255, 255, 255, 0.06);
+  --color-card-hover: rgba(255, 255, 255, 0.03);
 
-  /* Sidebar */
-  --color-sidebar-bg: rgba(15, 22, 41, 0.90);
-  --color-sidebar-border: rgba(98, 168, 255, 0.08);
-  --color-nav-hover: rgba(59, 130, 246, 0.10);
-  --color-nav-active: rgba(59, 130, 246, 0.15);
+  /* Sidebar - Solid */
+  --color-sidebar-bg: #111111;
+  --color-sidebar-border: rgba(255, 255, 255, 0.06);
+  --color-nav-hover: rgba(255, 255, 255, 0.04);
+  --color-nav-active: rgba(59, 130, 246, 0.12);
 
-  /* Topbar */
-  --color-topbar-bg: rgba(15, 22, 41, 0.80);
-  --color-topbar-border: rgba(98, 168, 255, 0.08);
+  /* Topbar - Solid */
+  --color-topbar-bg: #111111;
+  --color-topbar-border: rgba(255, 255, 255, 0.06);
 
   /* Fonts */
   --font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -56,22 +56,22 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Border radius - Tightened */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
 
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
   --transition-slow: 400ms ease;
 
-  /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.30);
-  --shadow-glow: 0 0 24px rgba(59, 130, 246, 0.25);
+  /* Shadows - Pure black, no glow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-glow: none;
 }
 
 * {
@@ -144,10 +144,10 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(98, 168, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(98, 168, 255, 0.35);
+  background: rgba(255, 255, 255, 0.2);
 }

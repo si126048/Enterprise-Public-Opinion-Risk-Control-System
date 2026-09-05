@@ -84,6 +84,47 @@ function whenLieflatReady(fn, retries) {
   setTimeout(function() { whenLieflatReady(fn, retries - 1); }, 250);
 }
 
+function animateValue(el, end, duration) {
+  if (!el) return;
+  var raw = String(end).replace(/[^\d.]/g, '');
+  var num = parseFloat(raw);
+  if (isNaN(num)) return;
+  var suffix = String(end).replace(/[\d.,]/g, '');
+  var hasComma = String(end).indexOf(',') !== -1;
+  var start = 0;
+  var startTime = null;
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    var current = Math.round(start + (num - start) * eased);
+    var formatted = hasComma ? current.toLocaleString('zh-CN') : String(current);
+    el.textContent = formatted + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function initScrollReveal() {
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.reveal-item').forEach(function(el) {
+      el.classList.add('revealed');
+    });
+    return;
+  }
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal-item').forEach(function(el) {
+    observer.observe(el);
+  });
+}
+
 // ========== App Core ==========
 (function() {
   'use strict';
@@ -132,20 +173,26 @@ function whenLieflatReady(fn, retries) {
 
   function loadPage(page) {
     currentPage = page;
-    contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
+    contentArea.classList.add('page-exit');
 
-    fetch('pages/' + page + '.html?v=4')
-      .then(function(r) {
-        if (!r.ok) throw new Error('Page not found');
-        return r.text();
-      })
-      .then(function(html) {
-        contentArea.innerHTML = '<div class="page-container">' + html + '</div>';
-        initPageScripts(page);
-      })
-      .catch(function() {
-        contentArea.innerHTML = '<div class="page-container"><div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-text">页面加载失败</div><button class="btn btn-primary" onclick="location.reload()">重试</button></div></div>';
-      });
+    setTimeout(function() {
+      contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
+      contentArea.classList.remove('page-exit');
+
+      fetch('pages/' + page + '.html?v=5')
+        .then(function(r) {
+          if (!r.ok) throw new Error('Page not found');
+          return r.text();
+        })
+        .then(function(html) {
+          contentArea.innerHTML = '<div class="page-container page-enter">' + html + '</div>';
+          initPageScripts(page);
+          initScrollReveal();
+        })
+        .catch(function() {
+          contentArea.innerHTML = '<div class="page-container"><div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-text">页面加载失败</div><button class="btn btn-primary" onclick="location.reload()">重试</button></div></div>';
+        });
+    }, 150);
   }
 
   function initPageScripts(page) {
@@ -256,21 +303,37 @@ function whenLieflatReady(fn, retries) {
     var container = document.getElementById('stats-cards');
     if (!container || !stats) return;
 
+    var rawValues = [
+      stats.total_count || 0,
+      ((stats.low_credibility_rate || 0) * 100).toFixed(1) + '%',
+      stats.high_risk_count || 0,
+      Math.round(stats.community_heat_score || 0)
+    ];
+
     var cards = [
-      { label: '总舆情', value: formatNumber(stats.total_count), trend: '+12%', up: true },
-      { label: '低信度比例', value: ((stats.low_credibility_rate || 0) * 100).toFixed(1) + '%', trend: '-3%', up: false },
-      { label: '高风险事件', value: stats.high_risk_count || 0, trend: '+2', up: true },
-      { label: '社区热度', value: formatNumber(Math.round(stats.community_heat_score || 0)), trend: '+8%', up: true }
+      { label: '总舆情', value: formatNumber(stats.total_count), raw: rawValues[0] },
+      { label: '低信度比例', value: rawValues[1], raw: rawValues[1] },
+      { label: '高风险事件', value: stats.high_risk_count || 0, raw: rawValues[2] },
+      { label: '社区热度', value: formatNumber(Math.round(stats.community_heat_score || 0)), raw: rawValues[3] }
     ];
 
     container.innerHTML = cards.map(function(c, i) {
-      return '<div class="stat-card card-stagger" style="animation-delay:' + (i * 0.05) + 's">' +
+      return '<div class="stat-card card-stagger" style="animation-delay:' + (i * 0.04) + 's">' +
         '<div class="stat-label">' + c.label + '</div>' +
-        '<div class="stat-value">' + c.value + '</div>' +
-        '<div class="stat-trend ' + (c.up ? 'up' : 'down') + '">' +
-          '<span>' + (c.up ? '↑' : '↓') + '</span><span>' + c.trend + '</span>' +
+        '<div class="stat-value" data-target="' + c.raw + '">0</div>' +
+        '<div class="stat-trend up">' +
+          '<span>—</span>' +
         '</div></div>';
     }).join('');
+
+    container.querySelectorAll('.stat-value').forEach(function(el) {
+      var target = el.getAttribute('data-target');
+      if (target && String(target).indexOf('%') === -1) {
+        animateValue(el, target, 800);
+      } else {
+        el.textContent = target;
+      }
+    });
   }
 
   function renderDashboardCharts(stats, routingStatus) {
@@ -316,6 +379,55 @@ function whenLieflatReady(fn, retries) {
       var prTotal = prArr.reduce(function (s, d) { return s + d.value; }, 0);
       LieflatCharts.tickDonut(productEl, prArr, {
         centerLabel: { value: formatNumber(prTotal), unit: '总计' },
+      });
+    }
+
+    var heatEl = document.getElementById('chart-heat-calendar');
+    if (heatEl && stats && stats.trend_data && stats.trend_data.dates) {
+      var heatDates = stats.trend_data.dates;
+      var heatValues = heatDates.map(function(d, i) {
+        return (stats.trend_data.total[i] || 0) + (stats.trend_data.low_credibility[i] || 0);
+      });
+      LieflatCharts.heatCalendar(heatEl, {
+        dates: heatDates,
+        values: heatValues,
+        range: [heatDates[0], heatDates[heatDates.length - 1]],
+      });
+    }
+
+    var funnelEl = document.getElementById('chart-credibility-funnel');
+    if (funnelEl && stats) {
+      var credData = [
+        { name: '高可信', value: stats.credibility_high || 0 },
+        { name: '中可信', value: stats.credibility_medium || 0 },
+        { name: '不确定', value: stats.credibility_uncertain || 0 },
+        { name: '低可信', value: stats.credibility_low || 0 },
+      ].filter(function(d) { return d.value > 0; });
+      if (credData.length) LieflatCharts.funnelChart(funnelEl, credData);
+    }
+
+    var radarEl = document.getElementById('chart-sentiment-radar');
+    if (radarEl && stats) {
+      LieflatCharts.sentimentRadar(radarEl, {
+        indicators: [
+          { name: '传播速度', max: 100 },
+          { name: '情绪强度', max: 100 },
+          { name: '信度风险', max: 100 },
+          { name: '互动密度', max: 100 },
+          { name: '跨平台扩散', max: 100 },
+        ],
+        series: [
+          {
+            name: '当前周期',
+            values: [
+              Math.min(100, Math.round((stats.total_count || 0) / 50)),
+              Math.min(100, Math.round((stats.community_heat_score || 0) / 10)),
+              Math.min(100, Math.round((stats.low_credibility_rate || 0) * 200)),
+              Math.min(100, Math.round((stats.high_risk_count || 0) * 10)),
+              60,
+            ],
+          },
+        ],
       });
     }
     });
@@ -366,6 +478,26 @@ function whenLieflatReady(fn, retries) {
           '<span>' + formatTime(op.created_at) + '</span>' +
         '</div></div>';
     }).join('');
+
+    renderContentScatter(opinions);
+  }
+
+  function renderContentScatter(opinions) {
+    var scatterEl = document.getElementById('chart-scatter');
+    if (!scatterEl) return;
+    var credScores = { high: 0.9, medium: 0.6, uncertain: 0.35, low: 0.1 };
+    var data = opinions.map(function (op) {
+      var x = credScores[op.credibility] || 0.5;
+      var y = (op.likes || 0) + (op.comments || 0) * 2;
+      var size = Math.max(6, Math.min(40, Math.sqrt(y) * 3));
+      return [x, y, size, (op.content || '').substring(0, 20)];
+    });
+    whenLieflatReady(function() {
+      LieflatCharts.scatterPlot(scatterEl, data, {
+        xName: '信度',
+        yName: '互动量',
+      });
+    });
   }
 
   window.showContentDetail = function(id) {
@@ -397,10 +529,18 @@ function whenLieflatReady(fn, retries) {
     if (!topics.length) return;
     whenLieflatReady(function() {
       var distEl = document.getElementById('chart-topic-dist');
-      if (!distEl) return;
-      LieflatCharts.tickRows(distEl, topics.map(function (t) {
-        return { name: t.name, value: t.sample_count || t.content_count || 0 };
-      }), { labelWidth: 120 });
+      if (distEl) {
+        LieflatCharts.tickRows(distEl, topics.map(function (t) {
+          return { name: t.name, value: t.sample_count || t.content_count || 0 };
+        }), { labelWidth: 120 });
+      }
+
+      var treemapEl = document.getElementById('chart-topic-treemap');
+      if (treemapEl) {
+        LieflatCharts.treemapChart(treemapEl, topics.map(function (t) {
+          return { name: t.name, value: t.sample_count || t.content_count || 0 };
+        }));
+      }
     });
   }
 

@@ -19,8 +19,6 @@
   flex-direction: column;
   z-index: 100;
   transition: width 0.3s ease, transform 0.3s ease;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .sidebar-header {
@@ -46,10 +44,7 @@
 .sidebar-logo-text {
   font-size: 15px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent-cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -168,8 +163,6 @@
   padding: 0 24px;
   gap: 16px;
   z-index: 90;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .topbar-left {
@@ -211,8 +204,7 @@
 }
 
 .company-selector:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .company-selector .arrow {
@@ -290,7 +282,6 @@
 
 .global-search-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -351,14 +342,13 @@
   height: 8px;
   background: var(--color-danger);
   border-radius: 50%;
-  animation: pulse-ring 2s ease-in-out infinite;
 }
 
 .user-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent-purple));
+  background: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -366,11 +356,11 @@
   font-weight: 600;
   color: white;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: opacity var(--transition-fast);
 }
 
 .user-avatar:hover {
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
+  opacity: 0.85;
 }
 
 /* ---- Content area ---- */

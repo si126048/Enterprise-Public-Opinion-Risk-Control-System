@@ -3,17 +3,14 @@
 /* ---- Card ---- */
 .card {
   background: var(--color-card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   padding: 20px 24px;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: border-color var(--transition-base);
 }
 
 .card:hover {
-  border-color: rgba(59, 130, 246, 0.20);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .card-header {
@@ -38,36 +35,14 @@
 /* ---- Stat Card ---- */
 .stat-card {
   background: var(--color-card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   padding: 20px 24px;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent-cyan));
-  opacity: 0;
-  transition: opacity var(--transition-base);
+  transition: border-color var(--transition-base);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(59, 130, 246, 0.25);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(59, 130, 246, 0.08);
-}
-
-.stat-card:hover::before {
-  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .stat-label {
@@ -116,13 +91,12 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: var(--color-primary);
   color: white;
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  filter: brightness(1.15);
 }
 
 .btn-secondary {
@@ -171,7 +145,6 @@
 
 .input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.15);
 }
 
 .input::placeholder {
@@ -196,7 +169,6 @@
 
 .select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.15);
 }
 
 /* ---- Badges / Tags ---- */
@@ -370,7 +342,7 @@
   z-index: 501;
   display: none;
   flex-direction: column;
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
 }
 
 .drawer.active {
@@ -497,14 +469,12 @@
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   padding: 20px;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: border-color var(--transition-base);
   cursor: pointer;
 }
 
 .topic-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(59, 130, 246, 0.20);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .topic-card-name {
@@ -543,8 +513,7 @@
 }
 
 .content-card:hover {
-  background: var(--color-card-hover);
-  border-color: rgba(59, 130, 246, 0.15);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .content-card-header {

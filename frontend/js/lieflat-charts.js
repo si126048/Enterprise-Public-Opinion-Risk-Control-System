@@ -7,21 +7,21 @@
   /* ── Dark Porcelain 色板 ────────────────────────────────── */
   var DK = {
     bg:       'transparent',
-    cardBg:   'rgba(15, 23, 42, 0.55)',
-    txt:      '#E2E8F0',
-    mut:      'rgba(148,163,184,0.7)',
-    faint:    'rgba(148,163,184,0.35)',
-    grid:     'rgba(148,163,184,0.08)',
+    cardBg:   '#181818',
+    txt:      '#E5E5E5',
+    mut:      'rgba(153,153,153,0.7)',
+    faint:    'rgba(153,153,153,0.35)',
+    grid:     'rgba(255,255,255,0.06)',
     data:     '#7096D1',
     data2:    '#9EB3CD',
     hero:     '#3B82F6',
-    accent:   '#22D3EE',
+    accent:   '#60A5FA',
     danger:   '#F87171',
     warn:     '#FBBF24',
     success:  '#34D399',
-    ladder:   ['#E2E8F0', '#BCC7D7', '#9EB3CD', '#809EC6', '#6C93C7', '#4D82C6', '#3472C2'],
-    cat4:     ['#3B82F6', '#7096D1', '#22D3EE', '#9EB3CD'],
-    ser:      ['#3B82F6', '#7096D1', '#22D3EE', '#9EB3CD', '#4D82C6', '#BCC7D7'],
+    ladder:   ['#E5E5E5', '#BCC7D7', '#9EB3CD', '#809EC6', '#6C93C7', '#4D82C6', '#3472C2'],
+    cat4:     ['#3B82F6', '#7096D1', '#60A5FA', '#9EB3CD'],
+    ser:      ['#3B82F6', '#7096D1', '#60A5FA', '#9EB3CD', '#4D82C6', '#BCC7D7'],
   };
 
   var FONT = {
@@ -34,9 +34,9 @@
   };
 
   var MOTION = {
-    enter: 900,
-    easing: 'quarticOut',
-    staggerBar: 100,
+    enter: 600,
+    easing: 'cubicOut',
+    staggerBar: 80,
   };
 
   function baseOpt() {
@@ -44,14 +44,16 @@
       backgroundColor: DK.bg,
       textStyle: { fontFamily: FONT.family, color: DK.txt },
       tooltip: {
-        backgroundColor: 'rgba(8,31,92,0.92)',
-        borderWidth: 0,
+        backgroundColor: 'rgba(24,24,24,0.95)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.08)',
         padding: [10, 14],
-        textStyle: { color: '#E2E8F0', fontFamily: FONT.family, fontSize: 12 },
-        extraCssText: 'border-radius:12px;backdrop-filter:blur(8px);box-shadow:0 8px 32px rgba(0,0,0,0.3);',
+        textStyle: { color: '#E5E5E5', fontFamily: FONT.family, fontSize: 12 },
+        extraCssText: 'border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);',
       },
       animationDuration: MOTION.enter,
       animationEasing: MOTION.easing,
+      animationDurationUpdate: 400,
     };
   }
 
@@ -516,6 +518,338 @@
     return initChart(el, opt);
   }
 
+  /* ═══ 雷达图 — 多维风险画像 ═══════════════════════════ */
+  function sentimentRadar(el, data) {
+    if (!el || !data) return;
+    var indicators = data.indicators || [];
+    var series = data.series || [];
+
+    var opt = baseOpt();
+    opt.tooltip = Object.assign({}, opt.tooltip, { trigger: 'item' });
+    opt.legend = {
+      data: series.map(function (s) { return s.name; }),
+      bottom: 4, right: 8,
+      textStyle: { color: DK.mut, fontSize: FONT.subSize, fontFamily: FONT.family },
+      itemWidth: 12, itemHeight: 3,
+    };
+    opt.radar = {
+      indicator: indicators,
+      radius: '65%',
+      center: ['50%', '46%'],
+      axisName: {
+        color: DK.mut,
+        fontSize: FONT.axisSize,
+        fontWeight: FONT.axisWeight,
+        fontFamily: FONT.family,
+      },
+      splitArea: {
+        areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.01)'] },
+      },
+      splitLine: { lineStyle: { color: DK.grid } },
+      axisLine: { lineStyle: { color: DK.grid } },
+    };
+    opt.series = [{
+      type: 'radar',
+      data: series.map(function (s, i) {
+        return {
+          name: s.name,
+          value: s.values,
+          symbol: 'circle',
+          symbolSize: 4,
+          lineStyle: { width: 1.5, color: DK.ser[i % DK.ser.length] },
+          areaStyle: { color: DK.ser[i % DK.ser.length], opacity: 0.12 },
+          itemStyle: { color: DK.ser[i % DK.ser.length] },
+        };
+      }),
+    }];
+    return initChart(el, opt);
+  }
+
+  /* ═══ 日历热力图 — 舆情发布时间分布 ═══════════════════ */
+  function heatCalendar(el, data) {
+    if (!el || !data) return;
+    var dates = data.dates || [];
+    var values = data.values || [];
+
+    var calData = dates.map(function (d, i) {
+      return [d, values[i] || 0];
+    });
+
+    var opt = baseOpt();
+    opt.tooltip = Object.assign({}, opt.tooltip, {
+      position: 'top',
+      formatter: function (p) {
+        return p.data[0] + '<br/>' + p.data[1] + ' 条舆情';
+      },
+    });
+    opt.visualMap = {
+      min: 0,
+      max: Math.max.apply(null, values) || 10,
+      calculable: false,
+      orient: 'horizontal',
+      left: 'center',
+      bottom: 4,
+      inRange: {
+        color: ['rgba(59,130,246,0.1)', 'rgba(59,130,246,0.35)', '#3B82F6'],
+      },
+      textStyle: { color: DK.mut, fontSize: FONT.axisSize, fontFamily: FONT.family },
+      itemWidth: 10, itemHeight: 80,
+    };
+    opt.calendar = {
+      top: 32,
+      left: 48,
+      right: 16,
+      cellSize: ['auto', 14],
+      range: data.range || 'auto',
+      orient: 'horizontal',
+      splitLine: { show: false },
+      axisLine: { show: false },
+      axisLabel: { show: false },
+      dayLabel: {
+        nameMap: 'cn',
+        color: DK.mut,
+        fontSize: 9,
+        fontFamily: FONT.family,
+      },
+      monthLabel: {
+        color: DK.mut,
+        fontSize: 9,
+        fontFamily: FONT.family,
+      },
+      itemStyle: {
+        color: 'rgba(255,255,255,0.02)',
+        borderColor: 'rgba(255,255,255,0.03)',
+        borderWidth: 1,
+        borderRadius: 2,
+      },
+    };
+    opt.series = [{
+      type: 'heatmap',
+      coordinateSystem: 'calendar',
+      data: calData,
+      emphasis: {
+        itemStyle: { borderColor: '#fff', borderWidth: 1 },
+      },
+    }];
+    return initChart(el, opt);
+  }
+
+  /* ═══ 漏斗图 — 信度分布 ═══════════════════════════════ */
+  function funnelChart(el, data) {
+    if (!el || !data || !data.length) return;
+
+    var sorted = data.slice().sort(function (a, b) { return b.value - a.value; });
+
+    var opt = baseOpt();
+    opt.tooltip = Object.assign({}, opt.tooltip, {
+      trigger: 'item',
+      formatter: function (p) {
+        return '<b>' + p.name + '</b><br/>' + p.value;
+      },
+    });
+    opt.legend = {
+      data: sorted.map(function (d) { return d.name; }),
+      bottom: 4, right: 8,
+      textStyle: { color: DK.mut, fontSize: FONT.subSize, fontFamily: FONT.family },
+      itemWidth: 8, itemHeight: 8, itemGap: 12,
+    };
+    opt.series = [{
+      type: 'funnel',
+      left: '15%',
+      right: '15%',
+      top: 16,
+      bottom: 40,
+      width: '70%',
+      min: 0,
+      max: sorted[0] ? sorted[0].value : 100,
+      sort: 'descending',
+      gap: 4,
+      label: {
+        show: true,
+        position: 'inside',
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: FONT.valueWeight,
+        fontFamily: FONT.family,
+        formatter: '{b}\n{c}',
+      },
+      itemStyle: {
+        borderColor: DK.cardBg,
+        borderWidth: 2,
+        borderRadius: 4,
+      },
+      emphasis: {
+        label: { fontSize: 13 },
+      },
+      data: sorted.map(function (d, i) {
+        return {
+          name: d.name,
+          value: d.value,
+          itemStyle: { color: DK.ser[i % DK.ser.length] },
+        };
+      }),
+    }];
+    return initChart(el, opt);
+  }
+
+  /* ═══ 散点图 — 信度 vs 热度 ═══════════════════════════ */
+  function scatterPlot(el, data, options) {
+    if (!el || !data || !data.length) return;
+    var opts = options || {};
+
+    var opt = baseOpt();
+    opt.grid = { left: 48, right: 24, top: 24, bottom: 40 };
+    opt.xAxis = {
+      type: 'value',
+      name: opts.xName || '信度',
+      nameTextStyle: { color: DK.mut, fontSize: FONT.axisSize, fontFamily: FONT.family },
+      axisLine: { lineStyle: { color: DK.grid } },
+      axisTick: { show: false },
+      axisLabel: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
+      splitLine: { lineStyle: { color: DK.grid, type: 'dashed' } },
+    };
+    opt.yAxis = {
+      type: 'value',
+      name: opts.yName || '热度',
+      nameTextStyle: { color: DK.mut, fontSize: FONT.axisSize, fontFamily: FONT.family },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: DK.mut, fontSize: FONT.axisSize, fontWeight: FONT.axisWeight, fontFamily: FONT.family },
+      splitLine: { lineStyle: { color: DK.grid, type: 'dashed' } },
+    };
+    opt.tooltip = Object.assign({}, opt.tooltip, {
+      formatter: function (p) {
+        var d = p.data;
+        return '<b>' + (d[3] || '') + '</b><br/>' +
+          (opts.xName || '信度') + ': ' + d[0] + '<br/>' +
+          (opts.yName || '热度') + ': ' + d[1];
+      },
+    });
+    opt.series = [{
+      type: 'scatter',
+      data: data.map(function (d) {
+        return [d.x, d.y, d.size || 8, d.label || ''];
+      }),
+      symbolSize: function (d) { return Math.sqrt(d[2]) * 3; },
+      itemStyle: {
+        color: DK.hero,
+        opacity: 0.7,
+        borderColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 1,
+      },
+      emphasis: {
+        itemStyle: { opacity: 1, borderColor: '#fff', borderWidth: 2 },
+      },
+    }];
+    return initChart(el, opt);
+  }
+
+  /* ═══ 矩形树图 — 主题层级结构 ═════════════════════════ */
+  function treemapChart(el, data) {
+    if (!el || !data || !data.length) return;
+
+    var opt = baseOpt();
+    opt.tooltip = Object.assign({}, opt.tooltip, {
+      formatter: function (p) {
+        return '<b>' + p.name + '</b><br/>数量: ' + p.value;
+      },
+    });
+    opt.series = [{
+      type: 'treemap',
+      top: 8,
+      left: 8,
+      right: 8,
+      bottom: 8,
+      roam: false,
+      nodeClick: false,
+      width: '100%',
+      height: '100%',
+      breadcrumb: { show: false },
+      label: {
+        show: true,
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: FONT.valueWeight,
+        fontFamily: FONT.family,
+        formatter: '{b}',
+      },
+      itemStyle: {
+        borderColor: DK.cardBg,
+        borderWidth: 2,
+        gapWidth: 2,
+        borderRadius: 4,
+      },
+      emphasis: {
+        itemStyle: { borderColor: '#fff', borderWidth: 1 },
+        label: { fontSize: 14 },
+      },
+      levels: [
+        {
+          itemStyle: { borderColor: DK.cardBg, borderWidth: 3, gapWidth: 3 },
+          upperLabel: { show: false },
+        },
+        {
+          itemStyle: { borderColor: 'rgba(255,255,255,0.06)', borderWidth: 1, gapWidth: 1 },
+          colorSaturation: [0.35, 0.5],
+        },
+      ],
+      data: data,
+      color: DK.ser,
+    }];
+    return initChart(el, opt);
+  }
+
+  /* ═══ 旭日图 — 主题×平台构成 ═════════════════════════ */
+  function sunburstChart(el, data) {
+    if (!el || !data || !data.length) return;
+
+    var opt = baseOpt();
+    opt.tooltip = Object.assign({}, opt.tooltip, {
+      trigger: 'item',
+      formatter: function (p) {
+        return '<b>' + p.name + '</b><br/>数量: ' + p.value;
+      },
+    });
+    opt.series = [{
+      type: 'sunburst',
+      radius: ['15%', '80%'],
+      center: ['50%', '50%'],
+      sort: 'desc',
+      emphasis: {
+        focus: 'ancestor',
+      },
+      label: {
+        show: true,
+        color: DK.txt,
+        fontSize: 10,
+        fontWeight: FONT.axisWeight,
+        fontFamily: FONT.family,
+        rotate: 'radial',
+      },
+      itemStyle: {
+        borderColor: DK.cardBg,
+        borderWidth: 2,
+        borderRadius: 4,
+      },
+      levels: [
+        {},
+        {
+          r0: '15%', r: '45%',
+          itemStyle: { borderWidth: 2 },
+          label: { fontSize: 11, fontWeight: FONT.valueWeight },
+        },
+        {
+          r0: '45%', r: '72%',
+          itemStyle: { borderWidth: 1 },
+          label: { fontSize: 9, align: 'right' },
+        },
+      ],
+      data: data,
+      color: DK.ser,
+    }];
+    return initChart(el, opt);
+  }
+
   /* ═══ 工具函数 ═══════════════════════════════════════ */
   function lerpColor(a, b, t) {
     var ah = parseInt(a.replace('#', ''), 16);
@@ -551,6 +885,12 @@
     rungBars: rungBars,
     tickGauge: tickGauge,
     riskLevelBar: riskLevelBar,
+    sentimentRadar: sentimentRadar,
+    heatCalendar: heatCalendar,
+    funnelChart: funnelChart,
+    scatterPlot: scatterPlot,
+    treemapChart: treemapChart,
+    sunburstChart: sunburstChart,
     resizeAll: resizeAll,
     disposeAll: disposeAll,
     disposeChart: disposeChart,
