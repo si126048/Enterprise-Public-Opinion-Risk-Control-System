@@ -171,7 +171,7 @@ function initScrollReveal() {
     navItems.forEach(function(item) {
       item.classList.toggle('active', item.getAttribute('data-page') === page);
     });
-    if (window.innerWidth <= 1023) closeSidebar();
+    closeSidebar();
     loadPage(page);
   }
 

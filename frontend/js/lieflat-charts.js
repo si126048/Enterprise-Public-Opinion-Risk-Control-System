@@ -998,20 +998,34 @@
   function treemapChart(el, data) {
     if (!el || !data || !data.length) return;
 
+    var total = data.reduce(function (s, d) { return s + d.value; }, 0);
+    var maxVal = Math.max.apply(null, data.map(function (d) { return d.value; }));
+
+    /* 单色相明度梯度 — 按数值比例分配透明度，保持视觉和谐 */
+    function valueColor(v) {
+      var ratio = v / maxVal;
+      var alpha = 0.35 + ratio * 0.55; /* 0.35 ~ 0.90 */
+      return 'rgba(245, 208, 0, ' + alpha.toFixed(2) + ')';
+    }
+
     var opt = baseOpt();
-    opt.animationDuration = 800;
+    opt.animationDuration = 1000;
     opt.animationEasing = 'quarticOut';
     opt.tooltip = Object.assign({}, opt.tooltip, {
       formatter: function (p) {
-        return '<b>' + p.name + '</b><br/>数量: ' + p.value;
+        var pct = total > 0 ? ((p.value / total) * 100).toFixed(1) : 0;
+        return '<div style="font-family:' + FONT.family + '">' +
+          '<b style="font-size:13px">' + p.name + '</b><br/>' +
+          '<span style="color:' + DK.mut + ';font-size:11px">数量: ' + p.value + ' · 占比 ' + pct + '%</span>' +
+          '</div>';
       },
     });
     opt.series = [{
       type: 'treemap',
-      top: 8,
-      left: 8,
-      right: 8,
-      bottom: 8,
+      top: 12,
+      left: 12,
+      right: 12,
+      bottom: 12,
       roam: false,
       nodeClick: false,
       width: '100%',
@@ -1019,37 +1033,62 @@
       breadcrumb: { show: false },
       label: {
         show: true,
-        color: '#fff',
-        fontSize: 12,
+        color: '#FFFFFF',
+        fontSize: 11,
         fontWeight: FONT.valueWeight,
         fontFamily: FONT.family,
-        formatter: '{b}',
-        textShadowColor: 'rgba(0,0,0,0.4)',
-        textShadowBlur: 4,
+        formatter: function (p) {
+          /* 小格子只显示名称，大格子显示名称+数值 */
+          if (p.area < 3000) return p.name;
+          return p.name + '\n' + p.value;
+        },
+        textShadowColor: 'rgba(0,0,0,0.6)',
+        textShadowBlur: 6,
       },
       itemStyle: {
-        borderColor: DK.cardBg,
+        borderColor: 'rgba(30, 30, 30, 0.8)',
         borderWidth: 2,
-        gapWidth: 2,
-        borderRadius: 4,
+        gapWidth: 3,
+        borderRadius: 6,
       },
       emphasis: {
-        itemStyle: { borderColor: DK.hero, borderWidth: 2 },
-        label: { fontSize: 14 },
+        itemStyle: {
+          borderColor: DK.hero,
+          borderWidth: 2,
+          shadowBlur: 16,
+          shadowColor: 'rgba(245, 208, 0, 0.3)',
+        },
+        label: { fontSize: 13, fontWeight: 800 },
       },
       levels: [
         {
-          itemStyle: { borderColor: DK.cardBg, borderWidth: 3, gapWidth: 3 },
+          itemStyle: {
+            borderColor: 'rgba(30, 30, 30, 0.9)',
+            borderWidth: 3,
+            gapWidth: 4,
+            borderRadius: 8,
+          },
           upperLabel: { show: false },
         },
         {
-          itemStyle: { borderColor: 'rgba(255,255,255,0.06)', borderWidth: 1, gapWidth: 1 },
-          colorSaturation: [0.35, 0.55],
+          itemStyle: {
+            borderColor: 'rgba(255, 255, 255, 0.04)',
+            borderWidth: 1,
+            gapWidth: 2,
+            borderRadius: 4,
+          },
         },
       ],
-      data: data,
-      color: DK.ser,
-      animationDelay: function (idx) { return idx * 60; },
+      data: data.map(function (d) {
+        return {
+          name: d.name,
+          value: d.value,
+          itemStyle: {
+            color: valueColor(d.value),
+          },
+        };
+      }),
+      animationDelay: function (idx) { return idx * 80; },
     }];
     return initChart(el, opt);
   }

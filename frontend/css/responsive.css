@@ -4,22 +4,6 @@
 
 /* Medium desktop / small laptop: 1024-1439px */
 @media (max-width: 1439px) {
-  .sidebar {
-    width: 64px;
-  }
-
-  .sidebar .sidebar-logo-text,
-  .sidebar .nav-item-text,
-  .sidebar .nav-section-label {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-  }
-
-  .main-area {
-    margin-left: 64px;
-  }
-
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -27,30 +11,6 @@
 
 /* Tablet: 768-1023px */
 @media (max-width: 1023px) {
-  .sidebar {
-    transform: translateX(-100%);
-    width: 220px;
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar.open .sidebar-logo-text,
-  .sidebar.open .nav-item-text,
-  .sidebar.open .nav-section-label {
-    opacity: 1;
-    width: auto;
-  }
-
-  .main-area {
-    margin-left: 0;
-  }
-
-  .topbar-hamburger {
-    display: flex;
-  }
-
   .grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
