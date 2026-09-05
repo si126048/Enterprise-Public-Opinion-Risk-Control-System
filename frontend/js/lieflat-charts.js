@@ -233,6 +233,8 @@
     var total = data.reduce(function (s, d) { return s + d.value; }, 0);
     var colors = opts.colors || DK.cat4;
 
+    var donutCenter = opts.donutCenter || ['38%', '50%'];
+
     var opt = baseOpt();
     opt.tooltip = Object.assign({}, opt.tooltip, {
       trigger: 'item',
@@ -251,7 +253,7 @@
     opt.series = [{
       type: 'pie',
       radius: ['52%', '74%'],
-      center: ['38%', '50%'],
+      center: donutCenter,
       avoidLabelOverlap: false,
       itemStyle: {
         borderColor: 'rgba(15,23,42,0.8)',
@@ -281,8 +283,8 @@
     if (opts.centerLabel) {
       opt.graphic = [{
         type: 'group',
-        left: 'center',
-        top: 'center',
+        left: donutCenter[0],
+        top: donutCenter[1],
         children: [
           {
             type: 'text',

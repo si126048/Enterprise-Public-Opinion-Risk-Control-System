@@ -134,7 +134,7 @@ function whenLieflatReady(fn, retries) {
     currentPage = page;
     contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
 
-    fetch('pages/' + page + '.html?v=3')
+    fetch('pages/' + page + '.html?v=4')
       .then(function(r) {
         if (!r.ok) throw new Error('Page not found');
         return r.text();
@@ -291,7 +291,18 @@ function whenLieflatReady(fn, retries) {
     var platformEl = document.getElementById('chart-platform');
     if (platformEl && stats && stats.platform_distribution) {
       var pd = stats.platform_distribution;
-      var pdArr = Object.keys(pd).map(function (k) { return { name: k, value: pd[k] }; });
+      var platformAlias = {
+        'bilibili': 'B站',
+        'xiaheihe': '小黑盒',
+        'xiaoheihe': '小黑盒',
+        'taptap': 'TapTap',
+      };
+      var merged = {};
+      Object.keys(pd).forEach(function (k) {
+        var name = platformAlias[k.toLowerCase()] || k;
+        merged[name] = (merged[name] || 0) + pd[k];
+      });
+      var pdArr = Object.keys(merged).map(function (k) { return { name: k, value: merged[k] }; });
       var pdTotal = pdArr.reduce(function (s, d) { return s + d.value; }, 0);
       LieflatCharts.tickDonut(platformEl, pdArr, {
         centerLabel: { value: formatNumber(pdTotal), unit: '总计' },
