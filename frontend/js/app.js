@@ -77,6 +77,13 @@ function debounce(fn, ms) {
   };
 }
 
+function whenLieflatReady(fn, retries) {
+  if (typeof LieflatCharts !== 'undefined') { fn(); return; }
+  retries = retries != null ? retries : 20;
+  if (retries <= 0) return;
+  setTimeout(function() { whenLieflatReady(fn, retries - 1); }, 250);
+}
+
 // ========== App Core ==========
 (function() {
   'use strict';
@@ -127,7 +134,7 @@ function debounce(fn, ms) {
     currentPage = page;
     contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
 
-    fetch('pages/' + page + '.html')
+    fetch('pages/' + page + '.html?v=3')
       .then(function(r) {
         if (!r.ok) throw new Error('Page not found');
         return r.text();
@@ -267,65 +274,40 @@ function debounce(fn, ms) {
   }
 
   function renderDashboardCharts(stats, routingStatus) {
+    whenLieflatReady(function() {
     var trendEl = document.getElementById('chart-trend');
     if (trendEl && stats && stats.trend_data) {
-      var chart = echarts.init(trendEl, 'dark');
-      var td = stats.trend_data;
-      var dates = td.dates || [];
-      chart.setOption({
-        backgroundColor: 'transparent',
-        tooltip: { trigger: 'axis' },
-        legend: { data: ['总舆情', '低信度'], top: 0, textStyle: { color: '#94A3B8', fontSize: 11 } },
-        grid: { left: 40, right: 16, top: 32, bottom: 40 },
-        xAxis: {
-          type: 'category', data: dates,
-          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-          axisLabel: { color: '#94A3B8', fontSize: 10, rotate: 30 }
-        },
-        yAxis: {
-          type: 'value',
-          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-          axisLabel: { color: '#94A3B8', fontSize: 11 },
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }
-        },
-        series: [
-          {
-            name: '总舆情', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
-            lineStyle: { color: '#3B82F6', width: 2 },
-            areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(59,130,246,0.35)' }, { offset: 1, color: 'rgba(59,130,246,0.02)' }] } },
-            itemStyle: { color: '#3B82F6' },
-            data: td.total || []
-          },
-          {
-            name: '低信度', type: 'line', smooth: true, symbol: 'diamond', symbolSize: 6,
-            lineStyle: { color: '#EF4444', width: 2 },
-            areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(239,68,68,0.25)' }, { offset: 1, color: 'rgba(239,68,68,0.01)' }] } },
-            itemStyle: { color: '#EF4444' },
-            data: td.low_credibility || []
-          }
-        ]
-      });
-      window.addEventListener('resize', function() { chart.resize(); });
+      LieflatCharts.hairlineArea(trendEl, stats.trend_data);
     }
 
     var topicEl = document.getElementById('chart-topic-rank');
     if (topicEl && routingStatus && routingStatus.topic_distribution) {
-      var chart2 = echarts.init(topicEl, 'dark');
-      var topics = routingStatus.topic_distribution.slice(0, 8).reverse();
-      chart2.setOption({
-        backgroundColor: 'transparent',
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        grid: { left: 80, right: 16, top: 8, bottom: 8 },
-        xAxis: { type: 'value', axisLabel: { color: '#94A3B8' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
-        yAxis: { type: 'category', data: topics.map(function(t) { return t.name; }), axisLabel: { color: '#94A3B8', fontSize: 12 } },
-        series: [{
-          type: 'bar', barWidth: 8, borderRadius: [0, 4, 4, 0],
-          itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#3B82F6' }, { offset: 1, color: '#22D3EE' }] } },
-          data: topics.map(function(t) { return t.count; })
-        }]
-      });
-      window.addEventListener('resize', function() { chart2.resize(); });
+      var topics = routingStatus.topic_distribution.slice(0, 8);
+      LieflatCharts.tickRows(topicEl, topics.map(function (t) {
+        return { name: t.name, value: t.count };
+      }));
     }
+
+    var platformEl = document.getElementById('chart-platform');
+    if (platformEl && stats && stats.platform_distribution) {
+      var pd = stats.platform_distribution;
+      var pdArr = Object.keys(pd).map(function (k) { return { name: k, value: pd[k] }; });
+      var pdTotal = pdArr.reduce(function (s, d) { return s + d.value; }, 0);
+      LieflatCharts.tickDonut(platformEl, pdArr, {
+        centerLabel: { value: formatNumber(pdTotal), unit: '总计' },
+      });
+    }
+
+    var productEl = document.getElementById('chart-product');
+    if (productEl && stats && stats.product_distribution) {
+      var pr = stats.product_distribution;
+      var prArr = Object.keys(pr).map(function (k) { return { name: k, value: pr[k] }; });
+      var prTotal = prArr.reduce(function (s, d) { return s + d.value; }, 0);
+      LieflatCharts.tickDonut(productEl, prArr, {
+        centerLabel: { value: formatNumber(prTotal), unit: '总计' },
+      });
+    }
+    });
   }
 
   function renderDashboardTimeline(events) {
@@ -392,8 +374,23 @@ function debounce(fn, ms) {
   // ========== Topics ==========
   function loadTopics() {
     fetchApi('/api/routing/topics')
-      .then(function(data) { renderTopics(data.topics || data || []); })
+      .then(function(data) {
+        var topics = data.topics || data || [];
+        renderTopics(topics);
+        renderTopicChart(topics);
+      })
       .catch(function(err) { console.error('Topics error:', err); });
+  }
+
+  function renderTopicChart(topics) {
+    if (!topics.length) return;
+    whenLieflatReady(function() {
+      var distEl = document.getElementById('chart-topic-dist');
+      if (!distEl) return;
+      LieflatCharts.tickRows(distEl, topics.map(function (t) {
+        return { name: t.name, value: t.sample_count || t.content_count || 0 };
+      }), { labelWidth: 120 });
+    });
   }
 
   function renderTopics(topics) {
@@ -451,6 +448,37 @@ function debounce(fn, ms) {
         '<div class="timeline-title">' + escapeHtml(ev.title) + '</div>' +
         '<div class="timeline-desc">' + escapeHtml(ev.description || '') + '</div></div>';
     }).join('') + '</div>';
+
+    whenLieflatReady(function() { renderRiskCharts(events); });
+  }
+
+  function renderRiskCharts(events) {
+    var levelData = { critical: 0, high: 0, medium: 0, low: 0 };
+    var statusData = { active: 0, resolved: 0 };
+    events.forEach(function (ev) {
+      var lvl = ev.severity || ev.risk_level || 'medium';
+      if (levelData[lvl] != null) levelData[lvl]++;
+      else levelData.medium++;
+      if (ev.status === 'active') statusData.active++;
+      else statusData.resolved++;
+    });
+
+    var levelEl = document.getElementById('chart-risk-level');
+    if (levelEl) LieflatCharts.rungBars(levelEl, [
+      { name: '严重', value: levelData.critical },
+      { name: '高', value: levelData.high },
+      { name: '中', value: levelData.medium },
+      { name: '低', value: levelData.low },
+    ].filter(function (d) { return d.value > 0; }));
+
+    var statusEl = document.getElementById('chart-risk-status');
+    if (statusEl) LieflatCharts.tickDonut(statusEl, [
+      { name: '进行中', value: statusData.active },
+      { name: '已解决', value: statusData.resolved },
+    ].filter(function (d) { return d.value > 0; }), {
+      centerLabel: { value: events.length, unit: '事件' },
+      colors: ['#F87171', '#34D399'],
+    });
   }
 
   window.showEventDetail = function(id) {
