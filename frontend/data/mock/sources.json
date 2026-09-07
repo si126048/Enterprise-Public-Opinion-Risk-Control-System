@@ -1,0 +1,11 @@
+{
+  "sources": [
+    { "id": "src-001", "name": "微博爬虫", "type": "crawler", "platform": "微博", "status": "active", "updated_at": "2026-09-07T08:00:00" },
+    { "id": "src-002", "name": "小红书爬虫", "type": "crawler", "platform": "小红书", "status": "active", "updated_at": "2026-09-07T08:00:00" },
+    { "id": "src-003", "name": "知乎爬虫", "type": "crawler", "platform": "知乎", "status": "active", "updated_at": "2026-09-07T07:30:00" },
+    { "id": "src-004", "name": "B站爬虫", "type": "crawler", "platform": "B站", "status": "active", "updated_at": "2026-09-07T08:00:00" },
+    { "id": "src-005", "name": "TapTap爬虫", "type": "crawler", "platform": "TapTap", "status": "active", "updated_at": "2026-09-07T07:45:00" },
+    { "id": "src-006", "name": "小黑盒爬虫", "type": "crawler", "platform": "小黑盒", "status": "active", "updated_at": "2026-09-07T07:00:00" },
+    { "id": "src-007", "name": "米游社爬虫", "type": "crawler", "platform": "米游社", "status": "active", "updated_at": "2026-09-07T06:30:00" }
+  ]
+}

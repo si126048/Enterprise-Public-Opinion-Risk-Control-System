@@ -1,0 +1,45 @@
+{
+  "logs": [
+    {
+      "id": "log-001",
+      "timestamp": "2026-09-07T06:00:00",
+      "candidate_name": "AI生成内容争议",
+      "decision": "ignore",
+      "reason": "内容与现有G007(公司治理)主题重叠度高，属于子话题，建议归入现有主题体系",
+      "raw_output": "{\"decision\":\"ignore\",\"reason\":\"内容与现有G007主题重叠\"}"
+    },
+    {
+      "id": "log-002",
+      "timestamp": "2026-09-06T18:00:00",
+      "candidate_name": "周边商品质量",
+      "decision": "approve",
+      "reason": "新发现的风险主题，与现有8个主题均不重叠，内容量已达阈值，建议新增为G009子主题",
+      "raw_output": "{\"decision\":\"approve\",\"reason\":\"独立新主题\"}"
+    },
+    {
+      "id": "log-003",
+      "timestamp": "2026-09-06T12:00:00",
+      "candidate_name": "线下活动体验",
+      "decision": "merge",
+      "reason": "与G005(社区公关)主题高度相关，建议合并为社区公关的子分类",
+      "raw_output": "{\"decision\":\"merge\",\"reason\":\"与G005重叠\"}"
+    },
+    {
+      "id": "log-004",
+      "timestamp": "2026-09-05T20:00:00",
+      "candidate_name": "多语言翻译质量",
+      "decision": "ignore",
+      "reason": "内容量不足（仅5条），暂不满足新建主题条件",
+      "raw_output": "{\"decision\":\"ignore\",\"reason\":\"内容量不足\"}"
+    },
+    {
+      "id": "log-005",
+      "timestamp": "2026-09-05T10:00:00",
+      "candidate_name": "账号安全与盗号",
+      "decision": "approve",
+      "reason": "涉及合规与用户权益，独立性强，建议新增为主题",
+      "raw_output": "{\"decision\":\"approve\",\"reason\":\"独立合规主题\"}"
+    }
+  ],
+  "total": 5
+}

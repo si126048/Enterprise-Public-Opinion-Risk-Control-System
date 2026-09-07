@@ -1,0 +1,9 @@
+[
+  { "name": "weibo", "enabled": true, "category": "social", "urls": ["https://s.weibo.com/weibo?q=原神"], "max_pages": 200, "delay": 2.0, "registered": true },
+  { "name": "xiaohongshu", "enabled": true, "category": "social", "urls": ["https://www.xiaohongshu.com/search_result?keyword=原神"], "max_pages": 200, "delay": 2.5, "registered": true },
+  { "name": "zhihu", "enabled": true, "category": "forum", "urls": ["https://www.zhihu.com/search?type=content&q=原神"], "max_pages": 100, "delay": 3.0, "registered": true },
+  { "name": "bilibili", "enabled": true, "category": "video", "urls": ["https://search.bilibili.com/all?keyword=原神"], "max_pages": 200, "delay": 2.0, "registered": true },
+  { "name": "taptap", "enabled": true, "category": "gaming", "urls": ["https://www.taptap.cn/search/原神"], "max_pages": 100, "delay": 2.5, "registered": true },
+  { "name": "xiaoheihe", "enabled": true, "category": "gaming", "urls": ["https://api.xiaoheihe.cn/bbs/app/api/share/list"], "max_pages": 100, "delay": 2.0, "registered": true },
+  { "name": "miyoushe", "enabled": true, "category": "official", "urls": ["https://bbs-api.miyoushe.com/post/wapi/getNewsList"], "max_pages": 200, "delay": 1.5, "registered": true }
+]

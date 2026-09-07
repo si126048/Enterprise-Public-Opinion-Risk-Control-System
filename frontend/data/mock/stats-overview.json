@@ -1,0 +1,44 @@
+{
+  "total_count": 2847,
+  "total_analyzed": 2647,
+  "low_credibility_count": 521,
+  "low_credibility_rate": 0.1968,
+  "high_risk_count": 12,
+  "community_heat_score": 45.3,
+  "credibility_distribution": {
+    "high": 892,
+    "medium": 1234,
+    "low": 521,
+    "uncertain": 200
+  },
+  "topic_distribution": [
+    { "topic_id": "G001", "topic_name": "版本节奏", "count": 423 },
+    { "topic_id": "G002", "topic_name": "抽卡机制", "count": 389 },
+    { "topic_id": "G003", "topic_name": "角色设计", "count": 356 },
+    { "topic_id": "G004", "topic_name": "技术性能", "count": 298 },
+    { "topic_id": "G005", "topic_name": "社区公关", "count": 267 },
+    { "topic_id": "G006", "topic_name": "竞品对比", "count": 234 },
+    { "topic_id": "G007", "topic_name": "公司治理", "count": 187 },
+    { "topic_id": "G008", "topic_name": "合规风险", "count": 142 }
+  ],
+  "platform_distribution": {
+    "微博": 687,
+    "小红书": 512,
+    "知乎": 398,
+    "B站": 456,
+    "TapTap": 341,
+    "小黑盒": 245,
+    "米游社": 208
+  },
+  "product_distribution": {
+    "原神": 1200,
+    "崩坏3": 800,
+    "崩坏星穹铁道": 547,
+    "绝区零": 300
+  },
+  "trend_data": {
+    "dates": ["2024-06-24", "2024-06-25", "2024-06-26", "2024-06-27", "2024-06-28", "2024-06-29", "2024-06-30"],
+    "total": [28, 31, 25, 42, 38, 34, 34],
+    "low_credibility": [5, 3, 7, 8, 6, 4, 5]
+  }
+}

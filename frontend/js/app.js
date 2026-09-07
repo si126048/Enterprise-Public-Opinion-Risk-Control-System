@@ -7,6 +7,13 @@ function fetchApi(endpoint, options) {
   if (url.charAt(0) !== '/' && url.indexOf('http') !== 0) {
     url = '/api/' + url;
   }
+  if (window.__DEMO_MODE) {
+    return window.__demoFetch(url, options)
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      });
+  }
   return fetch(url, options)
     .then(function(res) {
       if (!res.ok) {
@@ -855,7 +862,9 @@ function initScrollReveal() {
   }
 
   window.approveCandidate = function(id) {
-    fetch('/api/discovery/candidates/' + id + '/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+    var fetchFn = window.__DEMO_MODE ? window.__demoFetch : fetch;
+    var url = '/api/discovery/candidates/' + id + '/approve';
+    fetchFn(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       .then(function(res) {
         if (res.ok) pet('success');
         loadReviewCandidates();
@@ -863,7 +872,9 @@ function initScrollReveal() {
   };
 
   window.rejectCandidate = function(id) {
-    fetch('/api/discovery/candidates/' + id + '/ignore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: 'manually ignored' }) })
+    var fetchFn = window.__DEMO_MODE ? window.__demoFetch : fetch;
+    var url = '/api/discovery/candidates/' + id + '/ignore';
+    fetchFn(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: 'manually ignored' }) })
       .then(function(res) {
         if (res.ok) pet('success');
         loadReviewCandidates();
@@ -874,7 +885,8 @@ function initScrollReveal() {
     var btn = document.getElementById('btn-run-agent');
     if (btn) { btn.disabled = true; btn.textContent = '审核中...'; }
     pet('work-start');
-    fetch('/api/review-agent/run', { method: 'POST' })
+    var fetchFn = window.__DEMO_MODE ? window.__demoFetch : fetch;
+    fetchFn('/api/review-agent/run', { method: 'POST' })
       .then(function(r) { return r.json(); })
       .then(function() { pet('work-ok'); loadReviewCandidates(); })
       .catch(function(err) { console.error('Agent review error:', err); pet('fail'); })

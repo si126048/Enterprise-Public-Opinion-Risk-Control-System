@@ -1,0 +1,17 @@
+{
+  "status": "healthy",
+  "analyzed": 2647,
+  "embedding_model": "text-embedding-v3",
+  "embedding_dim": 1024,
+  "total_vectors": 2847,
+  "total_anchors": 32,
+  "total_topics": 8,
+  "routing_threshold": 0.65,
+  "last_routing_at": "2026-09-07T08:30:00",
+  "pipeline": {
+    "embedding": "ok",
+    "routing": "ok",
+    "discovery": "ok",
+    "review_agent": "idle"
+  }
+}

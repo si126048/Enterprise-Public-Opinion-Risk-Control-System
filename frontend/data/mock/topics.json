@@ -1,0 +1,84 @@
+{
+  "topics": [
+    {
+      "id": "G001",
+      "name": "版本节奏",
+      "description": "游戏版本更新频率、内容量、活动安排等相关舆情",
+      "anchors_count": 4,
+      "content_count": 423,
+      "risk_pct": 18.2,
+      "trend": "rising",
+      "last_activity": "2026-09-07T06:00:00"
+    },
+    {
+      "id": "G002",
+      "name": "抽卡机制",
+      "description": "卡池概率、保底机制、付费体验等氪金相关舆情",
+      "anchors_count": 4,
+      "content_count": 389,
+      "risk_pct": 32.5,
+      "trend": "rising",
+      "last_activity": "2026-09-07T07:00:00"
+    },
+    {
+      "id": "G003",
+      "name": "角色设计",
+      "description": "角色外观、人设、强度设计等美术与策划相关舆情",
+      "anchors_count": 4,
+      "content_count": 356,
+      "risk_pct": 12.8,
+      "trend": "stable",
+      "last_activity": "2026-09-06T22:00:00"
+    },
+    {
+      "id": "G004",
+      "name": "技术性能",
+      "description": "游戏帧率、闪退、发热、兼容性等技术问题舆情",
+      "anchors_count": 4,
+      "content_count": 298,
+      "risk_pct": 24.1,
+      "trend": "rising",
+      "last_activity": "2026-09-07T05:00:00"
+    },
+    {
+      "id": "G005",
+      "name": "社区公关",
+      "description": "社区管理、官方回应、玩家关系等公关相关舆情",
+      "anchors_count": 4,
+      "content_count": 267,
+      "risk_pct": 15.7,
+      "trend": "stable",
+      "last_activity": "2026-09-06T20:00:00"
+    },
+    {
+      "id": "G006",
+      "name": "竞品对比",
+      "description": "与其他游戏的对比、竞争关系等舆情",
+      "anchors_count": 4,
+      "content_count": 234,
+      "risk_pct": 8.9,
+      "trend": "declining",
+      "last_activity": "2026-09-06T18:00:00"
+    },
+    {
+      "id": "G007",
+      "name": "公司治理",
+      "description": "公司经营、财务、人事、战略等企业层面舆情",
+      "anchors_count": 4,
+      "content_count": 187,
+      "risk_pct": 6.4,
+      "trend": "stable",
+      "last_activity": "2026-09-05T10:00:00"
+    },
+    {
+      "id": "G008",
+      "name": "合规风险",
+      "description": "法律法规、未成年人保护、数据安全等合规相关舆情",
+      "anchors_count": 4,
+      "content_count": 142,
+      "risk_pct": 4.2,
+      "trend": "stable",
+      "last_activity": "2026-09-06T12:00:00"
+    }
+  ]
+}

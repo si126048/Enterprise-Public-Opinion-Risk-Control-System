@@ -1,0 +1,83 @@
+{
+  "events": [
+    {
+      "id": "evt-001",
+      "title": "原神5.2版本卡池概率争议",
+      "risk_level": "high",
+      "topic_id": "G002",
+      "topic_name": "抽卡机制",
+      "status": "open",
+      "content_count": 156,
+      "first_seen": "2026-09-05T10:20:00",
+      "last_seen": "2026-09-07T06:45:00",
+      "platforms": ["微博", "B站", "TapTap"],
+      "advice": "建议官方发布概率说明公告，回应玩家对保底机制的质疑"
+    },
+    {
+      "id": "evt-002",
+      "title": "星铁2.6更新后闪退问题集中反馈",
+      "risk_level": "high",
+      "topic_id": "G004",
+      "topic_name": "技术性能",
+      "status": "open",
+      "content_count": 89,
+      "first_seen": "2026-09-06T14:00:00",
+      "last_seen": "2026-09-07T07:30:00",
+      "platforms": ["TapTap", "米游社", "小黑盒"],
+      "advice": "技术团队应优先排查Android端兼容性问题，发布修复进度"
+    },
+    {
+      "id": "evt-003",
+      "title": "绝区零新角色立绘风格讨论",
+      "risk_level": "medium",
+      "topic_id": "G003",
+      "topic_name": "角色设计",
+      "status": "open",
+      "content_count": 234,
+      "first_seen": "2026-09-04T08:00:00",
+      "last_seen": "2026-09-07T05:20:00",
+      "platforms": ["小红书", "微博", "知乎"],
+      "advice": "关注设计方向的正负面反馈比例，适时放出角色故事预告"
+    },
+    {
+      "id": "evt-004",
+      "title": "米哈游与竞品游戏对比引发社区争论",
+      "risk_level": "medium",
+      "topic_id": "G006",
+      "topic_name": "竞品对比",
+      "status": "monitoring",
+      "content_count": 178,
+      "first_seen": "2026-09-03T16:30:00",
+      "last_seen": "2026-09-06T22:00:00",
+      "platforms": ["知乎", "B站", "微博"],
+      "advice": "持续监控，避免官方账号参与讨论"
+    },
+    {
+      "id": "evt-005",
+      "title": "原神海外版本地化质量投诉",
+      "risk_level": "low",
+      "topic_id": "G001",
+      "topic_name": "版本节奏",
+      "status": "resolved",
+      "content_count": 45,
+      "first_seen": "2026-08-28T09:00:00",
+      "last_seen": "2026-09-02T15:00:00",
+      "platforms": ["微博", "米游社"],
+      "advice": "已转交本地化团队处理"
+    },
+    {
+      "id": "evt-006",
+      "title": "未成年代充值退款纠纷",
+      "risk_level": "high",
+      "topic_id": "G008",
+      "topic_name": "合规风险",
+      "status": "open",
+      "content_count": 23,
+      "first_seen": "2026-09-06T11:00:00",
+      "last_seen": "2026-09-07T04:00:00",
+      "platforms": ["微博", "知乎"],
+      "advice": "法务团队介入，确认退款流程合规"
+    }
+  ],
+  "total": 6
+}

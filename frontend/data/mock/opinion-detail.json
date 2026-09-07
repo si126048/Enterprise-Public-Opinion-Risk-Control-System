@@ -1,0 +1,29 @@
+{
+  "id": "c-101",
+  "title": "原神5.2版本卡池概率是不是有问题？做了1000抽数据分析",
+  "platform": "B站",
+  "author": "数据帝小明",
+  "author_followers": 52000,
+  "credibility": "high",
+  "credibility_score": 82.5,
+  "risk_level": "high",
+  "topic_id": "G002",
+  "topic_name": "抽卡机制",
+  "published_at": "2026-09-05T14:00:00",
+  "summary": "通过1000抽数据统计分析卡池概率分布，与官方公示概率存在偏差",
+  "content_text": "我在5.2版本进行了1000抽的大规模数据统计，结果发现五星角色的实际出货概率与官方公示的1.6%存在明显偏差。在我的样本中，五星出货率仅为1.2%，且连续保底的概率远高于理论值。详细数据见视频...",
+  "credibility_factors": {
+    "followers": 0.85,
+    "activity": 0.90,
+    "engagement_authenticity": 0.78,
+    "content_consistency": 0.82,
+    "credibility_intensity": 0.80,
+    "platform_credibility": 0.88,
+    "game_level": 0.75
+  },
+  "cross_validation": {
+    "topic_match": 0.92,
+    "risk_assessment": "high",
+    "providers_checked": 3
+  }
+}

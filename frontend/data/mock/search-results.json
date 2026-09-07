@@ -1,0 +1,46 @@
+{
+  "query": "卡池概率",
+  "results": [
+    {
+      "id": "c-101",
+      "title": "原神5.2版本卡池概率是不是有问题？做了1000抽数据分析",
+      "platform": "B站",
+      "author": "数据帝小明",
+      "score": 0.94,
+      "topic_name": "抽卡机制",
+      "risk_level": "high",
+      "published_at": "2026-09-05T14:00:00"
+    },
+    {
+      "id": "c-113",
+      "title": "小黑盒社区关于原神5.2的投票调查结果",
+      "platform": "小黑盒",
+      "author": "盒友投票",
+      "score": 0.81,
+      "topic_name": "抽卡机制",
+      "risk_level": "low",
+      "published_at": "2026-09-06T18:00:00"
+    },
+    {
+      "id": "c-107",
+      "title": "崩坏星穹铁道匹诺康尼剧情是不是烂尾了？",
+      "platform": "微博",
+      "author": "追番小能手",
+      "score": 0.62,
+      "topic_name": "版本节奏",
+      "risk_level": "medium",
+      "published_at": "2026-09-05T20:00:00"
+    },
+    {
+      "id": "c-105",
+      "title": "米游社社区管理越来越差了，反馈问题没人管",
+      "platform": "米游社",
+      "author": "普通玩家123",
+      "score": 0.45,
+      "topic_name": "社区公关",
+      "risk_level": "medium",
+      "published_at": "2026-09-06T09:00:00"
+    }
+  ],
+  "total": 4
+}

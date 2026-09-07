@@ -1,0 +1,67 @@
+{
+  "candidates": [
+    {
+      "id": "cand-001",
+      "name": "游戏内广告植入",
+      "content_count": 18,
+      "first_seen": "2026-09-05T10:00:00",
+      "similarity_to_existing": 0.42,
+      "status": "pending",
+      "sample_texts": [
+        "原神里面怎么开始有广告了？",
+        "米哈游是不是在测试游戏内广告系统",
+        "登录界面多了个推广入口，很影响体验"
+      ]
+    },
+    {
+      "id": "cand-002",
+      "name": "跨平台存档问题",
+      "content_count": 12,
+      "first_seen": "2026-09-06T08:00:00",
+      "similarity_to_existing": 0.38,
+      "status": "pending",
+      "sample_texts": [
+        "手机端和PC端存档不同步怎么办",
+        "换了手机之后数据全没了",
+        "跨平台进度同步一直有bug"
+      ]
+    },
+    {
+      "id": "cand-003",
+      "name": "电竞赛事生态",
+      "content_count": 8,
+      "first_seen": "2026-09-06T15:00:00",
+      "similarity_to_existing": 0.25,
+      "status": "pending",
+      "sample_texts": [
+        "原神什么时候出官方电竞比赛",
+        "深渊竞速赛是不是该正式化了",
+        "米哈游应该学习竞品的赛事体系"
+      ]
+    },
+    {
+      "id": "cand-004",
+      "name": "AI生成内容争议",
+      "content_count": 15,
+      "first_seen": "2026-09-04T12:00:00",
+      "similarity_to_existing": 0.30,
+      "status": "reviewed",
+      "ai_decision": "ignore",
+      "ai_reason": "内容与现有G007(公司治理)主题重叠度高，属于子话题",
+      "sample_texts": [
+        "米哈游是不是在用AI生成剧情",
+        "NPC对话感觉越来越像AI写的",
+        "AI辅助开发效率提升但质量下降"
+      ]
+    }
+  ],
+  "stats": {
+    "unknown_count": 3,
+    "pending": 3,
+    "approved": 0,
+    "merged": 0,
+    "ignored": 1,
+    "total": 4
+  },
+  "total": 4
+}

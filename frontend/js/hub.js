@@ -38,6 +38,12 @@
   function $(id) { return document.getElementById(id); }
 
   function hubFetch(url) {
+    if (window.__DEMO_MODE) {
+      return window.__demoFetch(url).then(function (res) {
+        if (!res.ok) throw new Error(url + ' -> ' + res.status);
+        return res.json();
+      });
+    }
     return fetch(url).then(function (res) {
       if (!res.ok) throw new Error(url + ' -> ' + res.status);
       return res.json();

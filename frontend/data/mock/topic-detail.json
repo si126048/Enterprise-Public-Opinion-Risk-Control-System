@@ -1,0 +1,34 @@
+{
+  "id": "G002",
+  "name": "抽卡机制",
+  "description": "卡池概率、保底机制、付费体验等氪金相关舆情",
+  "anchors_count": 4,
+  "content_count": 389,
+  "risk_pct": 32.5,
+  "trend": "rising",
+  "anchors": [
+    { "text": "卡池概率", "weight": 1.0 },
+    { "text": "保底机制", "weight": 0.9 },
+    { "text": "抽卡体验", "weight": 0.85 },
+    { "text": "氪金性价比", "weight": 0.8 }
+  ],
+  "recent_contents": [
+    { "id": "c-101", "title": "原神5.2版本卡池概率是不是有问题？", "platform": "B站", "risk": "high", "time": "2026-09-05T14:00:00" },
+    { "id": "c-113", "title": "小黑盒社区关于原神5.2的投票调查结果", "platform": "小黑盒", "risk": "low", "time": "2026-09-06T18:00:00" }
+  ],
+  "risk_breakdown": {
+    "high": 127,
+    "medium": 89,
+    "low": 95,
+    "info": 78
+  },
+  "platform_breakdown": [
+    { "name": "微博", "count": 98 },
+    { "name": "B站", "count": 87 },
+    { "name": "TapTap", "count": 72 },
+    { "name": "知乎", "count": 56 },
+    { "name": "小黑盒", "count": 42 },
+    { "name": "小红书", "count": 20 },
+    { "name": "米游社", "count": 14 }
+  ]
+}
