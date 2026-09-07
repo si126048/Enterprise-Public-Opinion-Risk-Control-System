@@ -8,6 +8,16 @@
   "total_topics": 8,
   "routing_threshold": 0.65,
   "last_routing_at": "2026-09-07T08:30:00",
+  "topic_distribution": [
+    { "name": "版本节奏", "count": 423 },
+    { "name": "抽卡机制", "count": 389 },
+    { "name": "角色设计", "count": 356 },
+    { "name": "技术性能", "count": 312 },
+    { "name": "社区公关", "count": 278 },
+    { "name": "竞品对比", "count": 245 },
+    { "name": "公司治理", "count": 198 },
+    { "name": "合规风险", "count": 146 }
+  ],
   "pipeline": {
     "embedding": "ok",
     "routing": "ok",
