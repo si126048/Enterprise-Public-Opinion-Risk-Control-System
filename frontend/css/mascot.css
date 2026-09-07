@@ -1,0 +1,170 @@
+/* ========== Floating Mascot Pet ==========
+ *
+ * z-index 95 sits above the sticky topbar (90) but permanently below the
+ * mobile sidebar (99/100) and the detail drawer (500/501). Do not raise it
+ * past 500 or the pet will float on top of the drawer.
+ *
+ * Position model: CSS right/bottom anchors the resting corner, and JS writes
+ * --mx / --my as an offset from it, so the pet stays glued to the corner when
+ * the window is resized. --ms is the minimize scale.
+ */
+
+.mascot-pet {
+  --mx: 0px;
+  --my: 0px;
+  --sx: 0px;
+  --sy: 0px;
+  --ms: 1;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 110px;
+  height: 110px;
+  z-index: 95;
+  touch-action: none;
+  cursor: grab;
+  will-change: transform;
+  transform: translate3d(calc(var(--mx) + var(--sx)), calc(var(--my) + var(--sy)), 0) scale(var(--ms));
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.mascot-pet.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+/* Settled pet fades back so it never blocks a chart for long. */
+.mascot-pet.dim {
+  opacity: 0.82;
+}
+
+.mascot-pet.minimized {
+  --ms: 0.25;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Nudge further into the corner so the drawer's left edge shadow stays clean. */
+.mascot-pet.drawer-open-shift {
+  --sx: 16px;
+  --sy: 16px;
+}
+
+.mascot-pet-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mascot-pet-hint {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mascot-pet:hover .mascot-pet-hint,
+.mascot-pet-hint.on {
+  opacity: 1;
+}
+
+.mascot-pet-min {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  opacity: 0;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-card-border);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  /* Diamond button — the brand motif, same clip as .mascot-badge. */
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.mascot-pet:hover .mascot-pet-min,
+.mascot-pet-min:focus-visible {
+  opacity: 1;
+}
+
+.mascot-pet-min:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.mascot-badge {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 28px;
+  height: 28px;
+  z-index: 95;
+  background: var(--color-primary);
+  cursor: pointer;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  transform: scale(0);
+  transition: transform 0.22s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.mascot-badge.visible {
+  transform: scale(1);
+}
+
+.mascot-badge:hover {
+  background: var(--color-primary-light);
+}
+
+.mascot-badge-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: var(--color-danger);
+  display: none;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.mascot-badge-dot.on {
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .mascot-pet {
+    width: 84px;
+    height: 84px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .mascot-badge {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-pet,
+  .mascot-badge,
+  .mascot-pet-hint,
+  .mascot-pet-min {
+    transition: none;
+  }
+}

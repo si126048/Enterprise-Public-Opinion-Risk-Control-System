@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>枢纽 · 企业舆情风控管理系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=19" />
+  <link rel="stylesheet" href="css/hub.css?v=22" />
+</head>
+<body class="hub-body">
+
+  <!-- Ambient + HUD background. Cyan and purple live here and nowhere else. -->
+  <div class="hub-bg" aria-hidden="true">
+    <div class="hub-field hub-field--cyan"></div>
+    <div class="hub-field hub-field--purple"></div>
+    <div class="hub-field hub-field--gold"></div>
+    <div class="hub-grid"></div>
+    <div class="hub-watermark">舆情风控<span>OPINION RISK CONTROL SYSTEM</span></div>
+    <div class="hub-diamond-bg"></div>
+    <div class="hub-scanline"></div>
+    <div class="hub-hazard hub-hazard--t"></div>
+    <div class="hub-hazard hub-hazard--b"></div>
+    <div class="hub-corner hub-corner--tl"></div>
+    <div class="hub-corner hub-corner--tr"></div>
+    <div class="hub-corner hub-corner--bl"></div>
+    <div class="hub-corner hub-corner--br"></div>
+  </div>
+
+  <header class="hub-topbar">
+    <div class="hub-brand">
+      <svg width="28" height="28" viewBox="0 0 48 48" fill="none" aria-hidden="true" style="overflow:visible">
+        <rect x="4" y="4" width="40" height="40" stroke="#F5D000" stroke-width="2" transform="rotate(45 24 24)" fill="none"/>
+        <rect x="14" y="14" width="20" height="20" stroke="#F5D000" stroke-width="1.5" transform="rotate(45 24 24)" fill="none"/>
+        <circle cx="24" cy="24" r="4" fill="#F5D000"/>
+      </svg>
+      <span class="hub-brand-name">舆情风控系统</span>
+    </div>
+    <div class="hub-topbar-right">
+      <span class="hub-clock" id="hub-clock">--:--:--</span>
+      <button class="hub-switch" id="hub-switch" type="button">切换账号</button>
+    </div>
+  </header>
+
+  <div class="hub-main">
+
+    <!-- ============ Cinematic first screen ============ -->
+    <section class="hub-stage" id="hub-stage">
+      <div class="hub-stage-copy">
+        <div class="hub-kicker">Enterprise Opinion Risk Control · v1.0.0</div>
+        <h1 class="hub-title">
+          <span class="hub-title-row"><span style="--i:0">舆</span><span style="--i:1">情</span></span>
+          <span class="hub-title-row"><span style="--i:2">风</span><span style="--i:3">控</span></span>
+        </h1>
+        <div class="hub-title-sub">
+          OPINION <i>◆</i> RISK <i>◆</i> CONTROL
+        </div>
+      </div>
+
+      <div class="hub-stage-mascot">
+        <div class="hub-mascot-stage" id="hub-mascot-stage">
+          <div class="hub-mascot-ring"></div>
+          <svg id="hub-mascot" role="img" aria-label="舆情风控助手"></svg>
+        </div>
+        <div class="hub-prts" id="hub-prts">
+          <span class="hub-prts-diamond" aria-hidden="true"></span>
+          <span class="hub-prts-tag">PRTS</span>
+          <span class="hub-prts-text" id="hub-prts-text"></span>
+          <span class="hub-prts-cursor" id="hub-prts-cursor">_</span>
+        </div>
+      </div>
+
+      <div class="hub-stage-foot">
+        <div class="hub-status-strip" id="hub-status-strip">
+          <span class="hub-chip">总舆情 <b id="hub-chip-total">—</b></span>
+          <span class="hub-chip" id="hub-chip-risk-wrap">高风险 <b id="hub-chip-risk">—</b></span>
+          <span class="hub-chip">待审核 <b id="hub-chip-pending">—</b></span>
+        </div>
+
+        <button class="hub-enter" id="hub-enter" type="button" data-page="dashboard">
+          进入系统
+          <span class="hub-enter-arrow">→</span>
+        </button>
+
+        <div class="hub-scroll-hint">▼ SCROLL · 业务模块</div>
+      </div>
+    </section>
+
+    <!-- ============ Scroll-revealed module navigation ============ -->
+    <section class="hub-modules" id="hub-modules">
+      <div class="hub-section-head hub-reveal">
+        <h2 class="hub-section-title">业务模块</h2>
+        <span class="hub-section-count">MODULES / 08</span>
+      </div>
+
+      <div class="hub-module-grid" id="hub-module-grid">
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="dashboard" style="--i:0">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">01</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><rect x="2" y="2" width="5.5" height="5.5"/><rect x="10.5" y="2" width="5.5" height="5.5"/><rect x="2" y="10.5" width="5.5" height="5.5"/><rect x="10.5" y="10.5" width="5.5" height="5.5"/></svg></span>
+          </span>
+          <span class="hub-module-name">舆情总览</span>
+          <span class="hub-module-num"><b id="hub-num-dashboard">—</b><i>条今日新增</i></span>
+          <span class="hub-module-meta">实时总览 · 趋势 · 排行</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="content" style="--i:1">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">02</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><rect x="3" y="1.5" width="12" height="15"/><line x1="6" y1="5.5" x2="12" y2="5.5"/><line x1="6" y1="9" x2="12" y2="9"/><line x1="6" y1="12.5" x2="10" y2="12.5"/></svg></span>
+          </span>
+          <span class="hub-module-name">舆情列表</span>
+          <span class="hub-module-num"><b id="hub-num-content">—</b><i>条在库</i></span>
+          <span class="hub-module-meta">全量检索 · 情感 · 平台</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="search" style="--i:2">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">03</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><circle cx="9" cy="9" r="6.5"/><line x1="9" y1="2.5" x2="9" y2="15.5"/><line x1="2.5" y1="9" x2="15.5" y2="9"/><line x1="4" y1="4" x2="14" y2="14"/></svg></span>
+          </span>
+          <span class="hub-module-name">语义搜索</span>
+          <span class="hub-module-num"><b id="hub-num-search">—</b><i>条已索引</i></span>
+          <span class="hub-module-meta">向量召回 · 语义排序</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="topics" style="--i:3">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">04</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M9 2 L16 9 L9 16 L2 9 Z"/><path d="M9 5.5 L13 9 L9 12.5 L5 9 Z"/><path d="M9 8 L10.5 9 L9 10 L7.5 9 Z"/></svg></span>
+          </span>
+          <span class="hub-module-name">风险主题</span>
+          <span class="hub-module-num"><b id="hub-num-topics">—</b><i>个主题</i></span>
+          <span class="hub-module-meta">主题聚类 · 热度分布</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="risk-events" style="--i:4">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">05</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M9 1.5 L15.5 5 L15.5 11 L9 16.5 L2.5 11 L2.5 5 Z"/><line x1="9" y1="6" x2="9" y2="11"/><rect x="8" y="12" width="2" height="1.5"/></svg></span>
+          </span>
+          <span class="hub-module-name">风控事件</span>
+          <span class="hub-module-num"><b id="hub-num-risk-events">—</b><i>起活跃</i></span>
+          <span class="hub-module-meta">事件时间线 · 处置状态</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="review" style="--i:5">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">06</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M9 2 L16 9 L9 16 L2 9 Z"/><circle cx="9" cy="9" r="3"/></svg></span>
+          </span>
+          <span class="hub-module-name">新风险审核</span>
+          <span class="hub-module-num"><b id="hub-num-review">—</b><i>条待审</i></span>
+          <span class="hub-module-meta">候选发现 · AI 复核</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="credibility" style="--i:6">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">07</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><line x1="9" y1="2" x2="9" y2="16"/><line x1="3" y1="5" x2="9" y2="2"/><line x1="15" y1="5" x2="9" y2="2"/><line x1="3" y1="5" x2="3" y2="8"/><line x1="15" y1="5" x2="15" y2="8"/><line x1="5" y1="16" x2="13" y2="16"/></svg></span>
+          </span>
+          <span class="hub-module-name">信度分析</span>
+          <span class="hub-module-num"><b id="hub-num-credibility">—</b><i>平均信度分</i></span>
+          <span class="hub-module-meta">信度评分 · 平台可信度</span>
+        </a>
+
+        <a class="hub-module hub-reveal" href="index.html" data-page="source-ledger" style="--i:7">
+          <span class="hub-module-br tl"></span><span class="hub-module-br tr"></span>
+          <span class="hub-module-br bl"></span><span class="hub-module-br br"></span>
+          <span class="hub-module-top">
+            <span class="hub-module-index">08</span>
+            <span class="hub-module-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><rect x="2.5" y="2" width="13" height="4"/><rect x="2.5" y="7" width="13" height="4"/><rect x="2.5" y="12" width="13" height="4"/></svg></span>
+          </span>
+          <span class="hub-module-name">来源台账</span>
+          <span class="hub-module-num"><b id="hub-num-source-ledger">—</b><i>个采集源</i></span>
+          <span class="hub-module-meta">采集源 · 覆盖范围</span>
+        </a>
+
+      </div>
+
+      <footer class="hub-footer">
+        <span>v1.0.0</span>
+        <span class="hub-footer-hazard" aria-hidden="true"></span>
+        <span>舆情监测与分析平台</span>
+      </footer>
+    </section>
+
+  </div>
+
+  <script src="js/mascot/mascot-core.js?v=22"></script>
+  <script src="js/mascot/mascot-shapes.js?v=22"></script>
+  <script src="js/mascot/mascot-states.js?v=22"></script>
+  <script src="js/mascot/mascot-body.js?v=22"></script>
+  <script src="js/mascot/mascot-eyes.js?v=22"></script>
+  <script src="js/mascot/mascot-fx.js?v=22"></script>
+  <script src="js/mascot/mascot-character.js?v=22"></script>
+  <script src="js/hub.js?v=22"></script>
+</body>
+</html>

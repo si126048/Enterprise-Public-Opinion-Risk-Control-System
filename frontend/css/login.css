@@ -454,6 +454,23 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Register success message */
+.register-success {
+  display: none;
+  text-align: center;
+  padding: 10px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+  color: #34D399;
+  font-size: 13px;
+  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+}
+
+.register-success.visible {
+  display: block;
+  animation: errorFadeIn 0.3s ease forwards;
+}
+
 /* Form footer */
 .form-footer {
   text-align: center;
@@ -513,4 +530,407 @@ html, body {
   .login-right {
     flex: 0 0 50%;
   }
+}
+
+/* ---- Login Transition Overlay ---- */
+@keyframes loginOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes loginDiamondSpin {
+  from { transform: rotate(0deg) scale(0.8); opacity: 0; }
+  to { transform: rotate(45deg) scale(1); opacity: 1; }
+}
+
+@keyframes loginTextSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-transition-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000;
+  background: #0E0E0E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.login-transition-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+  animation: loginOverlayIn 0.4s ease forwards;
+}
+
+/* ---- System Log Style Overlay ---- */
+@keyframes systemLogFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes systemLogLineIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes systemLogCursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.system-log-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000;
+  background: #0A0A0A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: systemLogFadeIn 0.3s ease forwards;
+}
+
+.system-log-overlay.fade-out {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ---- Animated HUD background ---- */
+.sl-hud {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sl-watermark {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(56px, 11vw, 150px);
+  font-weight: 800;
+  letter-spacing: 14px;
+  color: rgba(255, 255, 255, 0.035);
+  animation: slWatermarkDrift 8s ease-in-out infinite alternate;
+}
+
+.sl-watermark span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 10px;
+  color: rgba(245, 208, 0, 0.06);
+  margin-top: 12px;
+}
+
+@keyframes slWatermarkDrift {
+  from { letter-spacing: 14px; opacity: 0.7; }
+  to { letter-spacing: 26px; opacity: 1; }
+}
+
+.sl-diamond-bg {
+  position: absolute;
+  right: 6%;
+  top: 50%;
+  width: 360px;
+  height: 360px;
+  border: 1px solid rgba(245, 208, 0, 0.12);
+  animation: slDiamondSpin 26s linear infinite;
+}
+
+.sl-diamond-bg::before {
+  content: '';
+  position: absolute;
+  inset: 46px;
+  border: 1px solid rgba(245, 208, 0, 0.08);
+}
+
+.sl-diamond-bg::after {
+  content: '';
+  position: absolute;
+  inset: 92px;
+  border: 1px solid rgba(245, 208, 0, 0.05);
+}
+
+@keyframes slDiamondSpin {
+  from { transform: translateY(-50%) rotate(45deg); }
+  to { transform: translateY(-50%) rotate(405deg); }
+}
+
+.sl-scanline {
+  position: absolute;
+  left: 0; right: 0;
+  height: 140px;
+  background: linear-gradient(to bottom, transparent, rgba(143, 188, 143, 0.05), rgba(245, 208, 0, 0.05), transparent);
+  animation: slScan 4.5s linear infinite;
+}
+
+@keyframes slScan {
+  from { top: -20%; }
+  to { top: 110%; }
+}
+
+.sl-corner {
+  position: absolute;
+  width: 28px; height: 28px;
+  border: 0 solid rgba(245, 208, 0, 0.55);
+}
+
+.sl-corner-tl { top: 24px; left: 24px; border-top-width: 2px; border-left-width: 2px; }
+.sl-corner-tr { top: 24px; right: 24px; border-top-width: 2px; border-right-width: 2px; }
+.sl-corner-bl { bottom: 24px; left: 24px; border-bottom-width: 2px; border-left-width: 2px; }
+.sl-corner-br { bottom: 24px; right: 24px; border-bottom-width: 2px; border-right-width: 2px; }
+
+.sl-tag {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.sl-tag-tl { top: 32px; left: 68px; }
+
+.sl-hazard {
+  position: absolute;
+  left: 0; right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(245, 208, 0, 0.45) 0 14px,
+    transparent 14px 28px
+  );
+  animation: slHazardScroll 1.6s linear infinite;
+}
+
+.sl-hazard-t { top: 0; }
+.sl-hazard-b { bottom: 0; }
+
+@keyframes slHazardScroll {
+  from { background-position: 0 0; }
+  to { background-position: 40px 0; }
+}
+
+/* ---- Log panel ---- */
+.system-log-container {
+  position: relative;
+  width: 92%;
+  max-width: 980px;
+  padding: 48px;
+  background: rgba(12, 12, 12, 0.72);
+  border: 1px solid rgba(245, 208, 0, 0.18);
+  clip-path: polygon(28px 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%, 0 28px);
+}
+
+.system-log-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  color: #666;
+  letter-spacing: 3px;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.sl-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #ddd;
+  white-space: nowrap;
+}
+
+.sl-title::before { content: '['; color: #F5D000; margin-right: -4px; }
+.sl-title::after { content: ']'; color: #F5D000; margin-left: -4px; }
+
+.sl-diamond {
+  width: 8px;
+  height: 8px;
+  background: #F5D000;
+  transform: rotate(45deg);
+  animation: slDiamondPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes slDiamondPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 rgba(245, 208, 0, 0); }
+  50% { opacity: 0.5; box-shadow: 0 0 10px rgba(245, 208, 0, 0.6); }
+}
+
+.system-log-pct {
+  color: #F5D000;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 0 14px rgba(245, 208, 0, 0.35);
+}
+
+.system-log-content {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  line-height: 2;
+  color: #8fbc8f;
+  height: 400px;
+  border-left: 2px solid rgba(245, 208, 0, 0.25);
+  padding-left: 24px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 36px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 36px), transparent 100%);
+}
+
+.system-log-content::-webkit-scrollbar {
+  display: none;
+}
+
+.system-log-line {
+  opacity: 0;
+  animation: systemLogLineIn 0.3s ease forwards;
+  margin-bottom: 8px;
+}
+
+.system-log-line:last-child::after {
+  content: '_';
+  animation: systemLogCursorBlink 1s infinite;
+  margin-left: 2px;
+}
+
+.log-status {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 0 8px;
+  font-weight: 700;
+  color: #0a0a0a;
+  background: #8fbc8f;
+  opacity: 0;
+  animation: slStatusPop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) forwards 0.25s;
+}
+
+.log-status.pass {
+  background: #F5D000;
+  animation-name: slStatusPopPass;
+}
+
+@keyframes slStatusPop {
+  0% {
+    opacity: 0;
+    transform: scale(1.9);
+    background: #fff;
+    box-shadow: 0 0 0 rgba(143, 188, 143, 0);
+  }
+  60% { opacity: 1; transform: scale(0.94); }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(143, 188, 143, 0.4);
+  }
+}
+
+@keyframes slStatusPopPass {
+  0% {
+    opacity: 0;
+    transform: scale(1.9);
+    background: #fff;
+    box-shadow: 0 0 0 rgba(245, 208, 0, 0);
+  }
+  60% { opacity: 1; transform: scale(0.94); }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(245, 208, 0, 0.45);
+  }
+}
+
+/* ---- ASCII progress bar ---- */
+.system-log-progress {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.slp-label {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.slp-bar {
+  white-space: pre;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.slp-bar .slp-fill {
+  color: #F5D000;
+  text-shadow: 0 0 8px rgba(245, 208, 0, 0.4);
+}
+
+.slp-bar .slp-dim {
+  color: rgba(255, 255, 255, 0.16);
+}
+
+.slp-clock {
+  margin-left: auto;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #555;
+}
+
+@media (max-width: 900px) {
+  .sl-diamond-bg,
+  .slp-label,
+  .slp-clock {
+    display: none;
+  }
+
+  .slp-bar {
+    font-size: 11px;
+  }
+}
+
+.login-transition-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.login-transition-diamond svg {
+  transform: rotate(45deg);
+  opacity: 0;
+  animation: loginDiamondSpin 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards 0.2s;
+}
+
+.login-transition-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(229, 229, 229, 0.6);
+  letter-spacing: 2px;
+  opacity: 0;
+  animation: loginTextSlide 0.4s ease forwards 0.5s;
 }

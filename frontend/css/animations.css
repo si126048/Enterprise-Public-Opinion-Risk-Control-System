@@ -2,18 +2,24 @@
 
 /* Page entrance */
 @keyframes pageFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .page-enter {
-  animation: pageFadeIn 0.25s ease-out forwards;
+  animation: pageFadeIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 /* Page exit */
+.page-container {
+  opacity: 1;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
 .page-exit {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  opacity: 0 !important;
+  transform: translateY(-6px) !important;
+  transition: opacity 0.18s ease, transform 0.18s ease !important;
 }
 
 /* Card stagger entrance — sharp slide-in */
@@ -166,6 +172,141 @@
 
 .chart-fade-in {
   animation: chartFadeIn 0.4s ease-out forwards;
+}
+
+/* ========== App Loading Overlay ========== */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlayFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+@keyframes diamondPulse {
+  0%, 100% { transform: rotate(45deg) scale(1); opacity: 0.8; }
+  50% { transform: rotate(45deg) scale(1.05); opacity: 1; }
+}
+
+@keyframes diamondDotPulse {
+  0%, 100% { r: 4; opacity: 0.8; }
+  50% { r: 5; opacity: 1; }
+}
+
+@keyframes loadingBarFill {
+  0% { width: 0%; }
+  30% { width: 40%; }
+  60% { width: 70%; }
+  90% { width: 90%; }
+  100% { width: 100%; }
+}
+
+@keyframes loadingTextFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.app-loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: #0E0E0E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease forwards;
+}
+
+.app-loading-overlay.hidden {
+  animation: overlayFadeOut 0.5s ease forwards;
+  animation-delay: 0.1s;
+  pointer-events: none;
+}
+
+.app-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.app-loading-diamond svg {
+  animation: diamondPulse 2s ease-in-out infinite;
+}
+
+.app-loading-diamond .diamond-outer {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: diamondDraw 1.2s ease forwards 0.2s;
+}
+
+.app-loading-diamond .diamond-inner {
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  animation: diamondDraw 1s ease forwards 0.5s;
+}
+
+.app-loading-diamond .diamond-dot {
+  opacity: 0;
+  animation: diamondDotAppear 0.4s ease forwards 0.9s;
+}
+
+@keyframes diamondDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes diamondDotAppear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-loading-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(229, 229, 229, 0.6);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: loadingTextFade 0.5s ease forwards 0.3s;
+  opacity: 0;
+}
+
+.app-loading-bar {
+  width: 160px;
+  height: 2px;
+  background: rgba(245, 208, 0, 0.1);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.app-loading-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #F5D000, rgba(0, 212, 255, 0.8));
+  border-radius: 1px;
+  width: 0%;
+  animation: loadingBarFill 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards 0.4s;
+}
+
+/* Scroll Reveal Animation */
+@keyframes revealSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-item {
+  opacity: 0;
+}
+
+.reveal-item.revealed {
+  animation: revealSlideUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 /* Reduced motion */

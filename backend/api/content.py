@@ -216,7 +216,7 @@ async def stats_overview(company_id: Optional[str] = None):
             FROM raw_content rc
             LEFT JOIN content_analysis ca ON rc.id = ca.content_id
             {company_filter}
-            {"AND" if company_filter else "WHERE"} rc.publish_time >= DATE('now', '-14 days')
+            {"AND" if company_filter else "WHERE"} rc.publish_time >= DATE('now', '-84 days')
             GROUP BY DATE(rc.publish_time)
             ORDER BY day
         """, company_params).fetchall()

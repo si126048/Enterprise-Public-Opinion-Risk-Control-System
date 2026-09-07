@@ -613,3 +613,22 @@
   align-items: center;
   gap: 4px;
 }
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.stat-icon {
+  width: 14px;
+  height: 14px;
+  stroke: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.stat-time {
+  margin-left: auto;
+}

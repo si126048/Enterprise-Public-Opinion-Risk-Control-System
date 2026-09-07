@@ -141,6 +141,31 @@ function initScrollReveal() {
   var drawerClose = document.getElementById('drawer-close');
   var globalSearch = document.getElementById('global-search');
 
+  // Doubles as the whitelist for deep-link targets: the page id is concatenated
+  // into a fetch path, so only ids present here may ever reach loadPage().
+  var PAGE_INITS = {
+    'dashboard': loadDashboardData,
+    'content': loadContentList,
+    'topics': loadTopics,
+    'risk-events': loadRiskEvents,
+    'search': initSearchPage,
+    'review': loadReviewCandidates,
+    'source-ledger': loadSourceLedger,
+    'credibility': loadCredibilityPage
+  };
+
+  // The mascot is optional: drop its script tags and these become no-ops.
+  function pet(kind) {
+    if (window.MascotPet) MascotPet.activity(kind);
+  }
+
+  // Always push the count so the badge dot clears when risk drops back to zero.
+  function petRisk(count) {
+    if (!window.MascotPet) return;
+    MascotPet.setAlert(count);
+    if (count === 0) MascotPet.activity('risk-clear');
+  }
+
   function init() {
     if (!localStorage.getItem('auth_token')) {
       window.location.href = 'login.html';
@@ -151,7 +176,30 @@ function initScrollReveal() {
     setupCompanySelector();
     setupDrawer();
     setupKeyboardShortcuts();
-    loadPage('dashboard');
+    if (window.MascotPet) MascotPet.mount(document.getElementById('mascot-pet'));
+
+    var page = resolvePendingPage();
+    if (page !== currentPage) {
+      document.querySelectorAll('.nav-item[data-page]').forEach(function(item) {
+        item.classList.toggle('active', item.getAttribute('data-page') === page);
+      });
+    }
+    loadPage(page);
+  }
+
+  // The hub page hands off through sessionStorage so the target survives the
+  // navigation without polluting the URL; ?page= covers bookmarks and reloads.
+  function resolvePendingPage() {
+    var page = null;
+    try {
+      page = sessionStorage.getItem('app_pending_page');
+      sessionStorage.removeItem('app_pending_page');
+    } catch (e) { /* private mode */ }
+    if (!page) {
+      var m = /[?&]page=([a-z-]+)/.exec(window.location.search);
+      if (m) page = m[1];
+    }
+    return Object.prototype.hasOwnProperty.call(PAGE_INITS, page) ? page : 'dashboard';
   }
 
   // ---- Navigation ----
@@ -177,6 +225,7 @@ function initScrollReveal() {
 
   function loadPage(page) {
     currentPage = page;
+    pet('page-start');
     contentArea.classList.add('page-exit');
 
     setTimeout(function() {
@@ -184,7 +233,7 @@ function initScrollReveal() {
       contentArea.innerHTML = '<div class="page-container"><div class="skeleton" style="height: 200px;"></div></div>';
       contentArea.classList.remove('page-exit');
 
-      fetch('pages/' + page + '.html?v=6')
+      fetch('pages/' + page + '.html?v=19')
         .then(function(r) {
           if (!r.ok) throw new Error('Page not found');
           return r.text();
@@ -193,25 +242,17 @@ function initScrollReveal() {
           contentArea.innerHTML = '<div class="page-container page-enter">' + html + '</div>';
           initPageScripts(page);
           initScrollReveal();
+          pet('page-ok');
         })
         .catch(function() {
           contentArea.innerHTML = '<div class="page-container"><div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-text">页面加载失败</div><button class="btn btn-primary" onclick="location.reload()">重试</button></div></div>';
+          pet('page-fail');
         });
     }, 150);
   }
 
   function initPageScripts(page) {
-    var inits = {
-      'dashboard': loadDashboardData,
-      'content': loadContentList,
-      'topics': loadTopics,
-      'risk-events': loadRiskEvents,
-      'search': initSearchPage,
-      'review': loadReviewCandidates,
-      'source-ledger': loadSourceLedger,
-      'credibility': loadCredibilityPage
-    };
-    if (inits[page]) inits[page]();
+    if (PAGE_INITS[page]) PAGE_INITS[page]();
   }
 
   // ---- Sidebar ----
@@ -266,11 +307,14 @@ function initScrollReveal() {
     document.getElementById('drawer-body').innerHTML = content;
     drawerOverlay.classList.add('active');
     drawer.classList.add('active');
+    pet('drawer-open');
   };
 
   function closeDrawer() {
+    var wasOpen = drawer.classList.contains('active');
     drawerOverlay.classList.remove('active');
     drawer.classList.remove('active');
+    if (wasOpen) pet('drawer-close');
   }
 
   // ---- Keyboard shortcuts ----
@@ -301,6 +345,7 @@ function initScrollReveal() {
         renderDashboardStats(stats);
         renderDashboardCharts(stats, routingStatus);
         renderDashboardTimeline(events.events || []);
+        petRisk(stats.high_risk_count || 0);
       })
       .catch(function(err) { console.error('Dashboard error:', err); });
   }
@@ -358,36 +403,39 @@ function initScrollReveal() {
     }
 
     var platformEl = document.getElementById('chart-platform');
-    if (platformEl && stats && stats.platform_distribution) {
-      var pd = stats.platform_distribution;
+    if (platformEl) {
       var platformAlias = {
         'bilibili': 'B站',
         'xiaheihe': '小黑盒',
         'xiaoheihe': '小黑盒',
         'taptap': 'TapTap',
       };
-      var merged = {};
-      Object.keys(pd).forEach(function (k) {
-        var name = platformAlias[k.toLowerCase()] || k;
-        merged[name] = (merged[name] || 0) + pd[k];
-      });
-      var pdArr = Object.keys(merged).map(function (k) { return { name: k, value: merged[k] }; });
-      var pdTotal = pdArr.reduce(function (s, d) { return s + d.value; }, 0);
-      LieflatCharts.tickDonut(platformEl, pdArr, {
-        centerLabel: { value: formatNumber(pdTotal), unit: '总计' },
-        labelPosition: 'top',
-      });
+      fetchApi('/api/content?company_id=mihoyo&page_size=100&sort_by=publish_time&sort_order=desc')
+        .then(function(res) {
+          var items = (res && res.items) || [];
+          var records = items.map(function(op) {
+            var raw = op.publish_time || op.created_at || '';
+            var d = new Date(String(raw).replace(' ', 'T'));
+            var hour = isNaN(d.getTime()) ? 0 : d.getHours() + d.getMinutes() / 60;
+            var name = platformAlias[String(op.platform || '').toLowerCase()] || op.platform || '未知';
+            var body = String(op.content || op.title || '').replace(/\s+/g, ' ').slice(0, 18);
+            return {
+              hour: hour,
+              reach: (op.likes || 0) + (op.comments || 0) * 2,
+              flagged: op.credibility_level === 'low',
+              label: name + (body ? ' · ' + body : ''),
+            };
+          }).filter(function(r) { return r.reach > 0 || r.flagged; });
+          if (records.length) LieflatCharts.radialPatchwork(platformEl, records);
+        })
+        .catch(function(err) { console.error('Patchwork error:', err); });
     }
 
     var productEl = document.getElementById('chart-product');
     if (productEl && stats && stats.product_distribution) {
       var pr = stats.product_distribution;
       var prArr = Object.keys(pr).map(function (k) { return { name: k, value: pr[k] }; });
-      var prTotal = prArr.reduce(function (s, d) { return s + d.value; }, 0);
-      LieflatCharts.tickDonut(productEl, prArr, {
-        centerLabel: { value: formatNumber(prTotal), unit: '总计' },
-        labelPosition: 'top',
-      });
+      LieflatCharts.hundredField(productEl, prArr);
     }
 
     var heatEl = document.getElementById('chart-heat-calendar');
@@ -412,7 +460,7 @@ function initScrollReveal() {
         { name: '不确定', value: cd.uncertain || 0 },
         { name: '低可信', value: cd.low || 0 },
       ].filter(function(d) { return d.value > 0; });
-      if (credData.length) LieflatCharts.funnelChart(funnelEl, credData);
+      if (credData.length) LieflatCharts.rungBars(funnelEl, credData);
     }
 
     var radarEl = document.getElementById('chart-sentiment-radar');
@@ -469,34 +517,36 @@ function initScrollReveal() {
     var container = document.getElementById('content-list');
     if (!container) return;
     if (!opinions.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-text">暂无数据</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" style="width:48px;height:48px"><rect x="2" y="2" width="14" height="14"/><path d="M5 9l3 3 5-6"/></svg></div><div class="empty-state-text">暂无数据</div></div>';
       return;
     }
     container.innerHTML = opinions.map(function(op, i) {
-      var credClass = 'badge-' + (op.credibility || 'uncertain');
+      var credVal = op.credibility_level || op.credibility || 'uncertain';
+      var credClass = 'badge-' + credVal;
       var credLabels = { high: '高可信', low: '低可信', medium: '中可信', uncertain: '不确定' };
-      return '<div class="content-card card-stagger" style="animation-delay:' + (i * 0.03) + 's" onclick="showContentDetail(' + op.id + ')">' +
+      return '<div class="content-card card-stagger reveal-item" style="animation-delay:' + (i * 0.05) + 's" onclick="showContentDetail(' + op.id + ')">' +
         '<div class="content-card-header">' +
           '<span class="badge badge-primary">' + escapeHtml(op.product || '未知') + '</span>' +
-          '<span class="badge ' + credClass + '">' + (credLabels[op.credibility] || '-') + '</span>' +
+          '<span class="badge ' + credClass + '">' + (credLabels[credVal] || '-') + '</span>' +
         '</div>' +
         '<div class="content-card-body">' + escapeHtml((op.content || '').substring(0, 120)) + '</div>' +
         '<div class="content-card-footer">' +
-          '<span>👍 ' + (op.likes || 0) + '</span>' +
-          '<span>💬 ' + (op.comments || 0) + '</span>' +
-          '<span>' + formatTime(op.created_at) + '</span>' +
+          '<span class="stat-item"><svg class="stat-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h4l2-4 2 8 2-4h2"/></svg>' + (op.likes || 0) + '</span>' +
+          '<span class="stat-item"><svg class="stat-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12v8H4l-2 2V3z"/></svg>' + (op.comments || 0) + '</span>' +
+          '<span class="stat-item stat-time">' + formatTime(op.created_at) + '</span>' +
         '</div></div>';
     }).join('');
 
     renderContentScatter(opinions);
+    initScrollReveal();
   }
 
   function renderContentScatter(opinions) {
     var scatterEl = document.getElementById('chart-scatter');
     if (!scatterEl) return;
-    var credScores = { high: 0.9, medium: 0.6, uncertain: 0.35, low: 0.1 };
+    var credScores = { high: 90, medium: 60, uncertain: 35, low: 10 };
     var data = opinions.map(function (op) {
-      var x = credScores[op.credibility] || 0.5;
+      var x = credScores[op.credibility_level || op.credibility] || 50;
       var y = (op.likes || 0) + (op.comments || 0) * 2;
       var size = Math.max(6, Math.min(40, Math.sqrt(y) * 3));
       return { x: x, y: y, size: size, label: (op.content || '').substring(0, 20) };
@@ -546,7 +596,7 @@ function initScrollReveal() {
 
       var treemapEl = document.getElementById('chart-topic-treemap');
       if (treemapEl) {
-        LieflatCharts.treemapChart(treemapEl, topics.map(function (t) {
+        LieflatCharts.hundredField(treemapEl, topics.map(function (t) {
           return { name: t.name, value: t.sample_count || t.content_count || 0 };
         }));
       }
@@ -587,8 +637,25 @@ function initScrollReveal() {
   // ========== Risk Events ==========
   function loadRiskEvents() {
     fetchApi('/api/risk/events?company_id=mihoyo')
-      .then(function(data) { renderRiskEvents(data.events || []); })
+      .then(function(data) {
+        var events = data.events || [];
+        renderRiskEvents(events);
+        petRisk(countActiveHighRisk(events));
+      })
       .catch(function(err) { console.error('Risk events error:', err); });
+  }
+
+  // Rows are written with risk_level/status='open', but some render paths read
+  // severity/'active' — accept either spelling so the count is never understated.
+  function countActiveHighRisk(events) {
+    var n = 0;
+    for (var i = 0; i < events.length; i++) {
+      var st = String(events[i].status || '').toLowerCase();
+      if (st === 'closed' || st === 'resolved' || st === 'done') continue;
+      var lv = String(events[i].risk_level || events[i].severity || '').toLowerCase();
+      if (lv === 'high') n++;
+    }
+    return n;
   }
 
   function renderRiskEvents(events) {
@@ -632,14 +699,10 @@ function initScrollReveal() {
     ].filter(function (d) { return d.value > 0; }));
 
     var statusEl = document.getElementById('chart-risk-status');
-    if (statusEl) LieflatCharts.tickDonut(statusEl, [
-      { name: '进行中', value: statusData.active },
-      { name: '已解决', value: statusData.resolved },
-    ].filter(function (d) { return d.value > 0; }), {
-      centerLabel: { value: events.length, unit: '事件' },
-      colors: ['#F87171', '#34D399'],
-      labelPosition: 'top',
-    });
+    if (statusEl && events.length) {
+      var resolvedPct = Math.round(statusData.resolved / events.length * 100);
+      LieflatCharts.tickGauge(statusEl, resolvedPct, { label: '已解决' });
+    }
   }
 
   window.showEventDetail = function(id) {
@@ -660,6 +723,9 @@ function initScrollReveal() {
     var input = document.getElementById('search-input');
     if (input) {
       input.addEventListener('input', debounce(function() {
+        // No result hook on purpose: /api/search is not implemented, so a
+        // failure reaction here would fire on every single query.
+        if (input.value.trim()) pet('search-start');
         performSearch(input.value);
       }, 300));
     }
@@ -790,21 +856,28 @@ function initScrollReveal() {
 
   window.approveCandidate = function(id) {
     fetch('/api/discovery/candidates/' + id + '/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-      .then(function() { loadReviewCandidates(); });
+      .then(function(res) {
+        if (res.ok) pet('success');
+        loadReviewCandidates();
+      });
   };
 
   window.rejectCandidate = function(id) {
     fetch('/api/discovery/candidates/' + id + '/ignore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: 'manually ignored' }) })
-      .then(function() { loadReviewCandidates(); });
+      .then(function(res) {
+        if (res.ok) pet('success');
+        loadReviewCandidates();
+      });
   };
 
   window.triggerAgentReview = function() {
     var btn = document.getElementById('btn-run-agent');
     if (btn) { btn.disabled = true; btn.textContent = '审核中...'; }
+    pet('work-start');
     fetch('/api/review-agent/run', { method: 'POST' })
       .then(function(r) { return r.json(); })
-      .then(function() { loadReviewCandidates(); })
-      .catch(function(err) { console.error('Agent review error:', err); })
+      .then(function() { pet('work-ok'); loadReviewCandidates(); })
+      .catch(function(err) { console.error('Agent review error:', err); pet('fail'); })
       .finally(function() {
         if (btn) {
           btn.disabled = false;
@@ -873,6 +946,7 @@ function initScrollReveal() {
           interaction_authenticity: '互动真实性',
           content_consistency: '内容一致性',
           credibility_intensity: '信度强度',
+          sentiment_intensity: '情感强度',
           platform_trust: '平台信任',
           engagement_depth: '参与深度',
         };
@@ -911,7 +985,7 @@ function initScrollReveal() {
           { name: '低可信', value: dist.low || 0 },
         ].filter(function(d) { return d.value > 0; });
         if (distData.length) {
-          LieflatCharts.funnelChart(distEl, distData);
+          LieflatCharts.hundredField(distEl, distData);
         }
       }
     });

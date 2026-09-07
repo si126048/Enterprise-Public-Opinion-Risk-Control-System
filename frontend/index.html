@@ -7,11 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=8" />
-  <link rel="stylesheet" href="css/layout.css?v=8" />
-  <link rel="stylesheet" href="css/components.css?v=8" />
-  <link rel="stylesheet" href="css/animations.css?v=8" />
-  <link rel="stylesheet" href="css/responsive.css?v=8" />
+  <link rel="stylesheet" href="css/main.css?v=19" />
+  <link rel="stylesheet" href="css/layout.css?v=19" />
+  <link rel="stylesheet" href="css/components.css?v=19" />
+  <link rel="stylesheet" href="css/animations.css?v=19" />
+  <link rel="stylesheet" href="css/responsive.css?v=19" />
+  <link rel="stylesheet" href="css/mascot.css?v=21" />
 </head>
 <body>
   <div class="app-layout">
@@ -125,8 +126,26 @@
     </div>
   </div>
 
+  <!-- Floating mascot pet: lives outside #content-area so page swaps never wipe it -->
+  <div class="mascot-pet" id="mascot-pet">
+    <svg class="mascot-pet-svg" id="mascot-pet-svg" viewBox="0 0 256 256" aria-hidden="true"></svg>
+    <div class="mascot-pet-hint" id="mascot-pet-hint"></div>
+    <button class="mascot-pet-min" id="mascot-pet-min" type="button" title="收起助手" aria-label="收起助手">–</button>
+  </div>
+  <div class="mascot-badge" id="mascot-badge" title="展开助手">
+    <span class="mascot-badge-dot" id="mascot-badge-dot"></span>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-  <script src="js/lieflat-charts.js?v=8"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/lieflat-charts.js?v=20"></script>
+  <script src="js/mascot/mascot-core.js?v=21"></script>
+  <script src="js/mascot/mascot-shapes.js?v=21"></script>
+  <script src="js/mascot/mascot-states.js?v=21"></script>
+  <script src="js/mascot/mascot-body.js?v=21"></script>
+  <script src="js/mascot/mascot-eyes.js?v=21"></script>
+  <script src="js/mascot/mascot-fx.js?v=21"></script>
+  <script src="js/mascot/mascot-character.js?v=21"></script>
+  <script src="js/mascot/mascot-pet.js?v=21"></script>
+  <script src="js/app.js?v=21"></script>
 </body>
 </html>
