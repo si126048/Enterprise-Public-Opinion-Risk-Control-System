@@ -7,34 +7,35 @@
     "low": 521,
     "uncertain": 200
   },
-  "platform_scores": [
-    { "platform": "知乎", "avg_score": 78.5, "count": 398 },
-    { "platform": "B站", "avg_score": 71.2, "count": 456 },
-    { "platform": "米游社", "avg_score": 68.0, "count": 208 },
-    { "platform": "小黑盒", "avg_score": 60.3, "count": 245 },
-    { "platform": "TapTap", "avg_score": 55.8, "count": 341 },
-    { "platform": "微博", "avg_score": 52.1, "count": 687 },
-    { "platform": "小红书", "avg_score": 48.6, "count": 512 }
-  ],
-  "factor_weights": {
-    "followers": 0.15,
-    "activity": 0.10,
-    "engagement_authenticity": 0.20,
-    "content_consistency": 0.15,
-    "credibility_intensity": 0.15,
-    "platform_credibility": 0.15,
-    "game_level": 0.10
+  "factor_averages": {
+    "follower_score": 0.72,
+    "activity_score": 0.65,
+    "interaction_authenticity": 0.58,
+    "content_consistency": 0.71,
+    "credibility_intensity": 0.63,
+    "sentiment_intensity": 0.55,
+    "platform_trust": 0.68,
+    "engagement_depth": 0.60
   },
-  "top_credible": [
-    { "author": "财经观察", "platform": "知乎", "score": 92.0, "content_count": 15 },
-    { "author": "攻略达人", "platform": "小黑盒", "score": 91.0, "content_count": 42 },
-    { "author": "出海研究", "platform": "知乎", "score": 90.2, "content_count": 8 },
-    { "author": "星铁攻略组", "platform": "米游社", "score": 88.5, "content_count": 35 },
-    { "author": "游戏研究员", "platform": "知乎", "score": 88.1, "content_count": 22 }
-  ],
-  "low_credible": [
-    { "author": "职场爆料人", "platform": "微博", "score": 38.0, "content_count": 3 },
-    { "author": "普通玩家123", "platform": "米游社", "score": 35.2, "content_count": 7 },
-    { "author": "独立游戏粉", "platform": "TapTap", "score": 42.0, "content_count": 5 }
+  "platform_trust": {
+    "zhihu": 0.785,
+    "bilibili": 0.712,
+    "miyoushe": 0.680,
+    "xiaoheihe": 0.603,
+    "taptap": 0.558,
+    "weibo": 0.521,
+    "xiaohongshu": 0.486
+  },
+  "top_low_credibility": [
+    { "author": "职场爆料人", "platform": "微博", "credibility_score": 0.38, "content": "某大厂内部消息：下季度将大规模裁员，涉及多个核心部门" },
+    { "author": "普通玩家123", "platform": "米游社", "credibility_score": 0.352, "content": "听朋友说新版本会取消所有免费福利，大家赶紧囤资源" },
+    { "author": "独立游戏粉", "platform": "TapTap", "credibility_score": 0.42, "content": "据内部人士透露，制作组已经解散，游戏即将停服" },
+    { "author": "吃瓜群众A", "platform": "微博", "credibility_score": 0.31, "content": "爆料：某角色设计抄袭国外独立游戏，官方即将被起诉" },
+    { "author": "匿名用户X", "platform": "小红书", "credibility_score": 0.29, "content": "朋友在米哈游上班，说公司财务状况很差，随时可能倒闭" },
+    { "author": "游戏圈 insider", "platform": "微博", "credibility_score": 0.33, "content": "独家消息：下一个版本将全面转向付费，免费玩家将被淘汰" },
+    { "author": "神秘网友", "platform": "小黑盒", "credibility_score": 0.36, "content": "据说新角色强度是故意设计的弱，为了逼氪金" },
+    { "author": "路边社记者", "platform": "知乎", "credibility_score": 0.40, "content": "内部邮件泄露：公司计划砍掉所有单机项目" },
+    { "author": "键盘侠007", "platform": "B站", "credibility_score": 0.27, "content": "实锤！制作人已经离职，现在的游戏都是外包做的" },
+    { "author": "八卦小王子", "platform": "微博", "credibility_score": 0.34, "content": "听说下一个卡池会暗改概率，大家小心被割韭菜" }
   ]
 }
