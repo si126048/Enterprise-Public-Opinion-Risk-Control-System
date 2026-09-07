@@ -1,10 +1,13 @@
 import json
 import logging
+import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Optional
+
+from openai import OpenAI
 
 from backend.config import get_config
 from backend.db.database import get_connection
@@ -234,6 +237,73 @@ class SimulatedQwenProvider(BaseLLMProvider):
         )
 
 
+class DashScopeProvider(BaseLLMProvider):
+    PROMPT_TEMPLATE = """你是一个专业的舆情分析系统。请对以下文本进行分析，话题类别为「{topic_name}」。
+
+分析视角：{theory_perspective}
+
+文本内容：
+{text}
+
+请以 JSON 格式返回分析结果，包含以下字段：
+- credibility_level: 信息可信度等级，取值为 "high", "medium", "low", "uncertain"
+- credibility_confidence: 可信度置信度，0-1 之间的浮点数
+- risk_level: 风险等级，取值为 "high", "medium", "low"
+- risk_confidence: 风险置信度，0-1 之间的浮点数
+- summary: 50字以内的摘要
+- theory_perspective: 分析视角说明
+
+仅返回 JSON，不要其他内容。"""
+
+    def __init__(self):
+        config = get_config()
+        llm_cfg = config["llm"]
+        api_key = os.environ.get(llm_cfg.get("api_key_env", "DASHSCOPE_API_KEY"), "")
+        api_base = llm_cfg.get("api_base", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+        self.model = llm_cfg.get("model", "qwen-plus")
+        self.temperature = llm_cfg.get("temperature", 0.2)
+        self.max_retries = llm_cfg.get("max_retries", 2)
+        self._fallback = MockLLMProvider()
+
+        if not api_key:
+            logger.warning("DASHSCOPE_API_KEY not set, DashScope will use mock fallback")
+        self.client = OpenAI(api_key=api_key or "sk-placeholder", base_url=api_base)
+
+    def analyze(self, text: str, topic_name: str, metadata: Dict = None) -> LLMAnalysisResult:
+        theory_perspective = THEORY_MAP.get(topic_name, "基层治理综合评估")
+        prompt = self.PROMPT_TEMPLATE.format(
+            topic_name=topic_name,
+            theory_perspective=theory_perspective,
+            text=text[:2000],
+        )
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=self.temperature,
+                max_tokens=500,
+            )
+            content = response.choices[0].message.content.strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            data = json.loads(content)
+            return LLMAnalysisResult(
+                credibility_level=data.get("credibility_level", "medium"),
+                credibility_confidence=float(data.get("credibility_confidence", 0.5)),
+                risk_level=data.get("risk_level", "low"),
+                risk_confidence=float(data.get("risk_confidence", 0.5)),
+                summary=data.get("summary", text[:50]),
+                theory_perspective=data.get("theory_perspective", theory_perspective),
+            )
+        except Exception as e:
+            logger.warning("DashScope API call failed, falling back to mock: %s", e)
+            return self._fallback.analyze(text, topic_name, metadata)
+
+
 _provider = None
 
 
@@ -249,6 +319,8 @@ def get_provider() -> BaseLLMProvider:
         _provider = SimulatedDeepSeekProvider()
     elif provider_name == "qwen":
         _provider = SimulatedQwenProvider()
+    elif provider_name == "dashscope":
+        _provider = DashScopeProvider()
     else:
         raise ValueError(f"Unknown LLM provider: {provider_name}")
     return _provider
@@ -259,6 +331,7 @@ def get_all_providers():
         ("mock", MockLLMProvider()),
         ("deepseek", SimulatedDeepSeekProvider()),
         ("qwen", SimulatedQwenProvider()),
+        ("dashscope", DashScopeProvider()),
     ]
 
 

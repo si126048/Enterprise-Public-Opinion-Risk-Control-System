@@ -1,0 +1,41 @@
+# 生产环境配置
+# 复制为 config.yaml 使用: cp config.production.yaml config.yaml
+
+app:
+  name: enterprise-risk-monitor
+  display_name: "企业舆情风控管理系统"
+  demo_mode: false
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 8000
+  default_company: "mihoyo"
+
+llm:
+  provider: "dashscope"
+  model: "qwen-plus"
+  temperature: 0.2
+  max_retries: 3
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key_env: "DASHSCOPE_API_KEY"
+
+embedding:
+  provider: "dashscope"
+  model_name: "text-embedding-v3"
+  vector_dimension: 1024
+  normalize: true
+  batch_size: 10
+  preprocess_version: "v2"
+  cache_enabled: true
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key_env: "DASHSCOPE_API_KEY"
+
+database:
+  path: "data/app.db"
+
+vector_store:
+  provider: "chroma"
+  persist_directory: "data/chroma_db"
+
+server:
+  workers: 1
+  reload: false

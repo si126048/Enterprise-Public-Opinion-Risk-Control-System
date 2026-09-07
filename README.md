@@ -22,7 +22,7 @@
 | 向量索引 | Chroma（优先）/ FAISS（降级） |
 | 前端 | 原生 HTML/CSS/JavaScript + ECharts |
 | Embedding | BAAI/bge-m3（本地运行） |
-| LLM | Mock（可配置为 DeepSeek / 通义千问 / Kimi） |
+| LLM | 通义千问 DashScope API（可降级为 Mock） |
 
 ## 快速启动
 
@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 # 2. 配置环境变量
 cp .env.example .env
-# 编辑 .env 填入 LLM API Key（Mock 模式可跳过）
+# 编辑 .env 填入 DASHSCOPE_API_KEY（Mock 模式可跳过）
 
 # 3. 初始化数据库
 python scripts/init_db.py
@@ -46,6 +46,51 @@ uvicorn backend.app:app --host 0.0.0.0 --port 8000 --workers 1
 # 6. 访问
 # http://localhost:8000
 ```
+
+或使用启动脚本（自动创建虚拟环境 + 安装依赖）：
+
+```bash
+# Linux / macOS
+chmod +x start.sh && ./start.sh
+
+# Windows
+start.bat
+```
+
+## Docker 部署
+
+```bash
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env 填入 DASHSCOPE_API_KEY
+
+# 2. 构建并启动
+docker-compose up -d
+
+# 3. 查看日志
+docker-compose logs -f
+
+# 4. 停止
+docker-compose down
+```
+
+数据持久化在 `app-data` volume 中（SQLite + ChromaDB）。
+
+## LLM 配置
+
+默认使用通义千问 DashScope API。在 `config.yaml` 中配置：
+
+```yaml
+llm:
+  provider: "dashscope"          # 可选: mock / dashscope
+  model: "qwen-plus"             # 模型名称
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key_env: "DASHSCOPE_API_KEY"
+```
+
+API Key 获取：https://dashscope.console.aliyun.com/
+
+设为 `provider: "mock"` 可使用本地关键词匹配模式（无需 API Key）。
 
 ## 目录结构
 

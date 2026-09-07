@@ -102,8 +102,8 @@ def generate_candidate_label(texts: List[str], cluster_index: int) -> dict:
     from backend.services.llm_service import MockLLMProvider
 
     all_keywords = (
-        MockLLMProvider.NEGATIVE_KEYWORDS
-        + MockLLMProvider.POSITIVE_KEYWORDS
+        MockLLMProvider.LOW_KEYWORDS
+        + MockLLMProvider.HIGH_KEYWORDS
         + MockLLMProvider.HIGH_RISK_KEYWORDS
     )
 

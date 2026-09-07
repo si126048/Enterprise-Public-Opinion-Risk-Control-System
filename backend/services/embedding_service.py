@@ -1,9 +1,11 @@
 import hashlib
 import logging
+import os
 import sqlite3
 from typing import List, Optional
 
 import numpy as np
+from openai import OpenAI
 
 from backend.config import get_config
 from backend.db.database import get_connection
@@ -15,6 +17,9 @@ _tokenizer = None
 _device = None
 _space_id = None
 _dimension = None
+_api_client = None
+_api_mode = False
+_loaded = False
 
 
 def _get_device() -> str:
@@ -94,9 +99,9 @@ def _ensure_embedding_space() -> str:
 
 
 def load_model():
-    global _model, _tokenizer, _device, _space_id, _dimension
+    global _model, _tokenizer, _device, _space_id, _dimension, _api_client, _api_mode, _loaded
 
-    if _model is not None:
+    if _loaded:
         return
 
     config = get_config()
@@ -107,6 +112,20 @@ def load_model():
     _space_id = _ensure_embedding_space()
     _ensure_cache_table()
 
+    provider = emb_cfg.get("provider", "qwen")
+
+    if provider == "dashscope":
+        _api_mode = True
+        api_key = os.environ.get(emb_cfg.get("api_key_env", "DASHSCOPE_API_KEY"), "")
+        api_base = emb_cfg.get("api_base", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+        if not api_key:
+            logger.warning("DASHSCOPE_API_KEY not set, embedding API calls will fail")
+        _api_client = OpenAI(api_key=api_key or "sk-placeholder", base_url=api_base)
+        _loaded = True
+        logger.info("Embedding API mode: DashScope (%s, dim=%d)", model_name, _dimension)
+        return
+
+    _api_mode = False
     _device = _get_device()
     logger.info("Loading embedding model: %s on %s", model_name, _device)
 
@@ -123,6 +142,7 @@ def load_model():
         logger.warning("Config dimension %d != model hidden_size %d. Using model's actual dimension.", _dimension, actual_dim)
         _dimension = actual_dim
 
+    _loaded = True
     logger.info("Embedding model loaded. Dimension: %d, Device: %s", _dimension, _device)
 
 
@@ -158,7 +178,37 @@ def _save_to_cache(text_hash: str, vector: np.ndarray):
         conn.close()
 
 
+def _encode_texts_api(texts: List[str]) -> np.ndarray:
+    config = get_config()
+    emb_cfg = config["embedding"]
+    model_name = emb_cfg["model_name"]
+    batch_size = emb_cfg.get("batch_size", 25)
+    all_embeddings = []
+
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        response = _api_client.embeddings.create(
+            model=model_name,
+            input=batch,
+            dimensions=_dimension,
+        )
+        batch_vectors = [item.embedding for item in response.data]
+        all_embeddings.extend(batch_vectors)
+
+    result = np.array(all_embeddings, dtype=np.float32)
+
+    if emb_cfg.get("normalize", True):
+        norms = np.linalg.norm(result, axis=1, keepdims=True)
+        norms = np.where(norms == 0, 1, norms)
+        result = result / norms
+
+    return result
+
+
 def _encode_texts(texts: List[str]) -> np.ndarray:
+    if _api_mode:
+        return _encode_texts_api(texts)
+
     import torch
 
     all_embeddings = []
@@ -233,10 +283,10 @@ def embed_batch(texts: List[str], text_hashes: List[str] = None) -> List[np.ndar
 def health() -> dict:
     config = get_config()
     return {
-        "model_loaded": _model is not None,
+        "model_loaded": _api_mode or _model is not None,
         "model": config["embedding"]["model_name"],
         "dimension": _dimension,
-        "device": _device,
+        "device": "api" if _api_mode else _device,
         "space_id": _space_id,
     }
 

@@ -102,8 +102,7 @@
     svg.style.cursor = 'pointer';
     svg.addEventListener('click', function () {
       if (!hubMascot || onboardingActive()) return;
-      var msg = PRTS_CLICK[(Math.random() * PRTS_CLICK.length) | 0];
-      prtsShow(msg);
+      minervaShow(mPick(M_CLICK));
       hubMascot.setState('curious');
       hubMascot.trick('bounce');
     });
@@ -139,13 +138,15 @@
     if (onboardingActive()) return;      /* the entrance show owns the mascot */
     applyReaction(kind);
     if (kind === 'fail') {
-      prtsShow('部分模块响应异常，已启用降级方案。');
+      minervaShow(mPick(M_LOAD_FAIL));
     } else if (riskAlert > 0) {
-      prtsShow('检测到 ' + riskAlert + ' 条高风险舆情，建议立即关注。');
+      minervaShow(mFill(mPick(M_RISK_HIGH), riskAlert));
     } else if (kind === 'partial') {
-      prtsShow('数据同步完成，部分模块待确认。');
+      minervaShow(mPick(M_LOAD_PARTIAL));
+    } else if (riskAlert === 0 && dataReady) {
+      minervaShow(mPick(M_RISK_CLEAR));
     } else {
-      prtsShow('全部模块就绪。当前态势平稳。');
+      minervaShow(mPick(M_LOAD_OK));
     }
   }
 
@@ -159,39 +160,82 @@
     hubMascot.setState(kind === 'partial' ? 'curious' : 'happy');
   }
 
-  /* ----------------------------------------------------------------- PRTS */
+  /* --------------------------------------------------------------- MINERVA */
 
-  var prtsText = null, prtsCursor = null, prtsEl = null;
-  var prtsQueue = [];
-  var prtsTyping = false;
-  var prtsTypeTimer = 0;
+  var mText = null, mCursor = null, mEl = null;
+  var mQueue = [];
+  var mTyping = false;
+  var mTypeTimer = 0;
 
-  var PRTS_GREETING = [
+  var M_GREETING = [
     '系统启动完成。欢迎回来，操作者。',
-    'PRTS 已就绪。今日态势总体平稳。',
-    '初始化完毕。所有模块在线，待命中。'
+    'MINERVA 已就绪。今日态势总体平稳。',
+    '初始化完毕。所有模块在线，待命中。',
+    '情报链路畅通。随时可以开始工作。',
+    '数据管线校准完毕，采集源全部在线。'
   ];
 
-  var PRTS_CLICK = [
+  var M_CLICK = [
     '随时待命，操作者。',
     '系统运行正常，暂无异常。',
     '需要我为您分析当前态势吗？',
     '所有采集源在线，数据同步中。',
     '如需详细报告，请进入对应模块。',
     '已为您标记高风险条目。',
-    '信度评分引擎运行正常。'
+    '信度评分引擎运行正常。',
+    '今日信息密度偏高，建议关注热点趋势。',
+    '情感分析模型已完成今日第一轮校准。',
+    '操作者，注意休息。系统会持续监控。',
+    '当前无待处理告警。',
+    '数据刷新周期：每 15 分钟一次。',
+    '如需导出报告，请进入内容分析模块。',
+    '风险雷达灵敏度已调至最高。',
+    '所有嵌入点响应正常，延迟 < 50ms。'
   ];
 
-  function prtsInit() {
-    prtsEl = $('hub-prts');
-    prtsText = $('hub-prts-text');
-    prtsCursor = $('hub-prts-cursor');
-    if (!prtsEl || !prtsText) return;
+  var M_RISK_HIGH = [
+    '检测到 {n} 条高风险舆情，建议立即关注。',
+    '风险信号聚集：{n} 条高信度负面条目。操作者，是否需要展开分析？',
+    '预警：{n} 条内容触发了风险阈值。'
+  ];
 
-    prtsEl.addEventListener('click', function () {
-      if (prtsTyping) return;
-      var msg = PRTS_CLICK[(Math.random() * PRTS_CLICK.length) | 0];
-      prtsShow(msg);
+  var M_RISK_CLEAR = [
+    '当前态势平稳，未检测到显著风险。',
+    '全域扫描完毕，风险指标均在安全区间。',
+    '今日暂无高信度负面事件。'
+  ];
+
+  var M_LOAD_OK = [
+    '全部模块就绪。当前态势平稳。',
+    '数据同步完成，各模块运行正常。',
+    '加载完毕。系统状态良好。'
+  ];
+
+  var M_LOAD_PARTIAL = [
+    '数据同步完成，部分模块待确认。',
+    '部分数据源响应偏慢，已启用缓存兜底。',
+    '加载完成。建议稍后刷新确认完整性。'
+  ];
+
+  var M_LOAD_FAIL = [
+    '部分模块响应异常，已启用降级方案。',
+    '数据链路出现中断，正在尝试重连。',
+    '加载失败。操作者，请检查网络连接。'
+  ];
+
+  function mPick(arr) { return arr[(Math.random() * arr.length) | 0]; }
+
+  function mFill(template, n) { return template.replace('{n}', n); }
+
+  function minervaInit() {
+    mEl = $('hub-minerva');
+    mText = $('hub-minerva-text');
+    mCursor = $('hub-minerva-cursor');
+    if (!mEl || !mText) return;
+
+    mEl.addEventListener('click', function () {
+      if (mTyping) return;
+      minervaShow(mPick(M_CLICK));
       if (hubMascot && !onboardingActive()) {
         hubMascot.setState('happy');
         hubMascot.trick('bounce');
@@ -199,34 +243,33 @@
     });
   }
 
-  function prtsShow(text) {
-    if (!prtsText) return;
-    prtsQueue.push(text);
-    if (!prtsTyping) prtsDrain();
+  function minervaShow(text) {
+    if (!mText) return;
+    mQueue.push(text);
+    if (!mTyping) mDrain();
   }
 
-  function prtsDrain() {
-    if (!prtsQueue.length) { prtsTyping = false; return; }
-    prtsTyping = true;
-    var text = prtsQueue.shift();
-    prtsText.textContent = '';
+  function mDrain() {
+    if (!mQueue.length) { mTyping = false; return; }
+    mTyping = true;
+    var text = mQueue.shift();
+    mText.textContent = '';
     var idx = 0;
-    if (prtsTypeTimer) clearInterval(prtsTypeTimer);
-    prtsTypeTimer = setInterval(function () {
+    if (mTypeTimer) clearInterval(mTypeTimer);
+    mTypeTimer = setInterval(function () {
       if (idx < text.length) {
-        prtsText.textContent += text.charAt(idx);
+        mText.textContent += text.charAt(idx);
         idx++;
       } else {
-        clearInterval(prtsTypeTimer);
-        prtsTypeTimer = 0;
-        setTimeout(function () { prtsDrain(); }, 2800);
+        clearInterval(mTypeTimer);
+        mTypeTimer = 0;
+        setTimeout(function () { mDrain(); }, 2800);
       }
     }, 38);
   }
 
-  function prtsGreet() {
-    var msg = PRTS_GREETING[(Math.random() * PRTS_GREETING.length) | 0];
-    prtsShow(msg);
+  function minervaGreet() {
+    minervaShow(mPick(M_GREETING));
   }
 
   /* ----------------------------------------------------------------- data */
@@ -471,8 +514,8 @@
     initNav();
     initScroll();
     loadAll();
-    prtsInit();
-    setTimeout(prtsGreet, 2800);
+    minervaInit();
+    setTimeout(minervaGreet, 2800);
 
     window.addEventListener('pagehide', function () {
       stopOnboarding();

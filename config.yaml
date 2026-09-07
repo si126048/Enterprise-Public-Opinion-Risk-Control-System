@@ -89,13 +89,15 @@ topics:
       risk_weight: "高"
 
 embedding:
-  provider: "qwen"
-  model_name: "Qwen/Qwen3-Embedding-4B"
-  vector_dimension: 2560
+  provider: "dashscope"
+  model_name: "text-embedding-v3"
+  vector_dimension: 1024
   normalize: true
-  batch_size: 32
-  preprocess_version: "v1"
+  batch_size: 10
+  preprocess_version: "v2"
   cache_enabled: true
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key_env: "DASHSCOPE_API_KEY"
 
 credibility:
   weights:
@@ -123,12 +125,12 @@ discovery:
   min_unknown_for_clustering: 5
 
 llm:
-  provider: "mock"
-  model: "mock-v1"
+  provider: "dashscope"
+  model: "qwen-plus"
   temperature: 0.2
   max_retries: 2
-  api_base: ""
-  api_key_env: "LLM_API_KEY"
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key_env: "DASHSCOPE_API_KEY"
 
 database:
   path: "data/app.db"
